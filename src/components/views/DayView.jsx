@@ -51,6 +51,7 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day }) => {
 
     // Vérifier si une scène est visible
     const isSceneVisible = (sceneName) => {
+        if (!sceneName) return false;
         // Mapper le nom de scène vers l'ID dans state.scenes
         const sceneIdMap = {
             "MAINSTAGE 1": "mainstage1",
@@ -69,17 +70,51 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day }) => {
 
     // Construire les paires de scènes (logique originale CompactDay.js)
     const buildSceneCouples = () => {
-        let sceneCouples = [["MAINSTAGE 1", "MAINSTAGE 2"], ["WARZONE", "VALLEY"], ["TEMPLE", "ALTAR"]];
+        if (!groups) return [];
+
+        const isSmallScreen = windowWidth < 1200;
+        let sceneCouples = [];
+
+        // Couples scènes annexes (HELLSTAGE + METAL_CORNER ensemble selon demande)
+        const annexCouples = [
+            ["HELLSTAGE", "METAL_CORNER"],
+            ["PURPLE_HOUSE", null]
+        ];
+
+        // Couples scènes principales
+        let mainCouples = [["MAINSTAGE 1", "MAINSTAGE 2"], ["WARZONE", "VALLEY"], ["TEMPLE", "ALTAR"]];
 
         // Réarrangement si certaines scènes sont masquées (logique originale)
         if (
             (!state.scenes["warzone"] && !state.scenes["altar"] && state.scenes["temple"] && state.scenes["valley"]) ||
             (state.scenes["warzone"] && state.scenes["altar"] && !state.scenes["temple"] && !state.scenes["valley"])
         ) {
-            sceneCouples = [["MAINSTAGE 1", "MAINSTAGE 2"], ["WARZONE", "ALTAR"], ["TEMPLE", "VALLEY"]];
+            mainCouples = [["MAINSTAGE 1", "MAINSTAGE 2"], ["WARZONE", "ALTAR"], ["TEMPLE", "VALLEY"]];
         }
 
-        return sceneCouples;
+        if (state.sideScenes) {
+            if (isSmallScreen) {
+                // < 1200px : Afficher UNIQUEMENT les scènes annexes (Toggle exclusif)
+                sceneCouples = annexCouples;
+            } else {
+                // >= 1200px : Afficher TOUT (Principales + Annexes à la suite)
+                sceneCouples = [...mainCouples, ...annexCouples];
+            }
+        } else {
+            // SideScenes OFF : Afficher uniquement les principales
+            sceneCouples = mainCouples;
+        }
+
+        // Filtrer les couples qui sont entièrement vides (aucun groupe programmé ce jour-là sur aucune des 2 scènes)
+        return sceneCouples.filter(couple => {
+            const s1 = couple[0];
+            const s2 = couple[1];
+
+            const hasGroups1 = s1 && groups.some(g => g.SCENE === s1);
+            const hasGroups2 = s2 && groups.some(g => g.SCENE === s2);
+
+            return hasGroups1 || hasGroups2;
+        });
     };
 
     const handleTagClick = (groupId, position) => {
@@ -107,34 +142,48 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day }) => {
     // Déterminer le jour actuel (pour la hauteur dynamique des scene-bands)
     // Hauteurs calculées : 1px = 1 minute
     // - Mercredi: 16h00 → 01h00 = 9h = 540 minutes (scènes annexes uniquement)
-    // - Jeudi: 16h00 → 02h00 = 10h = 600 minutes
-    // - Vendredi: 10h00 → 02h00 = 16h = 960 minutes
-    // - Samedi: 10h00 → 02h00 = 16h = 960 minutes
+    // - Jeudi: 16h00 → 02h00 = 10h = 600 minutes (scènes principales)
+    //         11h00 → 04h00 = 17h = 1020 minutes (avec scènes annexes)
+    // - Vendredi/Samedi: 10h00 → 04h00 = 18h = 1080 minutes (avec scènes annexes)
     // - Dimanche: 10h00 → 01h00 = 15h = 900 minutes
     const currentDay = day || (groups && groups.length > 0 ? groups[0].DAY : 'Vendredi');
     const getSceneBandsHeight = () => {
         if (currentDay === 'Mercredi') return '540px';
-        if (currentDay === 'Jeudi') return '600px';
+        // Jeudi : 1020px si scènes annexes actives (commence à 11h, finit à 04h), sinon 600px
+        if (currentDay === 'Jeudi') return state.sideScenes ? '1020px' : '600px';
         if (currentDay === 'Dimanche') return '900px';
-        return '960px'; // Vendredi et Samedi
+        // Vendredi et Samedi : 1080px si scènes annexes (jusqu'à 04h), sinon 960px
+        return state.sideScenes ? '1080px' : '960px';
     };
 
     // Génération des heures pour les tags (dynamique selon le jour)
     const getHours = () => {
         let hours;
+        // Extension des heures de fin si scènes annexes activées (sauf Dimanche et Mercredi)
+        // Metal Corner finit à 03h50
+        const extendHours = state.sideScenes;
+        const extraHours = extendHours ? ["04:00", "03:00"] : [];
 
         if (currentDay === 'Mercredi') {
             // Mercredi : 16h → 01h (scènes annexes uniquement)
             hours = ["01:00", "00:00", "23:00", "22:00", "21:00", "20:00", "19:00", "18:00", "17:00", "16:00"];
         } else if (currentDay === 'Jeudi') {
-            // Jeudi : 16h → 02h (pas de concerts avant 16h)
-            hours = ["02:00", "01:00", "00:00", "23:00", "22:00", "21:00", "20:00", "19:00", "18:00", "17:00", "16:00"];
+            // Jeudi : heures étendues si scènes annexes actives
+            if (state.sideScenes) {
+                hours = [...extraHours, "02:00", "01:00", "00:00", "23:00", "22:00", "21:00", "20:00", "19:00", "18:00", "17:00", "16:00", "15:00", "14:00", "13:00", "12:00", "11:00"];
+            } else {
+                hours = ["02:00", "01:00", "00:00", "23:00", "22:00", "21:00", "20:00", "19:00", "18:00", "17:00", "16:00"];
+            }
         } else if (currentDay === 'Dimanche') {
             // Dimanche : 10h → 01h (fin plus tôt)
             hours = ["01:00", "00:00", "23:00", "22:00", "21:00", "20:00", "19:00", "18:00", "17:00", "16:00", "15:00", "14:00", "13:00", "12:00", "11:00", "10:00"];
         } else {
             // Vendredi/Samedi : 10h → 02h (schedule complet)
-            hours = ["02:00", "01:00", "00:00", "23:00", "22:00", "21:00", "20:00", "19:00", "18:00", "17:00", "16:00", "15:00", "14:00", "13:00", "12:00", "11:00", "10:00"];
+            if (state.sideScenes) {
+                hours = [...extraHours, "02:00", "01:00", "00:00", "23:00", "22:00", "21:00", "20:00", "19:00", "18:00", "17:00", "16:00", "15:00", "14:00", "13:00", "12:00", "11:00", "10:00"];
+            } else {
+                hours = ["02:00", "01:00", "00:00", "23:00", "22:00", "21:00", "20:00", "19:00", "18:00", "17:00", "16:00", "15:00", "14:00", "13:00", "12:00", "11:00", "10:00"];
+            }
         }
 
         if (state.reverse) {
@@ -158,7 +207,18 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day }) => {
         // Scènes annexes (ajoutées si sideScenes activé)
         const sideScenes = state.sideScenes ? ["HELLSTAGE", "PURPLE_HOUSE", "METAL_CORNER"] : [];
         const allScenes = [...mainScenes, ...sideScenes];
-        const visibleScenes = allScenes.filter(isSceneVisible);
+
+        // 1. Filtrer selon les préférences utilisateur (checkboxes)
+        const enabledScenes = allScenes.filter(isSceneVisible);
+
+        // 2. Filtrer les scènes vides (aucun groupe ce jour-là)
+        // Ceci évite d'afficher des colonnes vides (ex: Mainstages le mercredi)
+        const visibleScenes = enabledScenes.filter(sceneName => {
+            // Pour le mercredi, les scènes principales sont vides, on veut les cacher
+            if (currentDay === 'Mercredi' && mainScenes.includes(sceneName)) return false;
+            // Pour les autres cas, on vérifie s'il y a des groupes
+            return groups.some(g => g.SCENE === sceneName);
+        });
 
         return (
             <div className="compact-day extended-view">
@@ -224,20 +284,21 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day }) => {
 
                 // Couleurs pour le gradient (logique originale CompactScene.js)
                 let colorValue1 = sceneColors[scene1];
-                let colorValue2 = sceneColors[scene2];
+                let colorValue2 = scene2 ? sceneColors[scene2] : colorValue1;
 
                 if (!isSceneVisible(scene1)) {
                     colorValue1 = colorValue2;
                 }
-                if (!isSceneVisible(scene2)) {
+                // Check visibility only if scene2 exists
+                if (scene2 && !isSceneVisible(scene2)) {
                     colorValue2 = colorValue1;
                 }
 
                 // Masquer la colonne si les deux scènes sont invisibles
-                const bothHidden = !isSceneVisible(scene1) && !isSceneVisible(scene2);
+                const bothHidden = !isSceneVisible(scene1) && (!scene2 || !isSceneVisible(scene2));
 
                 // Groupes filtrés pour cette paire de scènes
-                const coupleGroups = groups.filter(g => g.SCENE === scene1 || g.SCENE === scene2);
+                const coupleGroups = groups.filter(g => g.SCENE === scene1 || (scene2 && g.SCENE === scene2));
 
                 return (
                     <div
@@ -268,22 +329,24 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day }) => {
                             </div>
 
                             {/* Scène 2 */}
-                            <div
-                                className="compact-scene-couple-header"
-                                style={{
-                                    margin: 'auto',
-                                    width: '50%',
-                                    display: !isSceneVisible(scene2) ? 'none' : 'block'
-                                }}
-                            >
-                                <img
-                                    className="scene-image"
-                                    src={imgSrc[scene2]}
-                                    alt={scene2}
-                                    style={{ width: '50%' }}
-                                />
-                                <h3>{scene2}</h3>
-                            </div>
+                            {scene2 && (
+                                <div
+                                    className="compact-scene-couple-header"
+                                    style={{
+                                        margin: 'auto',
+                                        width: '50%',
+                                        display: !isSceneVisible(scene2) ? 'none' : 'block'
+                                    }}
+                                >
+                                    <img
+                                        className="scene-image"
+                                        src={imgSrc[scene2]}
+                                        alt={scene2}
+                                        style={{ width: '50%' }}
+                                    />
+                                    <h3>{scene2}</h3>
+                                </div>
+                            )}
                         </div>
 
                         {/* ZONE DES GROUPES */}

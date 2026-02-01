@@ -53,16 +53,23 @@ export const CheckedStateProvider = ({ children }) => {
             const saved = localStorage.getItem('checkedState');
             if (saved) {
                 const parsed = JSON.parse(saved);
-                // Merge with INITIAL_STATE to ensure all keys exist
-                const mergedInterestColors = {
-                    ...getDefaultInterestColors(),
-                    ...(parsed.interestColors || {})
-                };
-                return {
+
+                // Merge profond et intelligent
+                const mergedState = {
                     ...INITIAL_STATE,
                     ...parsed,
-                    interestColors: mergedInterestColors
+                    // S'assurer que les nouvelles clés de scènes sont présentes
+                    scenes: {
+                        ...INITIAL_STATE.scenes,
+                        ...(parsed.scenes || {})
+                    },
+                    // S'assurer que les nouvelles clés de couleurs sont présentes
+                    interestColors: {
+                        ...getDefaultInterestColors(),
+                        ...(parsed.interestColors || {})
+                    }
                 };
+                return mergedState;
             }
         } catch (e) {
             console.error("Failed to load state", e);

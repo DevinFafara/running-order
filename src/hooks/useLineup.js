@@ -96,8 +96,8 @@ export const useLineup = () => {
     }, [checkTimestampOnly, loadData]);
 
     useEffect(() => {
-        loadData();
-        loadSideStages(); // Charger aussi les scènes annexes
+        // Charger les deux jeux de données en parallèle
+        Promise.all([loadData(), loadSideStages()]).catch(console.error);
         const intervalId = setInterval(checkForUpdates, 60000); // Check every minute
         return () => clearInterval(intervalId);
     }, [loadData, loadSideStages, checkForUpdates]);

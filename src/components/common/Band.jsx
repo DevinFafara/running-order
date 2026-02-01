@@ -54,18 +54,30 @@ const Band = ({ group, selectGroup, selectedGroupId, onTagClick }) => {
         let endOfDayMinutes;
         let startOfDayMinutes;
 
+        // Scènes annexes : elles peuvent commencer plus tôt que les scènes principales
+        const isSideStage = ['HELLSTAGE', 'PURPLE_HOUSE', 'METAL_CORNER'].includes(SCENE);
+        // Si sideScenes est activé, la journée s'étend jusqu'à 04h00 (28h) pour Metal Corner
+        const extendedEnd = state.sideScenes ? 28 * 60 : 26 * 60;
+
         if (day === 'Mercredi') {
             endOfDayMinutes = 25 * 60; // 01h00 = 25h
             startOfDayMinutes = 16 * 60; // 16h00
         } else if (day === 'Jeudi') {
-            endOfDayMinutes = 26 * 60; // 02h00 = 26h
-            startOfDayMinutes = 16 * 60; // 16h00
+            endOfDayMinutes = extendedEnd; // 02h00 ou 04h00
+            // Si sideScenes est activé, la grille commence à 11h pour TOUT LE MONDE
+            // Sinon, elle commence à 16h (comportement original)
+            if (state.sideScenes) {
+                startOfDayMinutes = 11 * 60;
+            } else {
+                startOfDayMinutes = 16 * 60;
+            }
         } else if (day === 'Dimanche') {
             endOfDayMinutes = 25 * 60; // 01h00 = 25h
             startOfDayMinutes = 10 * 60; // 10h00
         } else {
-            endOfDayMinutes = 26 * 60; // 02h00 = 26h
-            startOfDayMinutes = 10 * 60; // 10h00
+            // Vendredi/Samedi
+            endOfDayMinutes = extendedEnd; // 02h00 ou 04h00
+            startOfDayMinutes = 10 * 60; // 10h00 (même pour side stages)
         }
 
         // Ajuster les heures APRÈS MINUIT (+24h) - seulement pour 00h-06h
