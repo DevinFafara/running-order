@@ -85,16 +85,33 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day }) => {
     const sceneCouples = buildSceneCouples();
 
     // Déterminer le jour actuel (pour la hauteur dynamique des scene-bands)
+    // Hauteurs calculées : 1px = 1 minute
+    // - Jeudi: 16h00 → 02h30 = 10h30 = 630 minutes
+    // - Vendredi: 10h00 → 02h00 = 16h = 960 minutes
+    // - Samedi: 10h00 → 02h00 = 16h = 960 minutes
+    // - Dimanche: 10h00 → 01h00 = 15h = 900 minutes
     const currentDay = day || (groups && groups.length > 0 ? groups[0].DAY : 'Vendredi');
     const getSceneBandsHeight = () => {
-        if (currentDay === 'Jeudi') return '620px';
-        if (currentDay === 'Dimanche') return '860px';
+        if (currentDay === 'Jeudi') return '630px';
+        if (currentDay === 'Dimanche') return '900px';
         return '960px'; // Vendredi et Samedi
     };
 
-    // Génération des heures pour les tags (logique originale Scene.js)
+    // Génération des heures pour les tags (dynamique selon le jour)
     const getHours = () => {
-        let hours = ["02:00", "01:00", "00:00", "23:00", "22:00", "21:00", "20:00", "19:00", "18:00", "17:00", "16:00", "15:00", "14:00", "13:00", "12:00", "11:00", "10:00"];
+        let hours;
+
+        if (currentDay === 'Jeudi') {
+            // Jeudi : 16h → 02h30 (pas de concerts avant 16h)
+            hours = ["02:00", "01:00", "00:00", "23:00", "22:00", "21:00", "20:00", "19:00", "18:00", "17:00", "16:00"];
+        } else if (currentDay === 'Dimanche') {
+            // Dimanche : 10h → 01h (fin plus tôt)
+            hours = ["01:00", "00:00", "23:00", "22:00", "21:00", "20:00", "19:00", "18:00", "17:00", "16:00", "15:00", "14:00", "13:00", "12:00", "11:00", "10:00"];
+        } else {
+            // Vendredi/Samedi : 10h → 02h (schedule complet)
+            hours = ["02:00", "01:00", "00:00", "23:00", "22:00", "21:00", "20:00", "19:00", "18:00", "17:00", "16:00", "15:00", "14:00", "13:00", "12:00", "11:00", "10:00"];
+        }
+
         if (state.reverse) {
             hours = [...hours].reverse();
         }
