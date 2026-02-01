@@ -26,7 +26,6 @@ const Band = ({ group, selectGroup, selectedGroupId, onTagClick }) => {
     const finMinutes = (+fin[0]) * 60 + (+fin[1]);
     const duree = finMinutes - debutMinutes;
     const dureeConcert = duree;
-    const dureeAvantFin = 1560 - finMinutes;
 
     // Couleurs des scènes
     const sceneColors = {
@@ -38,16 +37,42 @@ const Band = ({ group, selectGroup, selectedGroupId, onTagClick }) => {
         "TEMPLE": '#93a7b0'
     };
 
-    // Calcul du top
+    // Calcul du top : positionnement vertical basé sur l'heure
+    // Référence : 1px = 1 minute, 0px = heure de fin de journée
+    // - Jeudi: fin à 02h30 (26.5h = 1590 min depuis minuit veille)
+    // - Vendredi/Samedi: fin à 02h (26h = 1560 min)
+    // - Dimanche: fin à 01h (25h = 1500 min)
     const getTop = () => {
-        if (state.reverse && group.DAY === "Jeudi") {
-            return `${debutMinutes - 960}px`;
-        } else if (state.reverse) {
-            return `${debutMinutes - 600}px`;
-        } else if (!state.reverse && group.DAY === "Dimanche") {
-            return `${dureeAvantFin - 90}px`;
+        const day = group.DAY;
+
+        // Heure de fin de journée en minutes (depuis minuit la veille, donc +24h pour après minuit)
+        let endOfDayMinutes;
+        let startOfDayMinutes;
+
+        if (day === 'Jeudi') {
+            endOfDayMinutes = 26.5 * 60; // 02h30 = 26.5h
+            startOfDayMinutes = 16 * 60; // 16h00
+        } else if (day === 'Dimanche') {
+            endOfDayMinutes = 25 * 60; // 01h00 = 25h
+            startOfDayMinutes = 10 * 60; // 10h00
+        } else {
+            endOfDayMinutes = 26 * 60; // 02h00 = 26h
+            startOfDayMinutes = 10 * 60; // 10h00
         }
-        return `${dureeAvantFin}px`;
+
+        // Ajuster les heures après minuit (+24h)
+        let adjustedFin = finMinutes;
+        let adjustedDebut = debutMinutes;
+        if (finMinutes < 12 * 60) adjustedFin += 24 * 60;
+        if (debutMinutes < 12 * 60) adjustedDebut += 24 * 60;
+
+        if (state.reverse) {
+            // Mode inversé: 10h en haut, 02h en bas
+            return `${adjustedDebut - startOfDayMinutes}px`;
+        } else {
+            // Mode normal: 02h en haut, 10h en bas
+            return `${endOfDayMinutes - adjustedFin}px`;
+        }
     };
 
     // Classe CSS pour la couleur de fond
