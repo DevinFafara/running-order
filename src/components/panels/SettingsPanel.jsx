@@ -126,23 +126,7 @@ const SettingsPanel = ({ isOpen, onClose }) => {
                         </div>
                     </label>
 
-                    <label className="settings-option">
-                        <div className="settings-option-info">
-                            <i className="fa-solid fa-tent"></i>
-                            <div>
-                                <span className="settings-option-title">Scènes annexes</span>
-                                <span className="settings-option-desc">Hell Stage, Purple House, Metal Corner + Mercredi</span>
-                            </div>
-                        </div>
-                        <div className="toggle-switch">
-                            <input
-                                type="checkbox"
-                                checked={state.sideScenes || false}
-                                onChange={() => setState(prev => ({ ...prev, sideScenes: !prev.sideScenes }))}
-                            />
-                            <span className="toggle-slider"></span>
-                        </div>
-                    </label>
+
                 </div>
             </div>
         </div>

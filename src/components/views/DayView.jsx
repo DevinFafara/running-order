@@ -238,7 +238,7 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day }) => {
                             {/* HEADER : image + titre */}
                             <div className="compact-scene-couple-header" style={{ display: 'block', width: '100%', textAlign: 'center' }}>
                                 <img className="scene-image" src={imgSrc[sceneName]} alt={sceneName} />
-                                <h3>{sceneName}</h3>
+                                <h3>{sceneName.replace(/_/g, ' ')}</h3>
                             </div>
 
                             {/* ZONE DES GROUPES avec heures */}
@@ -325,7 +325,7 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day }) => {
                                 }}
                             >
                                 <img className="scene-image" src={imgSrc[scene1]} alt={scene1} />
-                                <h3>{scene1}</h3>
+                                <h3>{scene1.replace(/_/g, ' ')}</h3>
                             </div>
 
                             {/* Scène 2 */}
@@ -342,9 +342,8 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day }) => {
                                         className="scene-image"
                                         src={imgSrc[scene2]}
                                         alt={scene2}
-                                        style={{ width: '50%' }}
                                     />
-                                    <h3>{scene2}</h3>
+                                    <h3>{scene2.replace(/_/g, ' ')}</h3>
                                 </div>
                             )}
                         </div>
