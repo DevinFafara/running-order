@@ -27,18 +27,23 @@ const Band = ({ group, selectGroup, selectedGroupId, onTagClick }) => {
     const duree = finMinutes - debutMinutes;
     const dureeConcert = duree;
 
-    // Couleurs des scènes
+    // Couleurs des scènes (principales + annexes)
     const sceneColors = {
         "MAINSTAGE 1": '#0055a5',
         "MAINSTAGE 2": '#a6a19b',
         "WARZONE": '#949b1a',
         "VALLEY": '#ce7c19',
         "ALTAR": '#dc2829',
-        "TEMPLE": '#93a7b0'
+        "TEMPLE": '#93a7b0',
+        // Scènes annexes
+        "HELLSTAGE": '#239c60',
+        "PURPLE_HOUSE": '#9500c6',
+        "METAL_CORNER": '#9f9c78'
     };
 
     // Calcul du top : positionnement vertical basé sur l'heure
     // Référence : 1px = 1 minute, 0px = heure de fin de journée
+    // - Mercredi: fin à 01h (25h = 1500 min depuis minuit veille)
     // - Jeudi: fin à 02h (26h = 1560 min depuis minuit veille)
     // - Vendredi/Samedi: fin à 02h (26h = 1560 min)
     // - Dimanche: fin à 01h (25h = 1500 min)
@@ -49,7 +54,10 @@ const Band = ({ group, selectGroup, selectedGroupId, onTagClick }) => {
         let endOfDayMinutes;
         let startOfDayMinutes;
 
-        if (day === 'Jeudi') {
+        if (day === 'Mercredi') {
+            endOfDayMinutes = 25 * 60; // 01h00 = 25h
+            startOfDayMinutes = 16 * 60; // 16h00
+        } else if (day === 'Jeudi') {
             endOfDayMinutes = 26 * 60; // 02h00 = 26h
             startOfDayMinutes = 16 * 60; // 16h00
         } else if (day === 'Dimanche') {

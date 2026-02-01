@@ -28,22 +28,42 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day }) => {
         "WARZONE": "https://forum.hellfest.fr/uploads/default/original/1X/fa9236925f7bd4a4f3b5f622071c425c8b1e04f6.png",
         "VALLEY": "https://forum.hellfest.fr/uploads/default/original/1X/bd43f51c3f066a6d96df719ec826021c0f5a864d.png",
         "ALTAR": "https://forum.hellfest.fr/uploads/default/original/1X/eede00d585209d337e8897aa24cbf0f2255bfdf2.png",
-        "TEMPLE": "https://forum.hellfest.fr/uploads/default/original/1X/2f6183017decac3885da317500a664a884eccf84.png"
+        "TEMPLE": "https://forum.hellfest.fr/uploads/default/original/1X/2f6183017decac3885da317500a664a884eccf84.png",
+        // Scènes annexes
+        "HELLSTAGE": "/running-order/icons/hellStage.png",
+        "PURPLE_HOUSE": "/running-order/icons/purple.png",
+        "METAL_CORNER": "/running-order/icons/metalCorner.png"
     };
 
-    // Couleurs des scènes
+    // Couleurs des scènes (principales + annexes)
     const sceneColors = {
         "MAINSTAGE 1": '#0055a5',
         "MAINSTAGE 2": '#a6a19b',
         "WARZONE": '#949b1a',
         "VALLEY": '#ce7c19',
         "ALTAR": '#dc2829',
-        "TEMPLE": '#93a7b0'
+        "TEMPLE": '#93a7b0',
+        // Scènes annexes
+        "HELLSTAGE": '#239c60',
+        "PURPLE_HOUSE": '#9500c6',
+        "METAL_CORNER": '#9f9c78'
     };
 
     // Vérifier si une scène est visible
     const isSceneVisible = (sceneName) => {
-        const sceneId = sceneName.toLowerCase().replace(' ', '');
+        // Mapper le nom de scène vers l'ID dans state.scenes
+        const sceneIdMap = {
+            "MAINSTAGE 1": "mainstage1",
+            "MAINSTAGE 2": "mainstage2",
+            "WARZONE": "warzone",
+            "VALLEY": "valley",
+            "ALTAR": "altar",
+            "TEMPLE": "temple",
+            "HELLSTAGE": "hellstage",
+            "PURPLE_HOUSE": "purple_house",
+            "METAL_CORNER": "metal_corner"
+        };
+        const sceneId = sceneIdMap[sceneName] || sceneName.toLowerCase().replace(' ', '');
         return state.scenes[sceneId] !== false;
     };
 
@@ -86,12 +106,14 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day }) => {
 
     // Déterminer le jour actuel (pour la hauteur dynamique des scene-bands)
     // Hauteurs calculées : 1px = 1 minute
+    // - Mercredi: 16h00 → 01h00 = 9h = 540 minutes (scènes annexes uniquement)
     // - Jeudi: 16h00 → 02h00 = 10h = 600 minutes
     // - Vendredi: 10h00 → 02h00 = 16h = 960 minutes
     // - Samedi: 10h00 → 02h00 = 16h = 960 minutes
     // - Dimanche: 10h00 → 01h00 = 15h = 900 minutes
     const currentDay = day || (groups && groups.length > 0 ? groups[0].DAY : 'Vendredi');
     const getSceneBandsHeight = () => {
+        if (currentDay === 'Mercredi') return '540px';
         if (currentDay === 'Jeudi') return '600px';
         if (currentDay === 'Dimanche') return '900px';
         return '960px'; // Vendredi et Samedi
@@ -101,7 +123,10 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day }) => {
     const getHours = () => {
         let hours;
 
-        if (currentDay === 'Jeudi') {
+        if (currentDay === 'Mercredi') {
+            // Mercredi : 16h → 01h (scènes annexes uniquement)
+            hours = ["01:00", "00:00", "23:00", "22:00", "21:00", "20:00", "19:00", "18:00", "17:00", "16:00"];
+        } else if (currentDay === 'Jeudi') {
             // Jeudi : 16h → 02h (pas de concerts avant 16h)
             hours = ["02:00", "01:00", "00:00", "23:00", "22:00", "21:00", "20:00", "19:00", "18:00", "17:00", "16:00"];
         } else if (currentDay === 'Dimanche') {
@@ -118,7 +143,7 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day }) => {
         return hours;
     };
 
-    // Vue étendue (6 colonnes) sur grands écrans
+    // Vue étendue (6+ colonnes) sur grands écrans
     const canUseExtendedView = windowWidth >= 1200;
     const isExtendedView = !state.compact && canUseExtendedView;
 
@@ -126,9 +151,13 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day }) => {
 
     const hours = getHours();
 
-    // MODE ÉTENDU : 6 colonnes individuelles avec heures
+    // MODE ÉTENDU : colonnes individuelles avec heures
     if (isExtendedView) {
-        const allScenes = ["MAINSTAGE 1", "MAINSTAGE 2", "WARZONE", "VALLEY", "TEMPLE", "ALTAR"];
+        // Scènes principales
+        const mainScenes = ["MAINSTAGE 1", "MAINSTAGE 2", "WARZONE", "VALLEY", "TEMPLE", "ALTAR"];
+        // Scènes annexes (ajoutées si sideScenes activé)
+        const sideScenes = state.sideScenes ? ["HELLSTAGE", "PURPLE_HOUSE", "METAL_CORNER"] : [];
+        const allScenes = [...mainScenes, ...sideScenes];
         const visibleScenes = allScenes.filter(isSceneVisible);
 
         return (

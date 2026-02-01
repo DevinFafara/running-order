@@ -4,11 +4,25 @@ import { DAYS } from '../../constants';
 
 const Navigation = () => {
     const { state, setDay } = useCheckedState();
-    const currentDayIndex = DAYS.indexOf(state.day);
+
+    // Si sideScenes n'est pas activé, exclure le Mercredi
+    const visibleDays = state.sideScenes
+        ? DAYS
+        : DAYS.filter(d => d !== 'Mercredi');
+
+    const currentDayIndex = visibleDays.indexOf(state.day);
+
+    // Si le jour actuel n'est pas dans les jours visibles (ex: Mercredi désactivé),
+    // basculer automatiquement sur le Jeudi
+    React.useEffect(() => {
+        if (currentDayIndex === -1 && visibleDays.length > 0) {
+            setDay(visibleDays[0]);
+        }
+    }, [state.sideScenes, currentDayIndex, visibleDays, setDay]);
 
     const handleDayChange = (newIndex) => {
-        if (newIndex >= 0 && newIndex < DAYS.length) {
-            setDay(DAYS[newIndex]);
+        if (newIndex >= 0 && newIndex < visibleDays.length) {
+            setDay(visibleDays[newIndex]);
         }
     };
 
@@ -20,7 +34,7 @@ const Navigation = () => {
                 </button>
             )}
             <h1>{state.day}</h1>
-            {currentDayIndex < DAYS.length - 1 && (
+            {currentDayIndex < visibleDays.length - 1 && (
                 <button onClick={() => handleDayChange(currentDayIndex + 1)}>
                     <i className="fa-solid fa-chevron-right"></i>
                 </button>

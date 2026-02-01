@@ -9,7 +9,7 @@ import GroupCard from './components/common/GroupCard';
 import './styles/App.css';
 
 function AppContent() {
-  const { data: groups, loading, error } = useLineup();
+  const { data: groups, sideStagesData, loading, error } = useLineup();
   const { state } = useCheckedState();
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [popoverPosition, setPopoverPosition] = useState(null);
@@ -32,8 +32,13 @@ function AppContent() {
   if (loading) return <div className="loading">Chargement du Hellfest... 🤘</div>;
   if (error) return <div className="error">Erreur : {error.message}</div>;
 
+  // Fusionner les groupes principaux et scènes annexes si sideScenes est activé
+  const allGroups = state.sideScenes
+    ? [...groups, ...sideStagesData]
+    : groups;
+
   // Filtrer les groupes par jour actuel (comme dans running-order original)
-  const currentDayGroups = groups.filter(group => group.DAY === state.day);
+  const currentDayGroups = allGroups.filter(group => group.DAY === state.day);
 
   return (
     <div className="App">

@@ -14,12 +14,17 @@ const getDefaultInterestColors = () => {
 
 const INITIAL_STATE = {
     scenes: {
+        // Scènes principales
         mainstage1: true,
         mainstage2: true,
         warzone: true,
         valley: true,
         altar: true,
         temple: true,
+        // Scènes annexes (visibles seulement si sideScenes = true)
+        hellstage: true,
+        purple_house: true,
+        metal_corner: true,
     },
     color: 'nocolor',
     ...DEFAULT_COLORS,
