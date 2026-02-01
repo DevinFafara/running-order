@@ -39,7 +39,7 @@ const Band = ({ group, selectGroup, selectedGroupId, onTagClick }) => {
 
     // Calcul du top : positionnement vertical basé sur l'heure
     // Référence : 1px = 1 minute, 0px = heure de fin de journée
-    // - Jeudi: fin à 02h30 (26.5h = 1590 min depuis minuit veille)
+    // - Jeudi: fin à 02h (26h = 1560 min depuis minuit veille)
     // - Vendredi/Samedi: fin à 02h (26h = 1560 min)
     // - Dimanche: fin à 01h (25h = 1500 min)
     const getTop = () => {
@@ -50,7 +50,7 @@ const Band = ({ group, selectGroup, selectedGroupId, onTagClick }) => {
         let startOfDayMinutes;
 
         if (day === 'Jeudi') {
-            endOfDayMinutes = 26.5 * 60; // 02h30 = 26.5h
+            endOfDayMinutes = 26 * 60; // 02h00 = 26h
             startOfDayMinutes = 16 * 60; // 16h00
         } else if (day === 'Dimanche') {
             endOfDayMinutes = 25 * 60; // 01h00 = 25h
@@ -60,11 +60,12 @@ const Band = ({ group, selectGroup, selectedGroupId, onTagClick }) => {
             startOfDayMinutes = 10 * 60; // 10h00
         }
 
-        // Ajuster les heures après minuit (+24h)
+        // Ajuster les heures APRÈS MINUIT (+24h) - seulement pour 00h-06h
+        // Les heures de 10h-12h ne doivent PAS être ajustées
         let adjustedFin = finMinutes;
         let adjustedDebut = debutMinutes;
-        if (finMinutes < 12 * 60) adjustedFin += 24 * 60;
-        if (debutMinutes < 12 * 60) adjustedDebut += 24 * 60;
+        if (finMinutes < 6 * 60) adjustedFin += 24 * 60;  // 00:00-05:59 → +24h
+        if (debutMinutes < 6 * 60) adjustedDebut += 24 * 60;  // 00:00-05:59 → +24h
 
         if (state.reverse) {
             // Mode inversé: 10h en haut, 02h en bas

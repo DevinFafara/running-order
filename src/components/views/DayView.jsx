@@ -86,13 +86,13 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day }) => {
 
     // Déterminer le jour actuel (pour la hauteur dynamique des scene-bands)
     // Hauteurs calculées : 1px = 1 minute
-    // - Jeudi: 16h00 → 02h30 = 10h30 = 630 minutes
+    // - Jeudi: 16h00 → 02h00 = 10h = 600 minutes
     // - Vendredi: 10h00 → 02h00 = 16h = 960 minutes
     // - Samedi: 10h00 → 02h00 = 16h = 960 minutes
     // - Dimanche: 10h00 → 01h00 = 15h = 900 minutes
     const currentDay = day || (groups && groups.length > 0 ? groups[0].DAY : 'Vendredi');
     const getSceneBandsHeight = () => {
-        if (currentDay === 'Jeudi') return '630px';
+        if (currentDay === 'Jeudi') return '600px';
         if (currentDay === 'Dimanche') return '900px';
         return '960px'; // Vendredi et Samedi
     };
@@ -102,8 +102,8 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day }) => {
         let hours;
 
         if (currentDay === 'Jeudi') {
-            // Jeudi : 16h → 02h30 (pas de concerts avant 16h)
-            hours = ["02:30", "02:00", "01:00", "00:00", "23:00", "22:00", "21:00", "20:00", "19:00", "18:00", "17:00", "16:00"];
+            // Jeudi : 16h → 02h (pas de concerts avant 16h)
+            hours = ["02:00", "01:00", "00:00", "23:00", "22:00", "21:00", "20:00", "19:00", "18:00", "17:00", "16:00"];
         } else if (currentDay === 'Dimanche') {
             // Dimanche : 10h → 01h (fin plus tôt)
             hours = ["01:00", "00:00", "23:00", "22:00", "21:00", "20:00", "19:00", "18:00", "17:00", "16:00", "15:00", "14:00", "13:00", "12:00", "11:00", "10:00"];
