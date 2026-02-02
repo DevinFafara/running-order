@@ -1189,48 +1189,64 @@ nav button:hover {
   pointer-events: none;
 }
 
-/* === TAG MENU === */
+/* === TAG MENU (Compact & Discrete) === */
 .tag-menu {
+  position: fixed;
   background: rgba(30, 30, 35, 0.98);
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  /* Reduced radius */
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1);
   min-width: 220px;
+  /* Reduced width */
   overflow: hidden;
+  z-index: 2000;
   animation: tag-menu-appear 0.15s ease-out;
+  padding: 4px;
+  /* Minimal padding container */
 }
 
 @keyframes tag-menu-appear {
   from {
     opacity: 0;
-    transform: scale(0.95) translateY(-5px);
+    transform: scale(0.95);
   }
 
   to {
     opacity: 1;
-    transform: scale(1) translateY(0);
+    transform: scale(1);
   }
 }
 
 .tag-menu-header {
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 15px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  color: #888;
-  font-size: 0.85em;
-  font-weight: 500;
+  font-size: 0.8em;
+  /* Smaller font */
+  font-weight: 600;
+  color: #aaa;
+}
+
+.tag-menu-header span:first-child {
+  display: none;
+  /* Hide 'Marquer ce groupe' title to save space */
 }
 
 .tag-menu-clear {
   background: rgba(231, 76, 60, 0.2);
   border: none;
   color: #E74C3C;
-  padding: 4px 10px;
+  padding: 2px 6px;
+  /* Smaller button */
   border-radius: 4px;
-  font-size: 0.85em;
+  font-size: 0.8em;
   cursor: pointer;
   transition: all 0.2s;
+  margin-left: auto;
+  /* Push to right */
 }
 
 .tag-menu-clear:hover {
@@ -1238,37 +1254,44 @@ nav button:hover {
 }
 
 .tag-menu-options {
-  padding: 8px;
+  padding: 2px;
 }
 
 .tag-menu-option {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
+  /* Reduced gap */
   width: 100%;
-  padding: 10px 12px;
+  padding: 6px 8px;
+  /* Reduced padding */
   background: transparent;
   border: none;
-  border-radius: 8px;
-  color: white;
+  border-radius: 6px;
+  color: #ddd;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.1s;
   text-align: left;
 }
 
 .tag-menu-option:hover {
   background: rgba(255, 255, 255, 0.08);
+  color: white;
 }
 
 .tag-menu-option.active {
   background: rgba(255, 255, 255, 0.12);
   border-left: 3px solid var(--tag-color, #888);
+  padding-left: 5px;
+  /* Adjust for border */
 }
 
 .tag-icon {
-  font-size: 1.3em;
-  width: 28px;
+  font-size: 1em;
+  /* Smaller icon */
+  width: 20px;
   text-align: center;
+  opacity: 0.8;
 }
 
 .tag-info {
@@ -1278,107 +1301,26 @@ nav button:hover {
 }
 
 .tag-label {
-  font-weight: 600;
-  font-size: 0.95em;
+  font-weight: 500;
+  font-size: 0.85em;
+  /* Smaller label */
 }
 
 .tag-desc {
-  font-size: 0.75em;
-  color: #888;
-  margin-top: 2px;
+  display: none;
+  /* HIDE DESCRIPTION as requested */
 }
 
 .tag-check {
   color: var(--tag-color, #50C878);
   font-weight: bold;
-}
-
-/* Tag indicator on bands */
-.band-tag-indicator {
-  position: absolute;
-  top: 3px;
-  right: 3px;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-  z-index: 5;
-}
-
-/* Tag overlay for clicking */
-.tag-menu-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 1999;
-}
-
-/* === TAG DROPDOWN IN CARD === */
-.tag-dropdown-container {
-  position: relative;
-}
-
-.tag-dropdown {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  margin-top: 8px;
-  background: rgba(30, 30, 35, 0.98);
-  border-radius: 10px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1);
-  min-width: 180px;
-  overflow: hidden;
-  z-index: 1200;
-  animation: tag-menu-appear 0.15s ease-out;
-}
-
-.tag-dropdown-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  padding: 10px 14px;
-  background: transparent;
-  border: none;
-  color: white;
-  cursor: pointer;
-  transition: all 0.15s;
-  text-align: left;
   font-size: 0.9em;
 }
 
-.tag-dropdown-item:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.tag-dropdown-item.active {
-  background: rgba(255, 255, 255, 0.15);
-  border-left: 3px solid var(--tag-color, #888);
-}
-
-.tag-item-icon {
-  font-size: 1.1em;
-  width: 24px;
-  text-align: center;
-}
-
-.favorite-btn {
-  font-size: 1.2em;
-  min-width: 30px;
-}
-
-/* === TWO-DIMENSION TAG SYSTEM === */
-
-/* Tag menu sections */
+/* Two-Dimension Tag System Sections */
 .tag-menu-section {
-  padding: 8px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 2px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .tag-menu-section:last-child {
@@ -1387,17 +1329,20 @@ nav button:hover {
 
 .tag-section-title,
 .dropdown-section-title {
-  font-size: 0.75em;
-  color: #888;
+  font-size: 0.65em;
+  /* Very small section title */
+  color: #666;
   text-transform: uppercase;
-  padding: 4px 12px 8px;
-  font-weight: 600;
+  padding: 4px 10px 2px;
+  font-weight: 700;
   letter-spacing: 0.5px;
+  display: none;
+  /* Hide section titles too? User said '6 elements'. Let's hide them for max compactness or keep them tiny. Let's keep them tiny for context but maybe hide default. Let's hide them to be really compact. Use display:block if user complains provided it's small. Actually user said "Trop grosse". Hiding headers helps.*/
 }
 
 /* Interest stars display */
 .interest-stars {
-  font-size: 1em;
+  font-size: 0.9em;
   letter-spacing: 1px;
   min-width: 50px;
 }

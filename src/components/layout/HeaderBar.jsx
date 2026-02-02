@@ -4,18 +4,30 @@ import FilterPanel from '../panels/FilterPanel';
 import SettingsPanel from '../panels/SettingsPanel';
 import CreditsPanel from '../panels/CreditsPanel';
 
+import StatsPanel from '../panels/StatsPanel';
+
 const HeaderBar = () => {
     const [playlistOpen, setPlaylistOpen] = useState(false);
     const [filterOpen, setFilterOpen] = useState(false);
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [creditsOpen, setCreditsOpen] = useState(false);
+    const [statsOpen, setStatsOpen] = useState(false);
 
     return (
         <>
             <header>
-                <span className="header-title">Hellfest-RO</span>
+                <div className="header-left">
+                    <span className="header-title">Hellfest-RO</span>
+                </div>
 
                 <div className="toolbar">
+                    <button
+                        className={`toolbar-btn ${statsOpen ? 'active' : ''}`}
+                        title="Mes Stats"
+                        onClick={() => setStatsOpen(true)}
+                    >
+                        <i className="fa-solid fa-chart-pie"></i>
+                    </button>
                     <button
                         className={`toolbar-btn ${filterOpen ? 'active' : ''}`}
                         title="Filtres"
@@ -66,6 +78,12 @@ const HeaderBar = () => {
                 isOpen={creditsOpen}
                 onClose={() => setCreditsOpen(false)}
             />
+
+            {statsOpen && (
+                <StatsPanel
+                    onClose={() => setStatsOpen(false)}
+                />
+            )}
         </>
     );
 };

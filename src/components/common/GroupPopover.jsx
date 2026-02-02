@@ -3,7 +3,7 @@ import { useCheckedState } from '../../context/CheckedStateContext';
 
 const GroupPopover = ({ group, position, onClose, onShowDetails }) => {
     const popoverRef = useRef(null);
-    const { state, toggleBand } = useCheckedState();
+    const { state, toggleBand, setInterest, setContext, getBandTag } = useCheckedState();
 
     const isTagged = !!state.taggedBands[group.id];
 
@@ -76,75 +76,64 @@ const GroupPopover = ({ group, position, onClose, onShowDetails }) => {
                 </button>
             </div>
 
-            {/* Infos rapides */}
-            <div className="popover-quick-info">
-                <div className="popover-time">
-                    <i className="fa-regular fa-clock"></i>
-                    <span>{group.DEBUT.replace('h', ':')} - {group.FIN.replace('h', ':')}</span>
+            {/* Actions Contextuelles (6 éléments) */}
+            <div className="popover-actions-grid">
+                {/* INTEREST */}
+                <div className="popover-section-title">Intérêt</div>
+                <div className="popover-buttons-row">
+                    <button
+                        className={`popover-action-btn ${getBandTag(group.id)?.interest === 'must_see' ? 'active' : ''}`}
+                        onClick={() => { setInterest(group.id, getBandTag(group.id)?.interest === 'must_see' ? null : 'must_see'); onClose(); }}
+                        style={{ '--btn-color': '#50C878' }}
+                    >
+                        <i className="fa-solid fa-star"></i> Incontournable
+                    </button>
+                    <button
+                        className={`popover-action-btn ${getBandTag(group.id)?.interest === 'interested' ? 'active' : ''}`}
+                        onClick={() => { setInterest(group.id, getBandTag(group.id)?.interest === 'interested' ? null : 'interested'); onClose(); }}
+                        style={{ '--btn-color': '#FFD700' }}
+                    >
+                        <i className="fa-solid fa-star-half-stroke"></i> Intéressé
+                    </button>
+                    <button
+                        className={`popover-action-btn ${getBandTag(group.id)?.interest === 'curious' ? 'active' : ''}`}
+                        onClick={() => { setInterest(group.id, getBandTag(group.id)?.interest === 'curious' ? null : 'curious'); onClose(); }}
+                        style={{ '--btn-color': '#3498db' }}
+                    >
+                        <i className="fa-regular fa-star"></i> Curieux
+                    </button>
                 </div>
-                <div className="popover-scene">
-                    <i className="fa-solid fa-location-dot"></i>
-                    <span>{group.SCENE}</span>
+
+                {/* CONTEXT */}
+                <div className="popover-section-title">Contexte</div>
+                <div className="popover-buttons-row">
+                    <button
+                        className={`popover-action-btn ${getBandTag(group.id)?.context === 'with_friend' ? 'active' : ''}`}
+                        onClick={() => { setContext(group.id, getBandTag(group.id)?.context === 'with_friend' ? null : 'with_friend'); onClose(); }}
+                    >
+                        <i className="fa-solid fa-user-group"></i> Avec Potes
+                    </button>
+                    <button
+                        className={`popover-action-btn ${getBandTag(group.id)?.context === 'strategic' ? 'active' : ''}`}
+                        onClick={() => { setContext(group.id, getBandTag(group.id)?.context === 'strategic' ? null : 'strategic'); onClose(); }}
+                    >
+                        <i className="fa-solid fa-chess"></i> Stratégique
+                    </button>
+                    <button
+                        className={`popover-action-btn ${getBandTag(group.id)?.context === 'skip' ? 'active' : ''}`}
+                        onClick={() => { setContext(group.id, getBandTag(group.id)?.context === 'skip' ? null : 'skip'); onClose(); }}
+                    >
+                        <i className="fa-solid fa-ban"></i> Au Bar
+                    </button>
                 </div>
-                {group.STYLE && (
-                    <div className="popover-style">
-                        <i className="fa-solid fa-music"></i>
-                        <span>{group.STYLE}</span>
-                    </div>
-                )}
-                {group.PAYS && (
-                    <div className="popover-country">
-                        <i className="fa-solid fa-globe"></i>
-                        <span>{group.PAYS}</span>
-                    </div>
-                )}
             </div>
 
-            {/* Actions */}
-            <div className="popover-actions">
-                <button
-                    className={`popover-btn popover-btn-favorite ${isTagged ? 'active' : ''}`}
-                    onClick={() => toggleBand(group.id)}
-                    title={isTagged ? 'Retirer des favoris' : 'Ajouter aux favoris'}
-                >
-                    <i className={`fa-${isTagged ? 'solid' : 'regular'} fa-star`}></i>
-                    <span>{isTagged ? 'Favori' : 'Ajouter'}</span>
-                </button>
-
-                <button
-                    className="popover-btn popover-btn-details"
-                    onClick={() => onShowDetails(group)}
-                >
-                    <i className="fa-solid fa-circle-info"></i>
-                    <span>Plus d'infos</span>
+            {/* Footer minime */}
+            <div className="popover-footer">
+                <button className="popover-details-link" onClick={() => onShowDetails(group)}>
+                    Voir la fiche complète
                 </button>
             </div>
-
-            {/* Liens streaming (si disponibles) */}
-            {(group.SPOTIFY || group.DEEZER || group.YOUTUBE) && (
-                <div className="popover-streaming">
-                    {group.SPOTIFY && (
-                        <a href={group.SPOTIFY} target="_blank" rel="noopener noreferrer" title="Spotify" className="streaming-link spotify">
-                            <i className="fa-brands fa-spotify"></i>
-                        </a>
-                    )}
-                    {group.DEEZER && (
-                        <a href={group.DEEZER} target="_blank" rel="noopener noreferrer" title="Deezer" className="streaming-link deezer">
-                            <i className="fa-brands fa-deezer"></i>
-                        </a>
-                    )}
-                    {group.YOUTUBE && (
-                        <a href={group.YOUTUBE} target="_blank" rel="noopener noreferrer" title="YouTube" className="streaming-link youtube">
-                            <i className="fa-brands fa-youtube"></i>
-                        </a>
-                    )}
-                    {group.BANDCAMP && (
-                        <a href={group.BANDCAMP} target="_blank" rel="noopener noreferrer" title="Bandcamp" className="streaming-link bandcamp">
-                            <i className="fa-brands fa-bandcamp"></i>
-                        </a>
-                    )}
-                </div>
-            )}
         </div>
     );
 };

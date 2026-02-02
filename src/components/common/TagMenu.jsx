@@ -4,10 +4,26 @@ import { useCheckedState } from '../../context/CheckedStateContext';
 
 const TagMenu = ({ groupId, position, onClose }) => {
     const { setInterest, setContext, getBandTag, getInterestColor } = useCheckedState();
+    const menuRef = React.useRef(null);
 
     const currentTag = getBandTag(groupId);
     const currentInterest = currentTag?.interest;
     const currentContext = currentTag?.context;
+
+    // Fermer au clic en dehors
+    React.useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (menuRef.current && !menuRef.current.contains(event.target)) {
+                onClose();
+            }
+        };
+
+        // Utiliser 'mousedown' pour être plus réactif que 'click'
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [onClose]);
 
     const handleInterestSelect = (interestId) => {
         if (currentInterest === interestId) {
@@ -33,6 +49,7 @@ const TagMenu = ({ groupId, position, onClose }) => {
 
     return (
         <div
+            ref={menuRef}
             className="tag-menu"
             style={{
                 position: 'fixed',

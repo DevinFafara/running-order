@@ -129,18 +129,18 @@ export const CheckedStateProvider = ({ children }) => {
         });
     };
 
-    // Toggle rapide d'intérêt (cycle: null -> must_see -> interested -> curious -> null)
+    // Toggle rapide d'intérêt (cycle: null -> curious -> interested -> must_see -> null)
     const cycleInterest = (groupId) => {
         const currentTag = getBandTag(groupId);
         const currentInterest = currentTag?.interest;
 
         let nextInterest;
         if (!currentInterest) {
-            nextInterest = 'must_see';
-        } else if (currentInterest === 'must_see') {
+            nextInterest = 'curious';
+        } else if (currentInterest === 'curious') {
             nextInterest = 'interested';
         } else if (currentInterest === 'interested') {
-            nextInterest = 'curious';
+            nextInterest = 'must_see';
         } else {
             nextInterest = null;
         }
