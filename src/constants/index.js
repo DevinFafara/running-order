@@ -70,14 +70,14 @@ export const STAGE_CONFIG = {
   [STAGES.METAL_CORNER]: {
     name: 'Metal Corner',
     icon: '/running-order/icons/metalCorner.png',
-    slug: 'metalcorner',
+    slug: 'metal_corner',
     themeColor: '#9f9c78',
     bandColor: '#d0cfae'
   },
   [STAGES.PURPLE_HOUSE]: {
     name: 'Purple House',
     icon: '/running-order/icons/purple.png',
-    slug: 'purplehouse',
+    slug: 'purple_house',
     themeColor: '#9500c6',
     bandColor: '#d6b2e0'
   },

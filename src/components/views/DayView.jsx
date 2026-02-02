@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useCheckedState } from '../../context/CheckedStateContext';
+import { STAGE_CONFIG } from '../../constants';
 import Band from '../common/Band';
 import TagMenu from '../common/TagMenu';
 
@@ -21,51 +22,11 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day }) => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    // URLs des images
-    const imgSrc = {
-        "MAINSTAGE 1": "https://forum.hellfest.fr/uploads/default/original/1X/723469cc76965f666beff04a4024eff673c444f3.png",
-        "MAINSTAGE 2": "https://forum.hellfest.fr/uploads/default/original/1X/9ef344af22970ef79d91c1955cd40c2ddaa2b32d.png",
-        "WARZONE": "https://forum.hellfest.fr/uploads/default/original/1X/fa9236925f7bd4a4f3b5f622071c425c8b1e04f6.png",
-        "VALLEY": "https://forum.hellfest.fr/uploads/default/original/1X/bd43f51c3f066a6d96df719ec826021c0f5a864d.png",
-        "ALTAR": "https://forum.hellfest.fr/uploads/default/original/1X/eede00d585209d337e8897aa24cbf0f2255bfdf2.png",
-        "TEMPLE": "https://forum.hellfest.fr/uploads/default/original/1X/2f6183017decac3885da317500a664a884eccf84.png",
-        // Scènes annexes
-        "HELLSTAGE": "/running-order/icons/hellStage.png",
-        "PURPLE_HOUSE": "/running-order/icons/purple.png",
-        "METAL_CORNER": "/running-order/icons/metalCorner.png"
-    };
-
-    // Couleurs des scènes (principales + annexes)
-    const sceneColors = {
-        "MAINSTAGE 1": '#0055a5',
-        "MAINSTAGE 2": '#a6a19b',
-        "WARZONE": '#949b1a',
-        "VALLEY": '#ce7c19',
-        "ALTAR": '#dc2829',
-        "TEMPLE": '#93a7b0',
-        // Scènes annexes
-        "HELLSTAGE": '#239c60',
-        "PURPLE_HOUSE": '#9500c6',
-        "METAL_CORNER": '#9f9c78'
-    };
-
     // Vérifier si une scène est visible
     const isSceneVisible = (sceneName) => {
         if (!sceneName) return false;
-        // Mapper le nom de scène vers l'ID dans state.scenes
-        const sceneIdMap = {
-            "MAINSTAGE 1": "mainstage1",
-            "MAINSTAGE 2": "mainstage2",
-            "WARZONE": "warzone",
-            "VALLEY": "valley",
-            "ALTAR": "altar",
-            "TEMPLE": "temple",
-            "HELLSTAGE": "hellstage",
-            "PURPLE_HOUSE": "purple_house",
-            "METAL_CORNER": "metal_corner"
-        };
-        const sceneId = sceneIdMap[sceneName] || sceneName.toLowerCase().replace(' ', '');
-        return state.scenes[sceneId] !== false;
+        const config = STAGE_CONFIG[sceneName];
+        return config ? state.scenes[config.slug] !== false : false;
     };
 
     // Construire les paires de scènes (logique originale CompactDay.js)
@@ -224,7 +185,8 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day }) => {
             <div className="compact-day extended-view">
                 {visibleScenes.map((sceneName, index) => {
                     const sceneGroups = groups.filter(g => g.SCENE === sceneName);
-                    const colorValue = sceneColors[sceneName];
+                    const config = STAGE_CONFIG[sceneName];
+                    const colorValue = config?.themeColor || '#000';
 
                     return (
                         <div
@@ -237,8 +199,8 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day }) => {
                         >
                             {/* HEADER : image + titre */}
                             <div className="compact-scene-couple-header" style={{ display: 'block', width: '100%', textAlign: 'center' }}>
-                                <img className="scene-image" src={imgSrc[sceneName]} alt={sceneName} />
-                                <h3>{sceneName.replace(/_/g, ' ')}</h3>
+                                <img className="scene-image" src={config?.icon} alt={sceneName} />
+                                <h3>{config?.name}</h3>
                             </div>
 
                             {/* ZONE DES GROUPES avec heures */}
@@ -282,9 +244,12 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day }) => {
                 const scene1 = sceneCouple[0];
                 const scene2 = sceneCouple[1];
 
-                // Couleurs pour le gradient (logique originale CompactScene.js)
-                let colorValue1 = sceneColors[scene1];
-                let colorValue2 = scene2 ? sceneColors[scene2] : colorValue1;
+                // Couleurs pour le gradient
+                const config1 = STAGE_CONFIG[scene1];
+                const config2 = scene2 ? STAGE_CONFIG[scene2] : null;
+
+                let colorValue1 = config1?.themeColor || '#000';
+                let colorValue2 = config2 ? config2.themeColor : colorValue1;
 
                 if (!isSceneVisible(scene1)) {
                     colorValue1 = colorValue2;
@@ -324,8 +289,8 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day }) => {
                                     display: !isSceneVisible(scene1) ? 'none' : 'block'
                                 }}
                             >
-                                <img className="scene-image" src={imgSrc[scene1]} alt={scene1} />
-                                <h3>{scene1.replace(/_/g, ' ')}</h3>
+                                <img className="scene-image" src={config1?.icon} alt={scene1} />
+                                <h3>{config1?.name}</h3>
                             </div>
 
                             {/* Scène 2 */}
@@ -340,10 +305,10 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day }) => {
                                 >
                                     <img
                                         className="scene-image"
-                                        src={imgSrc[scene2]}
+                                        src={config2?.icon}
                                         alt={scene2}
                                     />
-                                    <h3>{scene2.replace(/_/g, ' ')}</h3>
+                                    <h3>{config2?.name}</h3>
                                 </div>
                             )}
                         </div>
