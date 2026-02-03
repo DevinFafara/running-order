@@ -170,7 +170,12 @@ const WeeklyView = ({ groups, onGroupClick }) => {
                         // Absolute % on the screen
                         // Base Left = GroupColIndex * COLUMN_WIDTH_PCT
                         // Offset = RelativeLeft% of COLUMN_WIDTH_PCT
-                        pb.widthPct = (relativeWidth / 100) * COLUMN_WIDTH_PCT;
+                        let finalWidth = (relativeWidth / 100) * COLUMN_WIDTH_PCT;
+
+                        // User Request: Max width 50% of the day column
+                        finalWidth = Math.min(finalWidth, 50);
+
+                        pb.widthPct = finalWidth;
                         pb.leftPct = (groupColIndex * COLUMN_WIDTH_PCT) + ((relativeLeft / 100) * COLUMN_WIDTH_PCT);
 
                         positionedBands.push(pb);
@@ -230,7 +235,12 @@ const WeeklyView = ({ groups, onGroupClick }) => {
                     );
                     const maxCol = Math.max(pb.colIndex, ...overlaps.map(o => o.colIndex));
                     const totalCols = maxCol + 1;
-                    pb.widthPct = 100 / totalCols;
+                    let widthPct = 100 / totalCols;
+
+                    // User Request: Max strict width 50%
+                    widthPct = Math.min(widthPct, 50);
+
+                    pb.widthPct = widthPct;
                     pb.leftPct = pb.colIndex * pb.widthPct;
                 });
             }
