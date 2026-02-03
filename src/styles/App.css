@@ -456,7 +456,7 @@ nav button:hover {
 }
 
 .card-body {
-  padding: 20px;
+  padding: 10px;
   overflow-y: auto;
   color: #eee;
   flex: 1;

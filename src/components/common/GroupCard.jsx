@@ -178,54 +178,44 @@ const GroupCard = ({ group, position, onClose, onPositionChange }) => {
             case 'infos':
                 return (
                     <div className="tab-content fade-in">
-                        {/* LOGO DISPLAY */}
+                        {/* LOGO DISPLAY (Simplified) */}
                         {bandLogos[group.GROUPE] && (
                             <div className="group-logo-container" style={{
                                 width: '100%',
-                                marginBottom: '15px',
+                                marginBottom: '10px',
                                 display: 'flex',
                                 justifyContent: 'center',
-                                background: 'rgba(0,0,0,0.2)',
-                                borderRadius: '8px',
-                                padding: '10px'
+                                // removed background and padding
                             }}>
                                 <img
                                     src={bandLogos[group.GROUPE]}
                                     alt={group.GROUPE}
                                     style={{
                                         maxWidth: '100%',
-                                        maxHeight: '60px',
+                                        maxHeight: '80px',
                                         objectFit: 'contain'
                                     }}
                                 />
                             </div>
                         )}
 
-                        <div className="info-header-row">
-                            <div className="info-item">
-                                <i className="fa-regular fa-clock"></i>
-                                <span>{group.DEBUT ? group.DEBUT.replace('h', ':') : '?'} - {group.FIN ? group.FIN.replace('h', ':') : '?'}</span>
-                            </div>
-                            <div className="info-item">
-                                <i className="fa-solid fa-location-dot"></i>
-                                <span>{group.SCENE}</span>
-                            </div>
-                        </div>
+                        {/* REMOVED INFO HEADER ROW AS REQUESTED */}
+
                         {group.STYLE && (
                             <div className="info-row">
-                                <i className="fa-solid fa-music"></i>
+                                <i className="fa-solid fa-music" style={{ color: sceneColor }}></i>
                                 <span>{group.STYLE}</span>
                             </div>
                         )}
                         {group.PAYS && (
                             <div className="info-row">
-                                <i className="fa-solid fa-globe"></i>
+                                <i className="fa-solid fa-globe" style={{ color: sceneColor }}></i>
                                 <span>{group.PAYS}</span>
                             </div>
                         )}
                         {group.PARTICIPATIONS && (
                             <div className="info-row">
-                                <i className="fa-solid fa-fire"></i>
+                                <i className="fa-solid fa-fire" style={{ color: sceneColor }}></i>
                                 <span>{group.PARTICIPATIONS}</span>
                             </div>
                         )}
