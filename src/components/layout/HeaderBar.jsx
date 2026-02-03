@@ -6,7 +6,7 @@ import CreditsPanel from '../panels/CreditsPanel';
 
 import StatsPanel from '../panels/StatsPanel';
 
-const HeaderBar = () => {
+const HeaderBar = ({ viewMode, onViewChange }) => {
     const [playlistOpen, setPlaylistOpen] = useState(false);
     const [filterOpen, setFilterOpen] = useState(false);
     const [settingsOpen, setSettingsOpen] = useState(false);
@@ -21,6 +21,14 @@ const HeaderBar = () => {
                 </div>
 
                 <div className="toolbar">
+                    <button
+                        className={`toolbar-btn ${viewMode === 'week' ? 'active' : ''}`}
+                        title={viewMode === 'week' ? "Vue Journalière" : "Vue Semaine"}
+                        onClick={() => onViewChange(viewMode === 'week' ? 'day' : 'week')}
+                    >
+                        <i className={`fa-solid ${viewMode === 'week' ? 'fa-calendar-day' : 'fa-calendar-week'}`}></i>
+                    </button>
+
                     <button
                         className={`toolbar-btn ${statsOpen ? 'active' : ''}`}
                         title="Mes Stats"

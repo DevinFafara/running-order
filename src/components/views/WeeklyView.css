@@ -1,0 +1,291 @@
+/* WeeklyView.css */
+
+.weekly-view {
+    height: calc(100vh - 40px);
+    /* Full height minus header */
+    overflow-y: auto;
+    background-color: #121212;
+    color: white;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+.weekly-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 25px;
+    /* Increased padding */
+    background-color: #1e1e1e;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    flex-wrap: nowrap;
+    gap: 20px;
+}
+
+.weekly-header-left {
+    flex: 1;
+    /* Occupy space */
+    display: flex;
+    justify-content: flex-start;
+}
+
+.weekly-header-center {
+    flex: 2;
+    /* More space for filters */
+    display: flex;
+    justify-content: center;
+    /* Center filters */
+    gap: 10px;
+    flex-wrap: wrap;
+    /* Allow wrapping if many scenes */
+}
+
+.weekly-header-right {
+    flex: 1;
+    /* Occupy space */
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    align-items: center;
+}
+
+.weekly-filters-separator {
+    display: none;
+}
+
+.weekly-title h2 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: white;
+}
+
+.weekly-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.scene-filters-row {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.scene-filter-tiny-btn {
+    width: 42px;
+    /* Bigger */
+    height: 42px;
+    /* Bigger */
+    border-radius: 50%;
+    border: 2px solid transparent;
+    background: #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    padding: 0;
+}
+
+.scene-filter-tiny-btn.active {
+    border-color: var(--scene-color);
+    box-shadow: 0 0 8px var(--scene-color);
+    transform: scale(1.1);
+}
+
+.scene-filter-tiny-btn .mini-icon {
+    width: 24px;
+    /* Bigger icon */
+    height: 24px;
+    object-fit: contain;
+}
+
+.scene-filter-tiny-btn.all {
+    color: white;
+    font-size: 1.1rem;
+    /* Bigger formatting */
+}
+
+.weekly-filters {
+    display: flex;
+    gap: 10px;
+}
+
+.weekly-filter-btn {
+    background: transparent;
+    border: 1px solid #444;
+    color: #888;
+    padding: 5px 12px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+
+.weekly-filter-btn.active {
+    background: #e74c3c;
+    color: white;
+    border-color: #e74c3c;
+}
+
+.weekly-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    min-height: 1200px;
+    /* Ensure scrolling */
+    position: relative;
+    padding-left: 40px;
+    /* Space for time ruler */
+    flex: 1;
+}
+
+/* Time Ruler */
+.weekly-time-ruler {
+    position: absolute;
+    left: 0;
+    top: 40px;
+    /* Below headers */
+    width: 40px;
+    height: 100%;
+    border-right: 1px solid #333;
+}
+
+.time-marker {
+    position: absolute;
+    width: 100%;
+    text-align: right;
+    padding-right: 5px;
+    font-size: 0.75rem;
+    color: #666;
+    border-top: 1px dashed #333;
+}
+
+/* Day Columns */
+.weekly-day-column {
+    position: relative;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 4px;
+    border: 1px solid #222;
+    display: flex;
+    flex-direction: column;
+}
+
+.weekly-day-header {
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    background: rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid #333;
+    flex-shrink: 0;
+    /* Keep header fixed size */
+    z-index: 10;
+}
+
+.weekly-day-content {
+    position: relative;
+    /* Context for absolute bands */
+    flex: 1;
+    /* Fill remaining space */
+}
+
+/* Band Card in Weekly View */
+.weekly-band-card {
+    position: absolute;
+    background-color: #333;
+    /* Fallback */
+    border-radius: 4px;
+    padding: 4px;
+    font-size: 0.75rem;
+    overflow: hidden;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: transform 0.1s, z-index 0.1s;
+    display: flex;
+    flex-direction: column;
+}
+
+.weekly-band-card:hover {
+    z-index: 20 !important;
+    transform: scale(1.02);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
+}
+
+.weekly-band-card-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.weekly-band-name {
+    font-weight: bold;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 1px;
+    text-align: center;
+    /* Centered as requested */
+    font-size: 0.6rem;
+    /* Smaller */
+    line-height: 1.1;
+}
+
+.weekly-band-info {
+    font-size: 0.55rem;
+    /* Even smaller */
+    opacity: 0.7;
+    display: flex;
+    justify-content: center;
+    /* Centered info too */
+    gap: 4px;
+}
+
+.weekly-band-star {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    color: gold;
+    font-size: 0.7rem;
+}
+
+/* Print Styles */
+@media print {
+    .weekly-view {
+        height: auto;
+        overflow: visible;
+        background: white;
+        color: black;
+    }
+
+    .weekly-header,
+    .weekly-filters {
+        display: none;
+    }
+
+    .weekly-grid {
+        display: grid;
+    }
+
+    .weekly-day-column {
+        border-color: #ccc;
+        background: none;
+    }
+
+    .weekly-band-card {
+        border: 1px solid #999;
+        color: black;
+        box-shadow: none;
+    }
+
+    body {
+        background: white;
+    }
+}

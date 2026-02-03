@@ -5,6 +5,7 @@ import { useLineup } from './hooks/useLineup';
 import HeaderBar from './components/layout/HeaderBar';
 import Navigation from './components/layout/Navigation';
 import DayView from './components/views/DayView';
+import WeeklyView from './components/views/WeeklyView';
 import GroupCard from './components/common/GroupCard';
 import './styles/App.css';
 
@@ -13,13 +14,11 @@ function AppContent() {
   const { state } = useCheckedState();
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [popoverPosition, setPopoverPosition] = useState(null);
+  const [viewMode, setViewMode] = useState('day'); // 'day' or 'week'
 
   const handleGroupSelect = (group, event) => {
     if (group) {
-      // If clicking the same group, keep it open (or toggle? No, keep open to refine selection/tabs)
-      // If clicking different group, switch.
       setSelectedGroup(group);
-      // Only set position if the modal is not already open
       if (event && !selectedGroup) {
         setPopoverPosition({ x: event.clientX + 20, y: event.clientY });
       }
@@ -32,31 +31,38 @@ function AppContent() {
   if (loading) return <div className="loading">Chargement du Hellfest... 🤘</div>;
   if (error) return <div className="error">Erreur : {error.message}</div>;
 
-  // Fusionner les groupes principaux et scènes annexes si sideScenes est activé
   const allGroups = state.sideScenes
     ? [...groups, ...sideStagesData]
     : groups;
 
-  // Filtrer les groupes par jour actuel (comme dans running-order original)
   const currentDayGroups = allGroups.filter(group => group.DAY === state.day);
 
   return (
     <div className="App">
-      <HeaderBar />
-      <Navigation />
+      <HeaderBar viewMode={viewMode} onViewChange={setViewMode} />
+
+      {viewMode === 'day' && <Navigation />}
 
       <main className="content">
         <Routes>
           <Route path="/" element={
-            <DayView
-              groups={currentDayGroups}
-              selectGroup={handleGroupSelect}
-              selectedGroupId={selectedGroup?.id}
-              day={state.day}
-            />
+            viewMode === 'day' ? (
+              <DayView
+                groups={currentDayGroups}
+                selectGroup={handleGroupSelect}
+                selectedGroupId={selectedGroup?.id}
+                day={state.day}
+              />
+            ) : (
+              <WeeklyView
+                groups={[...groups, ...sideStagesData]} // Always pass all groups including side stages
+                onGroupClick={(g) => handleGroupSelect(g, { clientX: window.innerWidth / 2 - 200, clientY: window.innerHeight / 2 - 200 })} // Mock position for now
+              />
+            )
           } />
         </Routes>
 
+        {/* Modal Logic Reuse */}
         {selectedGroup && popoverPosition && (
           <GroupCard
             group={selectedGroup}
