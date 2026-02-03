@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useSwipeable } from 'react-swipeable';
 import { useCheckedState } from '../../context/CheckedStateContext';
 import { INTEREST_LEVELS, INTEREST_ORDER, CONTEXT_TAGS, CONTEXT_ORDER } from '../../constants';
 // Import Logos
@@ -21,6 +22,15 @@ const GroupCard = ({ group, position, onClose, onPositionChange }) => {
     const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
     const [measuredHeight, setMeasuredHeight] = useState(null);
     const [showTagDropdown, setShowTagDropdown] = useState(false);
+    const [expanded, setExpanded] = useState(false);
+
+    // Swipe logic for resizing
+    const swipeHandlers = useSwipeable({
+        onSwipedUp: () => setExpanded(true),
+        onSwipedDown: () => setExpanded(false),
+        preventDefaultTouchmoveEvent: true,
+        trackMouse: true
+    });
 
     // Get current tag info
     const bandTag = getBandTag(group.id);
@@ -141,11 +151,79 @@ const GroupCard = ({ group, position, onClose, onPositionChange }) => {
             document.addEventListener('mouseup', handleMouseUp);
         }
 
-        return () => {
-            document.removeEventListener('mousemove', handleMouseMove);
-            document.removeEventListener('mouseup', handleMouseUp);
-        };
     }, [isDragging, dragOffset, onPositionChange]);
+    // Touch Drag Handlers (Mobile Resize)
+    const touchStartRef = useRef({ y: 0, height: 0 });
+    const isTouchDraggingRef = useRef(false);
+
+    const handleTouchStart = (e) => {
+        // Only trigger on header or drag handle
+        if (e.target.closest('button') || e.target.closest('.tag-dropdown')) return;
+
+        const touch = e.touches[0];
+        const currentHeight = cardRef.current.offsetHeight;
+
+        touchStartRef.current = {
+            y: touch.clientY,
+            height: currentHeight
+        };
+        isTouchDraggingRef.current = true;
+
+        // Disable transition for 1:1 following
+        if (cardRef.current) {
+            cardRef.current.style.transition = 'none';
+        }
+    };
+
+    const handleTouchMove = (e) => {
+        if (!isTouchDraggingRef.current || !cardRef.current) return;
+
+        // Prevent default only if vertical scroll is intended (e.g. body scroll)
+        // But here we want to resize.
+        if (e.cancelable) e.preventDefault();
+
+        const touch = e.touches[0];
+        const deltaY = touchStartRef.current.y - touch.clientY; // Moving UP increases height
+        let newHeight = touchStartRef.current.height + deltaY;
+
+        // Constraints
+        const maxHeight = window.innerHeight * 0.95;
+        const minHeight = 150;
+
+        if (newHeight > maxHeight) newHeight = maxHeight;
+        if (newHeight < minHeight) newHeight = minHeight;
+
+        // Apply height directly
+        cardRef.current.style.setProperty('--mobile-height', `${newHeight}px`);
+    };
+
+    const handleTouchEnd = () => {
+        isTouchDraggingRef.current = false;
+        // Re-enable transition for smooth snaps if needed (though user asked for free drag)
+        if (cardRef.current) {
+            cardRef.current.style.transition = '';
+            // Update react state if needed to keep sync? Not strictly necessary for display
+            // but helpful if we re-render.
+            // setMeasuredHeight(parseFloat(cardRef.current.style.getPropertyValue('--mobile-height')));
+        }
+    };
+
+    useEffect(() => {
+        const cardHeader = cardRef.current?.querySelector('.card-header');
+        if (cardHeader) {
+            cardHeader.addEventListener('touchstart', handleTouchStart, { passive: false });
+            cardHeader.addEventListener('touchmove', handleTouchMove, { passive: false });
+            cardHeader.addEventListener('touchend', handleTouchEnd);
+        }
+
+        return () => {
+            if (cardHeader) {
+                cardHeader.removeEventListener('touchstart', handleTouchStart);
+                cardHeader.removeEventListener('touchmove', handleTouchMove);
+                cardHeader.removeEventListener('touchend', handleTouchEnd);
+            }
+        };
+    }, []);
 
     // Render single star for dropdown display
     const renderSingleStar = (level, isActive) => {
@@ -277,7 +355,7 @@ const GroupCard = ({ group, position, onClose, onPositionChange }) => {
     return (
         <div
             ref={cardRef}
-            className="group-card"
+            className={`group-card ${expanded ? 'expanded' : ''}`}
             style={{
                 left: cardPosition.x,
                 top: cardPosition.y,
@@ -294,9 +372,32 @@ const GroupCard = ({ group, position, onClose, onPositionChange }) => {
                 }}
                 onMouseDown={handleMouseDown}
             >
+                {/* Drag Handle Indicator */}
+                <div
+                    className="drag-handle"
+                    style={{
+                        width: '40px',
+                        height: '4px',
+                        backgroundColor: 'rgba(255,255,255,0.3)',
+                        borderRadius: '2px',
+                        margin: '0 auto 10px',
+                        cursor: 'grab'
+                    }}
+                />
+
                 <div className="header-top">
                     <h3>{group.GROUPE}</h3>
                     <div className="header-actions">
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setExpanded(!expanded);
+                            }}
+                            className="resize-btn"
+                            style={{ background: 'none', border: 'none', color: 'white', marginRight: '5px' }}
+                        >
+                            <i className={`fa-solid fa-chevron-${expanded ? 'down' : 'up'}`}></i>
+                        </button>
                         {/* Tag dropdown button */}
                         <div className="tag-dropdown-container" style={{ position: 'relative' }}>
                             <button

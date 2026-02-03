@@ -609,6 +609,12 @@ nav button:hover {
   background-color: #555;
 }
 
+/* HIDE MOBILE CONTROLS ON DESKTOP */
+.drag-handle,
+.resize-btn {
+  display: none;
+}
+
 .no-data {
   text-align: center;
   color: #666;
@@ -678,6 +684,17 @@ nav button:hover {
     border: none;
     border-top: 1px solid #444;
     animation: slide-up 0.4s cubic-bezier(0.1, 0.9, 0.2, 1) forwards !important;
+    transition: height 0.3s cubic-bezier(0.25, 0.8, 0.5, 1);
+  }
+
+  .group-card.expanded {
+    height: 85vh !important;
+    max-height: 85vh !important;
+  }
+
+  .drag-handle,
+  .resize-btn {
+    display: block;
   }
 
   @keyframes slide-up {
@@ -691,8 +708,12 @@ nav button:hover {
   }
 
   .card-body {
-    max-height: 60vh;
-    /* Scroll within body if needed */
+    max-height: 55vh;
+    transition: max-height 0.3s ease;
+  }
+
+  .group-card.expanded .card-body {
+    max-height: 75vh;
   }
 
   /* Padding when GroupCard is open to show content behind it */
