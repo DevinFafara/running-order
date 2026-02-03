@@ -187,8 +187,13 @@ const GroupCard = ({ group, position, onClose, onPositionChange }) => {
         let newHeight = touchStartRef.current.height + deltaY;
 
         // Constraints
-        const maxHeight = window.innerHeight * 0.95;
-        const minHeight = 150;
+        // MAX: Header touches Toolbar. Toolbar ~50px.
+        // Constraints
+        // MAX: Header touches Toolbar. Toolbar is 40px in CSS.
+        const maxHeight = window.innerHeight - 40;
+
+        // MIN: Provide enough space to be grabbable, plus safe area.
+        const minHeight = 80;
 
         if (newHeight > maxHeight) newHeight = maxHeight;
         if (newHeight < minHeight) newHeight = minHeight;
@@ -199,12 +204,15 @@ const GroupCard = ({ group, position, onClose, onPositionChange }) => {
 
     const handleTouchEnd = () => {
         isTouchDraggingRef.current = false;
-        // Re-enable transition for smooth snaps if needed (though user asked for free drag)
+        // Re-enable transition for smooth snaps (if needed)
+        // But keep it "sticky" to where user left it.
         if (cardRef.current) {
+            // Check if card is very small (closed?) -> user says "completely disappear" at bottom?
+            // "en bas : que le contenu de groupCard disparraisse complètement (mais pas le header)"
+            // This is matched by minHeight=60 (approx header height).
+
+            // Re-apply transition slightly for UX feel or keep raw?
             cardRef.current.style.transition = '';
-            // Update react state if needed to keep sync? Not strictly necessary for display
-            // but helpful if we re-render.
-            // setMeasuredHeight(parseFloat(cardRef.current.style.getPropertyValue('--mobile-height')));
         }
     };
 
@@ -388,16 +396,6 @@ const GroupCard = ({ group, position, onClose, onPositionChange }) => {
                 <div className="header-top">
                     <h3>{group.GROUPE}</h3>
                     <div className="header-actions">
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                setExpanded(!expanded);
-                            }}
-                            className="resize-btn"
-                            style={{ background: 'none', border: 'none', color: 'white', marginRight: '5px' }}
-                        >
-                            <i className={`fa-solid fa-chevron-${expanded ? 'down' : 'up'}`}></i>
-                        </button>
                         {/* Tag dropdown button */}
                         <div className="tag-dropdown-container" style={{ position: 'relative' }}>
                             <button
