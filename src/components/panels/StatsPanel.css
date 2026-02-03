@@ -298,3 +298,133 @@
         opacity: 1;
     }
 }
+
+/* --- NEW CLASH COUNTERS --- */
+.stats-panel-clash-counts {
+    display: flex;
+    gap: 8px;
+    margin-top: 5px;
+    margin-left: 10px;
+}
+
+.badge-simple,
+.badge-triple,
+.badge-quad,
+.badge-penta {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: #000;
+}
+
+.badge-simple {
+    background-color: #FFA500;
+    /* Orange */
+}
+
+.badge-triple {
+    background-color: #FF4500;
+    /* Red-Orange */
+    color: #fff;
+}
+
+.badge-quad {
+    background-color: #DC143C;
+    /* Crimson */
+    color: #fff;
+}
+
+.badge-penta {
+    background-color: #800080;
+    /* Purple */
+    color: #fff;
+    border: 1px solid white;
+}
+
+.stats-panel-duel.vertical {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+    margin-left: 10px;
+}
+
+.clash-band-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.clash-time-hint {
+    font-size: 0.7rem;
+    color: #aaa;
+    font-style: italic;
+}
+
+.stats-panel-clash-type {
+    font-weight: bold;
+    color: #666;
+    margin-left: 10px;
+    align-self: center;
+    white-space: nowrap;
+}
+
+/* --- COLLAPSIBLE CLASHES (Embedded) --- */
+.stats-panel-day-clashes {
+    margin-top: 8px;
+    background: rgba(220, 40, 41, 0.1);
+    border-radius: 6px;
+    border: 1px solid rgba(220, 40, 41, 0.3);
+    overflow: hidden;
+}
+
+.stats-panel-clash-trigger {
+    display: flex;
+    align-items: center;
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    color: #ff6b6b;
+    transition: background 0.2s;
+}
+
+.stats-panel-clash-trigger:hover {
+    background: rgba(220, 40, 41, 0.15);
+}
+
+.clash-trigger-icon {
+    margin-right: 8px;
+}
+
+.clash-trigger-text {
+    flex: 1;
+    font-weight: bold;
+}
+
+.clash-chevron {
+    font-size: 0.7rem;
+    transition: transform 0.3s ease;
+}
+
+.clash-chevron.open {
+    transform: rotate(180deg);
+}
+
+.stats-panel-clash-list.embedded {
+    padding: 0 10px 10px 10px;
+    border-top: 1px solid rgba(220, 40, 41, 0.2);
+    animation: fadeIn 0.2s ease;
+}
+
+.stats-panel-clash-item.embedded {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.stats-panel-clash-item.embedded:last-child {
+    border-bottom: none;
+}

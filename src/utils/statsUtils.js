@@ -120,36 +120,101 @@ export const calculateStats = (lineup, taggedBands) => {
         }
     });
 
-    // 3. Clash Detection (Seulement Must See et Interested pour les clashs "sérieux" ?)
-    // Le user n'a pas précisé, mais généralement on s'inquiète des clashs pour les groupes qu'on veut VRAIMENT voir.
-    // Je garde 'must_see' uniquement pour éviter le spam, ou j'ajoute 'interested' ?
-    // Restons sur 'must_see' pour l'instant pour les "Dilemmes Cruels".
-    const mustSeeBands = lineup.filter(group => taggedBands[group.id]?.interest === 'must_see');
+    // 3. Clash Detection (Concurrency Based)
+    // We use all bands the user has expressed interest in (Must See, Interested, Curious)
+    // to match what they see on the Weekly View "Favorites" filter.
+    const clashCandidates = myBands;
 
-    const bandsByDay = {};
-    mustSeeBands.forEach(b => {
-        if (!bandsByDay[b.DAY]) bandsByDay[b.DAY] = [];
-        bandsByDay[b.DAY].push({
+    // Group by Day
+    const dayBuckets = {};
+    clashCandidates.forEach(b => {
+        if (!dayBuckets[b.DAY]) dayBuckets[b.DAY] = [];
+        dayBuckets[b.DAY].push({
             ...b,
-            startMin: timeToMinutes(b.DEBUT),
-            endMin: timeToMinutes(b.FIN)
+            _s: timeToMinutes(b.DEBUT),
+            _e: timeToMinutes(b.FIN)
         });
     });
 
-    Object.keys(bandsByDay).forEach(day => {
-        const bands = bandsByDay[day].sort((a, b) => a.startMin - b.startMin);
-        for (let i = 0; i < bands.length; i++) {
-            for (let j = i + 1; j < bands.length; j++) {
-                const b1 = bands[i];
-                const b2 = bands[j];
+    stats.clashCounts = { 2: 0, 3: 0, 4: 0, 5: 0 };
+    stats.clashesExtended = []; // For detailed display
 
-                // Marge de 10 min
-                if (b2.startMin >= b1.endMin - 10) break;
+    Object.entries(dayBuckets).forEach(([day, bands]) => {
+        // Build Timeline: Minute -> Array of Band IDs
+        const timeline = new Map();
 
-                stats.clashes.push({ band1: b1, band2: b2, day });
+        bands.forEach(b => {
+            for (let t = b._s; t < b._e; t++) {
+                if (!timeline.has(t)) timeline.set(t, []);
+                timeline.get(t).push(b);
+            }
+        });
+
+        const sortedTimes = [...timeline.keys()].sort((a, b) => a - b);
+        if (sortedTimes.length === 0) return;
+
+        // Detect Segments
+        let currentLevel = 0;
+        let segmentStart = -1;
+        let currentBands = [];
+
+        // Helper to close segment
+        const commitSegment = (end) => {
+            if (currentLevel >= 2) {
+                const duration = end - segmentStart;
+                // Threshold: 10 minutes to be considered a real "Clash"
+                if (duration >= 10) {
+                    // Update Counts
+                    if (!stats.clashCounts[currentLevel]) stats.clashCounts[currentLevel] = 0;
+                    stats.clashCounts[currentLevel]++;
+
+                    // Add details
+                    stats.clashesExtended.push({
+                        day,
+                        startTime: segmentStart,
+                        endTime: end,
+                        level: currentLevel,
+                        bands: [...new Set(currentBands)].sort((a, b) => a.GROUPE.localeCompare(b.GROUPE)) // Dedup just in case
+                    });
+                }
+            }
+        };
+
+        // Sweep
+        // We need to iterate contiguously to detect breaks
+        // Min time to Max time + 1
+        const minT = sortedTimes[0];
+        const maxT = sortedTimes[sortedTimes.length - 1];
+
+        for (let t = minT; t <= maxT + 1; t++) {
+            const bandsAtT = timeline.get(t) || [];
+            const level = bandsAtT.length;
+
+            // Signature check: level changed OR bands changed?
+            // "Simple Clash" definition: N bands play together. 
+            // If band A & B play (Level 2). Then band A & C play (Level 2).
+            // Is this 1 Simple Clash or 2?
+            // Ideally 2 disparate clashes.
+            // So we compare the SET of bands.
+            // Using IDs string signature.
+            const sig = bandsAtT.map(b => b.id).sort().join(',');
+            const currentSig = currentBands.map(b => b.id).sort().join(',');
+
+            if (level !== currentLevel || sig !== currentSig) {
+                commitSegment(t);
+
+                // Start new
+                currentLevel = level;
+                currentBands = bandsAtT;
+                segmentStart = t;
             }
         }
     });
+
+    // Populate legacy `clashes` for compatibility (using first 2 bands of any clash)
+    // Or clear it to force UI update logic?
+    // Let's keep it empty and rely on `clashesExtended` in the UI to avoid duplicate data confusion.
+    stats.clashes = [];
 
     return stats;
 };

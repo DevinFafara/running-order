@@ -1,5 +1,5 @@
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useCheckedState } from '../../context/CheckedStateContext';
 import { useLineup } from '../../hooks/useLineup';
 import { calculateStats, getLevelTitle } from '../../utils/statsUtils';
@@ -8,6 +8,7 @@ import './StatsPanel.css';
 const StatsPanel = ({ onClose }) => {
     const { state } = useCheckedState();
     const { data: groups, sideStagesData } = useLineup();
+    const [expandedDays, setExpandedDays] = useState({});
 
     // Merge data if needed
     const allGroups = useMemo(() => {
@@ -19,6 +20,10 @@ const StatsPanel = ({ onClose }) => {
     const stats = useMemo(() => {
         return calculateStats(allGroups, state.taggedBands);
     }, [allGroups, state.taggedBands]);
+
+    const toggleDay = (day) => {
+        setExpandedDays(prev => ({ ...prev, [day]: !prev[day] }));
+    };
 
     // Le titre est basé sur le COMPTEUR EFFECTIF (plafonné par jour)
     const levelTitle = getLevelTitle(stats.effectiveTotal);
@@ -58,35 +63,8 @@ const StatsPanel = ({ onClose }) => {
                     </div>
                 </div>
 
-                {/* --- CLASH ALERT --- */}
-                {stats.clashes.length > 0 ? (
-                    <div className="stats-panel-clash-alert">
-                        <div className="stats-panel-clash-header">
-                            <span className="stats-panel-icon">⚠️</span>
-                            <h3 className="stats-panel-warning-title">{stats.clashes.length} Dilemmes Cruels (Clashes)</h3>
-                        </div>
-                        <div className="stats-panel-clash-list">
-                            {stats.clashes.map((clash, index) => (
-                                <div key={index} className="stats-panel-clash-item">
-                                    <span className="stats-panel-day">{clash.day}</span>
-                                    <div className="stats-panel-duel">
-                                        <span className="stats-panel-g1">{clash.band1.GROUPE}</span>
-                                        <span className="stats-panel-vs">vs</span>
-                                        <span className="stats-panel-g2">{clash.band2.GROUPE}</span>
-                                    </div>
-                                    <span className="stats-panel-time">{clash.band1.DEBUT}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                ) : (
-                    <div className="stats-panel-no-clash">
-                        ✅ Aucun clash majeur détecté. Planning optimisé !
-                    </div>
-                )}
-
-                {/* --- DAY INTENSITY --- */}
-                <div className="stats-panel-section-title">Intensité par Jour</div>
+                {/* --- DAY INTENSITY with CLASHES --- */}
+                <div className="stats-panel-section-title">Intensité & Conflits par Jour</div>
                 <div className="stats-panel-intensity-grid">
                     {Object.entries(stats.days).map(([day, data]) => {
                         const percentage = data.intensity;
@@ -101,6 +79,11 @@ const StatsPanel = ({ onClose }) => {
                             message = "Gourmandise ! (Journée chargée) 😈";
                         }
 
+                        // Filter Clashes for this day
+                        const dayClashes = stats.clashesExtended ? stats.clashesExtended.filter(c => c.day === day) : [];
+                        const hasClashes = dayClashes.length > 0;
+                        const isExpanded = expandedDays[day];
+
                         return (
                             <div key={day} className="stats-panel-day-intensity">
                                 <div className="stats-panel-day-label">
@@ -114,6 +97,39 @@ const StatsPanel = ({ onClose }) => {
                                     ></div>
                                 </div>
                                 <div className={`stats-panel-warning-text ${colorClass}`}>{message}</div>
+
+                                {hasClashes && (
+                                    <div className="stats-panel-day-clashes">
+                                        <div
+                                            className="stats-panel-clash-trigger"
+                                            onClick={() => toggleDay(day)}
+                                        >
+                                            <span className="clash-trigger-icon">⚠️</span>
+                                            <span className="clash-trigger-text">{dayClashes.length} Conflit{dayClashes.length > 1 ? 's' : ''} (Afficher)</span>
+                                            <span className={`clash-chevron ${isExpanded ? 'open' : ''}`}>▼</span>
+                                        </div>
+
+                                        {isExpanded && (
+                                            <div className="stats-panel-clash-list embedded">
+                                                {dayClashes.map((clash, index) => (
+                                                    <div key={index} className="stats-panel-clash-item embedded">
+                                                        <div className="stats-panel-duel vertical">
+                                                            {clash.bands.map(b => (
+                                                                <div key={b.id} className="clash-band-row">
+                                                                    <span>{b.GROUPE}</span>
+                                                                    <span className="clash-time-hint">{b.DEBUT}</span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                        <span className="stats-panel-clash-type">
+                                                            {clash.level === 2 ? 'VS' : `${clash.level} way`}
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         );
                     })}
