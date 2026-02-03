@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
+import { useSwipeable } from 'react-swipeable';
 import { HashRouter as Router, Route, Routes } from 'react-router-dom';
+import { DAYS } from './constants';
 import { CheckedStateProvider, useCheckedState } from './context/CheckedStateContext';
 import { useLineup } from './hooks/useLineup';
 import HeaderBar from './components/layout/HeaderBar';
@@ -11,10 +13,34 @@ import './styles/App.css';
 
 function AppContent() {
   const { data: groups, sideStagesData, loading, error } = useLineup();
-  const { state } = useCheckedState();
+  const { state, setDay } = useCheckedState();
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [popoverPosition, setPopoverPosition] = useState(null);
   const [viewMode, setViewMode] = useState('day'); // 'day' or 'week'
+
+  // SWIPE LOGIC
+  const swipeHandlers = useSwipeable({
+    onSwipedLeft: () => {
+      // Next Day
+      if (viewMode === 'day' && !selectedGroup) {
+        const currentIndex = DAYS.indexOf(state.day);
+        if (currentIndex !== -1 && currentIndex < DAYS.length - 1) {
+          setDay(DAYS[currentIndex + 1]);
+        }
+      }
+    },
+    onSwipedRight: () => {
+      // Previous Day
+      if (viewMode === 'day' && !selectedGroup) {
+        const currentIndex = DAYS.indexOf(state.day);
+        if (currentIndex > 0) {
+          setDay(DAYS[currentIndex - 1]);
+        }
+      }
+    },
+    preventScrollOnSwipe: false,
+    trackMouse: false
+  });
 
   const handleGroupSelect = (group, event) => {
     if (group) {
@@ -55,7 +81,7 @@ function AppContent() {
 
       {viewMode === 'day' && <Navigation />}
 
-      <main className="content">
+      <main className="content" {...swipeHandlers}>
         <Routes>
           <Route path="/" element={
             viewMode === 'day' ? (
