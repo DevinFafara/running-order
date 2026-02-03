@@ -237,7 +237,7 @@ const WeeklyView = ({ groups, onGroupClick }) => {
 
                     // Primary sort: Start time
                     if (startA !== startB) {
-                        return state.reverse ? startB - startA : startA - startB;
+                        return state.reverse ? startA - startB : startB - startA;
                     }
 
                     // Secondary sort: Duration (Longer first if same start?) or End time
@@ -290,8 +290,8 @@ const WeeklyView = ({ groups, onGroupClick }) => {
                         // Or rather, 0px = Late Night.
                         // Let's mirror it: NewTop = MAX_HEIGHT - (OriginalTop + Height)
                         const top = state.reverse
-                            ? MAX_HEIGHT - (originalTop + height)
-                            : originalTop;
+                            ? originalTop
+                            : MAX_HEIGHT - (originalTop + height);
 
                         // Find local sub-column (overlap index)
                         let subColIndex = 0;
@@ -372,8 +372,8 @@ const WeeklyView = ({ groups, onGroupClick }) => {
                     const MAX_HEIGHT = TOTAL_MINUTES * PIXELS_PER_MINUTE;
                     // For reverse, we use MAX - (TOP + HEIGHT)
                     const top = state.reverse
-                        ? MAX_HEIGHT - (originalTop + height)
-                        : originalTop;
+                        ? originalTop
+                        : MAX_HEIGHT - (originalTop + height);
 
                     positionedBands.push({
                         band,
@@ -462,8 +462,8 @@ const WeeklyView = ({ groups, onGroupClick }) => {
                         // Wait, if 10h is at 0px originally.
                         // Inverted: 10h should be at Bottom (MAX_HEIGHT).
                         const top = state.reverse
-                            ? MAX_HEIGHT - originalTop
-                            : originalTop;
+                            ? originalTop
+                            : MAX_HEIGHT - originalTop;
 
                         return (
                             <div

@@ -277,7 +277,7 @@ const GroupCard = ({ group, position, onClose, onPositionChange }) => {
                     <h3>{group.GROUPE}</h3>
                     <div className="header-actions">
                         {/* Tag dropdown button */}
-                        <div className="tag-dropdown-container">
+                        <div className="tag-dropdown-container" style={{ position: 'relative' }}>
                             <button
                                 className={`favorite-btn ${(currentInterest || currentContext) ? 'active' : ''}`}
                                 onClick={(e) => {
@@ -291,7 +291,24 @@ const GroupCard = ({ group, position, onClose, onPositionChange }) => {
 
                             {/* Dropdown menu */}
                             {showTagDropdown && (
-                                <div className="tag-dropdown" onClick={(e) => e.stopPropagation()}>
+                                <div
+                                    className="tag-dropdown"
+                                    onClick={(e) => e.stopPropagation()}
+                                    style={{
+                                        position: 'absolute',
+                                        top: '100%',
+                                        right: 0,
+                                        width: '200px',
+                                        backgroundColor: '#222',
+                                        border: '1px solid #444',
+                                        borderRadius: '8px',
+                                        padding: '10px',
+                                        boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+                                        zIndex: 2000,
+                                        marginTop: '5px',
+                                        textAlign: 'left'
+                                    }}
+                                >
                                     {/* Section Intérêt */}
                                     <div className="dropdown-section-title">Intérêt</div>
                                     {INTEREST_ORDER.map(levelId => {
@@ -304,7 +321,19 @@ const GroupCard = ({ group, position, onClose, onPositionChange }) => {
                                                 onClick={() => {
                                                     setInterest(group.id, isActive ? null : levelId);
                                                 }}
-                                                style={{ '--tag-color': getInterestColor(levelId) }}
+                                                style={{
+                                                    '--tag-color': getInterestColor(levelId),
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    width: '100%',
+                                                    padding: '6px',
+                                                    marginBottom: '4px',
+                                                    background: isActive ? '#333' : 'transparent',
+                                                    border: 'none',
+                                                    borderRadius: '4px',
+                                                    color: 'white',
+                                                    cursor: 'pointer'
+                                                }}
                                             >
                                                 {renderSingleStar(levelId, isActive)}
                                                 <span>{level.label}</span>
@@ -314,7 +343,7 @@ const GroupCard = ({ group, position, onClose, onPositionChange }) => {
                                     })}
 
                                     {/* Section Contexte */}
-                                    <div className="dropdown-section-title" style={{ marginTop: '8px' }}>Contexte</div>
+                                    <div className="dropdown-section-title" style={{ marginTop: '10px', marginBottom: '5px', fontSize: '0.85em', color: '#888' }}>Contexte</div>
                                     {CONTEXT_ORDER.map(contextId => {
                                         const ctx = CONTEXT_TAGS[contextId];
                                         const isActive = currentContext === contextId;
@@ -324,6 +353,19 @@ const GroupCard = ({ group, position, onClose, onPositionChange }) => {
                                                 className={`tag-dropdown-item ${isActive ? 'active' : ''}`}
                                                 onClick={() => {
                                                     setContext(group.id, isActive ? null : contextId);
+                                                }}
+                                                style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    width: '100%',
+                                                    padding: '6px',
+                                                    marginBottom: '4px',
+                                                    background: isActive ? '#333' : 'transparent',
+                                                    border: 'none',
+                                                    borderRadius: '4px',
+                                                    color: 'white',
+                                                    cursor: 'pointer',
+                                                    textAlign: 'left'
                                                 }}
                                             >
                                                 <span className="tag-item-icon">{ctx.icon}</span>
