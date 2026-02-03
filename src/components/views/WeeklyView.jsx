@@ -9,6 +9,164 @@ import './WeeklyView.css';
 const START_HOUR = 10; // Start at 10:00
 const PIXELS_PER_MINUTE = 0.8; // Compact vertical scale
 
+// --- LEGACY LAYOUT CONSTANTS (V6.1.5) ---
+const SCENE_COUPLES = {
+    'MAINSTAGE 1': 'MS', 'MAINSTAGE 2': 'MS',
+    'WARZONE': 'WV', 'VALLEY': 'WV',
+    'ALTAR': 'AT', 'TEMPLE': 'AT',
+    'HELLSTAGE': 'HM', 'METAL_CORNER': 'HM',
+    'PURPLE_HOUSE': 'PH'
+};
+const SCENE_ORDER = ['MS', 'WV', 'AT', 'HM', 'PH'];
+
+// --- ALGORITHM: SANDWICH LAYOUT (V6.1.5) ---
+const calculateFavoritesLayout = (groupsToLayout) => {
+    if (!groupsToLayout || groupsToLayout.length === 0) return [];
+
+    // 1. Pre-process: Time Points & Couples
+    const timePoints = new Set();
+    groupsToLayout.forEach(g => {
+        g.sceneCouple = SCENE_COUPLES[g.SCENE] || 'UNKNOWN';
+        g._start = timeToMinutes(g.DEBUT);
+        g._end = timeToMinutes(g.FIN);
+        g._duration = g._end - g._start;
+        timePoints.add(g._start);
+        timePoints.add(g._end);
+    });
+    const sortedTimePoints = [...timePoints].sort((a, b) => a - b);
+
+    // 2. Pass 1: Max Simultaneous Context
+    groupsToLayout.forEach(g => {
+        g.maxSimCols = 0;
+        g.maxSimContext = [];
+
+        for (let i = 0; i < sortedTimePoints.length - 1; i++) {
+            const intervalStart = sortedTimePoints[i];
+            const intervalEnd = sortedTimePoints[i + 1];
+            if (intervalStart === intervalEnd) continue;
+
+            if (g._start < intervalEnd && g._end > intervalStart) {
+                const couplesInInterval = new Set([g.sceneCouple]);
+                groupsToLayout.forEach(other => {
+                    if (g === other) return;
+                    if (other._start < intervalEnd && other._end > intervalStart) {
+                        couplesInInterval.add(other.sceneCouple);
+                    }
+                });
+
+                if (couplesInInterval.size > g.maxSimCols) {
+                    g.maxSimCols = couplesInInterval.size;
+                    g.maxSimContext = [...couplesInInterval].sort((a, b) => SCENE_ORDER.indexOf(a) - SCENE_ORDER.indexOf(b));
+                }
+            }
+        }
+        // Fallback
+        if (g.maxSimCols === 0) {
+            g.maxSimCols = 1;
+            g.maxSimContext = [g.sceneCouple];
+        }
+    });
+
+    // 3. Pass 2: Sandwich Detection (Strict Overlap)
+    const doTimesOverlap = (s1, e1, s2, e2) => s1 < e2 && e1 > s2;
+
+    groupsToLayout.forEach(g => {
+        g.isSandwiched = false;
+        g.sandwichedContext = [];
+        g.sandwichedCols = 0;
+
+        const g_sc_index = SCENE_ORDER.indexOf(g.sceneCouple);
+        const leftPartners = new Set();
+        const rightPartners = new Set();
+
+        groupsToLayout.forEach(other => {
+            if (g === other) return;
+            if (doTimesOverlap(g._start, g._end, other._start, other._end)) {
+                const other_sc_index = SCENE_ORDER.indexOf(other.sceneCouple);
+                if (other_sc_index < g_sc_index) leftPartners.add(other.sceneCouple);
+                else if (other_sc_index > g_sc_index) rightPartners.add(other.sceneCouple);
+            }
+        });
+
+        if (leftPartners.size > 0 && rightPartners.size > 0) {
+            g.isSandwiched = true;
+            const fullSet = new Set([g.sceneCouple, ...leftPartners, ...rightPartners]);
+            g.sandwichedContext = [...fullSet].sort((a, b) => SCENE_ORDER.indexOf(a) - SCENE_ORDER.indexOf(b));
+            g.sandwichedCols = g.sandwichedContext.length;
+        }
+    });
+
+    // 4. Pass 3: Selection (Sandwich vs MaxSim)
+    groupsToLayout.forEach(g => {
+        if (g.isSandwiched && g.sandwichedCols > g.maxSimCols) {
+            g.finalContext = [...g.sandwichedContext];
+            g.finalNumCols = g.sandwichedCols;
+        } else {
+            g.finalContext = [...g.maxSimContext];
+            g.finalNumCols = g.maxSimCols;
+        }
+    });
+
+    // 5. Pass 4: Propagation (The Wave)
+    let changed = true;
+    let iter = 0;
+    while (changed && iter < 10) {
+        changed = false;
+        iter++;
+        groupsToLayout.forEach(g1 => {
+            groupsToLayout.forEach(g2 => {
+                if (g1 === g2) return;
+                if (doTimesOverlap(g1._start, g1._end, g2._start, g2._end)) {
+                    // If one context contains the other's couple, try to unify
+                    if (g1.finalContext.includes(g2.sceneCouple)) {
+                        // Propagate larger context or same size but different content
+                        if (g1.finalNumCols > g2.finalNumCols ||
+                            (g1.finalNumCols === g2.finalNumCols && g1.finalContext.join(',') !== g2.finalContext.join(','))) {
+                            g2.finalContext = [...g1.finalContext];
+                            g2.finalNumCols = g1.finalNumCols;
+                            changed = true;
+                        }
+                    }
+                }
+            });
+        });
+    }
+
+    // 6. Final Calculation
+    return groupsToLayout.map(g => {
+        // Determine Position Index from SCENE_ORDER in the Context
+        let posIndex = g.finalContext.indexOf(g.sceneCouple);
+
+        // Safety fallback if context got corrupted or logic failed
+        if (posIndex === -1) {
+            g.finalContext.sort((a, b) => SCENE_ORDER.indexOf(a) - SCENE_ORDER.indexOf(b));
+            posIndex = g.finalContext.indexOf(g.sceneCouple);
+        }
+        if (posIndex === -1) posIndex = 0;
+
+        const totalCols = Math.max(1, g.finalNumCols);
+        let widthPct = 100 / totalCols;
+
+        // Apply User's Strict 50% Limit
+        widthPct = Math.min(widthPct, 50);
+
+        // Centering Logic
+        const usedWidth = widthPct * totalCols;
+        const remainingWidth = Math.max(0, 100 - usedWidth);
+        const shiftRight = remainingWidth / 2;
+
+        const leftPct = (posIndex * widthPct) + shiftRight;
+
+        return {
+            band: g,
+            start: g._start,
+            end: g._end,
+            widthPct,
+            leftPct,
+        };
+    });
+};
+
 const WeeklyView = ({ groups, onGroupClick }) => {
     const { state, getInterestColor, getBandTag } = useCheckedState();
     const [filterMode, setFilterMode] = useState('favorites'); // 'favorites' or 'all'
@@ -65,8 +223,15 @@ const WeeklyView = ({ groups, onGroupClick }) => {
             const positionedBands = [];
 
             // Sort Logic: Time based, respectful of Global Reverse setting
-            const sortBands = (bands) => {
+            const sortBands = (bands, sceneGroup = []) => {
                 bands.sort((a, b) => {
+                    // 1. Scene Priority (Index in grid pair)
+                    if (sceneGroup.length > 0 && a.SCENE !== b.SCENE) {
+                        const idxA = sceneGroup.indexOf(a.SCENE);
+                        const idxB = sceneGroup.indexOf(b.SCENE);
+                        if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+                    }
+
                     const startA = timeToMinutes(a.DEBUT);
                     const startB = timeToMinutes(b.DEBUT);
 
@@ -98,8 +263,8 @@ const WeeklyView = ({ groups, onGroupClick }) => {
                     // Matches if band's SCENE (Key) is in the sceneGroup (Keys)
                     const colBands = dayBands.filter(b => sceneGroup.includes(b.SCENE));
 
-                    // Apply Sort
-                    sortBands(colBands);
+                    // Apply Sort: Pass sceneGroup to respect MS1 > MS2 order
+                    sortBands(colBands, sceneGroup);
 
                     // Simple clash logic for WITHIN this column
                     const localPositioned = [];
@@ -175,22 +340,29 @@ const WeeklyView = ({ groups, onGroupClick }) => {
                         // User Request: Max width 50% of the day column
                         finalWidth = Math.min(finalWidth, 50);
 
+                        // Centering Logic
+                        // Available width for this sub-block is COLUMN_WIDTH_PCT
+                        // Used width is finalWidth * totalSubCols
+                        const usedWidth = finalWidth * totalSubCols;
+                        const remainingWidth = Math.max(0, COLUMN_WIDTH_PCT - usedWidth);
+                        const shiftRight = remainingWidth / 2;
+
                         pb.widthPct = finalWidth;
-                        pb.leftPct = (groupColIndex * COLUMN_WIDTH_PCT) + ((relativeLeft / 100) * COLUMN_WIDTH_PCT);
+                        // Base (Group Col Start) + (SubCol * Width) + Centering Offset
+                        pb.leftPct = (groupColIndex * COLUMN_WIDTH_PCT) + (pb.subColIndex * finalWidth) + shiftRight;
 
                         positionedBands.push(pb);
                     });
                 });
 
             } else {
-                // --- STRATEGY A: COMPACT CLASHFINDER (Favorites) ---
+                // --- STRATEGY A: SANDWICH LAYOUT (Favorites) ---
+                // V6.1.5 Algorithm ported from Legacy MyRoDay.js
+                // This algorithm respects Scene Priority contexts (MS > WZ > AT...)
+                const layoutResults = calculateFavoritesLayout(dayBands);
 
-                // Apply Sort
-                sortBands(dayBands);
-
-                dayBands.forEach(band => {
-                    const start = timeToMinutes(band.DEBUT);
-                    const end = timeToMinutes(band.FIN);
+                layoutResults.forEach(item => {
+                    const { band, start, end, widthPct, leftPct } = item;
                     const duration = end - start;
                     const originalTop = (start - (START_HOUR * 60)) * PIXELS_PER_MINUTE;
                     const height = Math.max(20, duration * PIXELS_PER_MINUTE);
@@ -198,24 +370,10 @@ const WeeklyView = ({ groups, onGroupClick }) => {
                     // Reverse logic
                     const TOTAL_MINUTES = 18 * 60;
                     const MAX_HEIGHT = TOTAL_MINUTES * PIXELS_PER_MINUTE;
+                    // For reverse, we use MAX - (TOP + HEIGHT)
                     const top = state.reverse
                         ? MAX_HEIGHT - (originalTop + height)
                         : originalTop;
-
-                    let colIndex = 0;
-                    let safety = 0;
-                    while (true) {
-                        const isFree = !positionedBands.some(pb =>
-                            pb.colIndex === colIndex &&
-                            !(end <= pb.start || start >= pb.end)
-                        );
-                        if (isFree) break;
-                        colIndex++;
-                        if (safety++ > 50) {
-                            console.warn('Possible infinite loop in favorites col assignment', band);
-                            break;
-                        }
-                    }
 
                     positionedBands.push({
                         band,
@@ -223,26 +381,11 @@ const WeeklyView = ({ groups, onGroupClick }) => {
                         end,
                         top,
                         height,
-                        colIndex
+                        widthPct,
+                        leftPct
                     });
                 });
 
-                // Calculate widths for compact mode
-                positionedBands.forEach(pb => {
-                    const overlaps = positionedBands.filter(other =>
-                        other !== pb &&
-                        !(pb.end <= other.start || pb.start >= other.end)
-                    );
-                    const maxCol = Math.max(pb.colIndex, ...overlaps.map(o => o.colIndex));
-                    const totalCols = maxCol + 1;
-                    let widthPct = 100 / totalCols;
-
-                    // User Request: Max strict width 50%
-                    widthPct = Math.min(widthPct, 50);
-
-                    pb.widthPct = widthPct;
-                    pb.leftPct = pb.colIndex * pb.widthPct;
-                });
             }
 
             columns[day] = positionedBands;
