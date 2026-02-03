@@ -683,6 +683,13 @@ nav button:hover {
     max-height: 60vh;
     /* Scroll within body if needed */
   }
+
+  /* Padding when GroupCard is open to show content behind it */
+  .App.group-selected .content {
+    padding-bottom: 420px;
+    /* Matches GroupCard height */
+    transition: padding-bottom 0.3s ease;
+  }
 }
 
 /* === LOADING & ERROR === */

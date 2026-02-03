@@ -38,7 +38,7 @@ function AppContent() {
   const currentDayGroups = allGroups.filter(group => group.DAY === state.day);
 
   return (
-    <div className="App">
+    <div className={`App ${selectedGroup ? 'group-selected' : ''}`}>
       <HeaderBar viewMode={viewMode} onViewChange={setViewMode} />
 
       {viewMode === 'day' && <Navigation />}
