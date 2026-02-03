@@ -1,11 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useCheckedState } from '../../context/CheckedStateContext';
 import { INTEREST_LEVELS, INTEREST_ORDER, CONTEXT_TAGS, CONTEXT_ORDER } from '../../constants';
+// Import Logos
+import bandLogos from '../../data/bandLogos.json';
 
 const GroupCard = ({ group, position, onClose, onPositionChange }) => {
+    // ... existing content ...
     const cardRef = useRef(null);
     const positionRef = useRef(position);
     const { state, setInterest, setContext, getBandTag, getInterestColor, updateNote } = useCheckedState();
+    // ...
+
+    // Helper to get logo safely (case insensitive?)
+    // The scraper uses exact match from H2, which theoretically matches lineup data.
+    const logoUrl = bandLogos[group.GROUPE];
     const [activeTab, setActiveTab] = useState('infos');
     const [note, setNote] = useState('');
     const [cardPosition, setCardPosition] = useState(position);
@@ -170,6 +178,29 @@ const GroupCard = ({ group, position, onClose, onPositionChange }) => {
             case 'infos':
                 return (
                     <div className="tab-content fade-in">
+                        {/* LOGO DISPLAY */}
+                        {bandLogos[group.GROUPE] && (
+                            <div className="group-logo-container" style={{
+                                width: '100%',
+                                marginBottom: '15px',
+                                display: 'flex',
+                                justifyContent: 'center',
+                                background: 'rgba(0,0,0,0.2)',
+                                borderRadius: '8px',
+                                padding: '10px'
+                            }}>
+                                <img
+                                    src={bandLogos[group.GROUPE]}
+                                    alt={group.GROUPE}
+                                    style={{
+                                        maxWidth: '100%',
+                                        maxHeight: '60px',
+                                        objectFit: 'contain'
+                                    }}
+                                />
+                            </div>
+                        )}
+
                         <div className="info-header-row">
                             <div className="info-item">
                                 <i className="fa-regular fa-clock"></i>
