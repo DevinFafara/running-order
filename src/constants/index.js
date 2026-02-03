@@ -20,42 +20,42 @@ export const STAGE_PAIRS = [
 export const STAGE_CONFIG = {
   [STAGES.MAINSTAGE_1]: {
     name: 'Mainstage 1',
-    icon: 'https://forum.hellfest.fr/uploads/default/original/1X/723469cc76965f666beff04a4024eff673c444f3.png',
+    icon: '/icons/icon_mainstage_1.png',
     slug: 'mainstage1',
     themeColor: '#0055a5',
     bandColor: '#9eaad3'
   },
   [STAGES.MAINSTAGE_2]: {
     name: 'Mainstage 2',
-    icon: 'https://forum.hellfest.fr/uploads/default/original/1X/9ef344af22970ef79d91c1955cd40c2ddaa2b32d.png',
+    icon: '/icons/icon_mainstage_2.png',
     slug: 'mainstage2',
     themeColor: '#a6a19b',
     bandColor: '#d4d2cf'
   },
   [STAGES.WARZONE]: {
     name: 'Warzone',
-    icon: 'https://forum.hellfest.fr/uploads/default/original/1X/fa9236925f7bd4a4f3b5f622071c425c8b1e04f6.png',
+    icon: '/icons/icon_warzone.png',
     slug: 'warzone',
     themeColor: '#949b1a',
     bandColor: '#cecb93'
   },
   [STAGES.VALLEY]: {
     name: 'Valley',
-    icon: 'https://forum.hellfest.fr/uploads/default/original/1X/bd43f51c3f066a6d96df719ec826021c0f5a864d.png',
+    icon: '/icons/icon_valley.png',
     slug: 'valley',
     themeColor: '#ce7c19',
     bandColor: '#eabe97'
   },
   [STAGES.ALTAR]: {
     name: 'Altar',
-    icon: 'https://forum.hellfest.fr/uploads/default/original/1X/eede00d585209d337e8897aa24cbf0f2255bfdf2.png',
+    icon: '/icons/icon_altar.png',
     slug: 'altar',
     themeColor: '#dc2829',
     bandColor: '#f19e9e'
   },
   [STAGES.TEMPLE]: {
     name: 'Temple',
-    icon: 'https://forum.hellfest.fr/uploads/default/original/1X/2f6183017decac3885da317500a664a884eccf84.png',
+    icon: '/icons/icon_temple.png',
     slug: 'temple',
     themeColor: '#93a7b0',
     bandColor: '#cbd4d8'
