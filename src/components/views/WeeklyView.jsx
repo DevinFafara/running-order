@@ -8,7 +8,7 @@ import TagMenu from '../common/TagMenu';
 import './WeeklyView.css';
 
 const START_HOUR = 10; // Start at 10:00
-const PIXELS_PER_MINUTE = 0.8; // Compact vertical scale
+const PIXELS_PER_MINUTE = 0.9; // Adjusted scale as per request
 
 // --- LEGACY LAYOUT CONSTANTS (V6.1.5) ---
 const SCENE_COUPLES = {
@@ -365,8 +365,8 @@ const WeeklyView = ({ groups, onGroupClick }) => {
                         // Offset = RelativeLeft% of COLUMN_WIDTH_PCT
                         let finalWidth = (relativeWidth / 100) * COLUMN_WIDTH_PCT;
 
-                        // User Request: Max width 50% of the day column
-                        finalWidth = Math.min(finalWidth, 50);
+                        // User Request: Max width 33% of the day column
+                        finalWidth = Math.min(finalWidth, 33);
 
                         // Centering Logic
                         // Available width for this sub-block is COLUMN_WIDTH_PCT
@@ -485,63 +485,32 @@ const WeeklyView = ({ groups, onGroupClick }) => {
                     });
 
                     const totalSubCols = columns.length;
-                    const gridUnit = 100 / totalSubCols;
+
+                    // NEW LOGIC: Packed Center
+                    // We want columns to be at most 33% wide (user request), 
+                    // but they must shrink if there are too many to fit in 100%.
+                    const MAX_COL_WIDTH = 33;
+                    const calculatedColWidth = 100 / totalSubCols;
+                    const colWidth = Math.min(MAX_COL_WIDTH, calculatedColWidth);
+
+                    const totalClusterWidth = totalSubCols * colWidth;
+                    const globalLeftOffset = (100 - totalClusterWidth) / 2;
 
                     // Finalize Position
                     cluster.forEach(item => {
-                        let widthPct = gridUnit;
+                        // Smart Expansion is disabled to enforce uniform column widths 
+                        // and strict adjacency ("glued" look).
+                        // If we allowed expansion, a band could become wider than its neighbors, 
+                        // creating misalignment or gaps in the "packed" look.
 
-                        // Smart Expansion (within cluster context)
-                        // Can we expand right?
-                        // Check neighbors in cluster with index > item.subColIndex
-                        const rightBlockers = cluster.filter(other =>
-                            other.subColIndex > item.subColIndex && overlaps(item, other)
-                        );
+                        // BUT, if an item spans multiple columns (greedy allocation might do this?),
+                        // we should respect it? 
+                        // Our greedy allocation (lines 449-485) assigns a SINGLE subColIndex.
+                        // It does not reserve multiple columns for one item.
+                        // So widthPct is strictly colWidth.
 
-                        if (rightBlockers.length === 0) {
-                            // Expand to edge
-                            const span = totalSubCols - item.subColIndex;
-                            widthPct = span * gridUnit;
-                        } else {
-                            // Expand to nearest neighbor
-                            const minNextCol = Math.min(...rightBlockers.map(o => o.subColIndex));
-                            const span = minNextCol - item.subColIndex;
-                            widthPct = span * gridUnit;
-                        }
-
-                        // Cap Width 50%
-                        widthPct = Math.min(widthPct, 50);
-
-                        // Layout
-                        // Shift used to center if wide? 
-                        // "Mettre tous les favoris dans une meme colonne centrée... sauf en cas de clashs"
-                        // If totalSubCols = 1, width limited to 50%.
-                        // Shift = (100 - 50)/2 = 25%.
-
-                        // If totalSubCols = 2. Unit = 50.
-                        // Item at 0. Width 50. Left 0.
-                        // Item at 1. Width 50. Left 50.
-
-                        // If we expanded:
-                        // availableWidth = span * gridUnit.
-                        // assignedWidth = widthPct (capped).
-                        // shift = (availableWidth - assignedWidth) / 2.
-
-                        const availableWidth = ((widthPct >= 50 && (100 / totalSubCols) < 50) ? widthPct : widthPct); // Logic trickery?
-                        // Actually:
-                        // SpanWidth is the full slots we cover.
-                        // widthPct is the potentially capped width.
-
-                        // Re-calculate Span Width (raw)
-                        let spanRaw = 1;
-                        if (rightBlockers.length === 0) spanRaw = totalSubCols - item.subColIndex;
-                        else spanRaw = Math.min(...rightBlockers.map(o => o.subColIndex)) - item.subColIndex;
-                        const fullSpanPct = spanRaw * gridUnit;
-
-                        const shift = (fullSpanPct - widthPct) / 2;
-
-                        item.widthPct = widthPct;
-                        item.leftPct = (item.subColIndex * gridUnit) + shift;
+                        item.widthPct = colWidth;
+                        item.leftPct = globalLeftOffset + (item.subColIndex * colWidth);
 
                         positionedBands.push(item);
                     });

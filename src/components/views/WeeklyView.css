@@ -202,7 +202,7 @@
     background-color: #333;
     /* Fallback */
     border-radius: 4px;
-    padding: 4px;
+    padding: 2px;
     font-size: 0.75rem;
     overflow: hidden;
     cursor: pointer;
