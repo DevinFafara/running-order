@@ -623,6 +623,7 @@ const WeeklyView = ({ groups, onGroupClick }) => {
 
                                 return (
                                     <div
+                                        id={`group-${item.band.id}`}
                                         key={item.band.id}
                                         className="weekly-band-card"
                                         style={{

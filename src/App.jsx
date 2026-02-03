@@ -22,6 +22,18 @@ function AppContent() {
       if (event && !selectedGroup) {
         setPopoverPosition({ x: event.clientX + 20, y: event.clientY });
       }
+
+      // Mobile Auto-Scroll Logic
+      if (window.innerWidth <= 600) {
+        setTimeout(() => {
+          const element = document.getElementById(`group-${group.id}`);
+          if (element) {
+            // "Translate" effect: bringing the element to center of viewport
+            element.scrollIntoView({ block: 'center', behavior: 'smooth' });
+          }
+        }, 350); // Wait for Card Slide-Up Animation to finish (approx 300ms)
+      }
+
     } else {
       setSelectedGroup(null);
       setPopoverPosition(null);

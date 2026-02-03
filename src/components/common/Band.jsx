@@ -137,6 +137,7 @@ const Band = ({ group, selectGroup, selectedGroupId, onTagClick }) => {
 
     return (
         <div
+            id={`group-${id}`}
             className={`band-container ${sceneClass} band-${id} ${isSelected ? 'selected-group' : ''} ${isTagged ? 'compact-tagged' : ''}`}
             style={{
                 position: 'absolute',
