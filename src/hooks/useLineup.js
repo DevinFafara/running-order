@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { fetchAndParseGoogleSheetsCSV } from '../utils/parseCSVToJSON';
+import { fetchAndParseGoogleSheetsCSV, extractTimestamp } from '../utils/parseCSVToJSON';
 import { GOOGLE_SHEETS_URL } from '../constants';
 
 const CACHE_KEY = 'lineup-data';
@@ -13,29 +13,39 @@ export const useLineup = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    const checkTimestampOnly = useCallback(async () => {
+    // Check for updates by comparing content, ignoring volatile timestamps (formulas)
+    const checkForUpdates = useCallback(async () => {
         try {
+            // We fetch the full data (since we can't efficiently partial fetch CSV anyway)
+            // and compare the actual DATA content, not just the timestamp line.
+            // This prevents loops when the sheet uses =NOW() in the timestamp field.
+
             const cacheBuster = Date.now();
             const url = `${GOOGLE_SHEETS_URL}&_cb=${cacheBuster}`;
-            const response = await fetch(url, { cache: 'no-cache' });
 
-            if (!response.ok) return null;
+            // Pass true to potential silent mode if implemented later
+            // For now, we reuse the utility
+            const result = await fetchAndParseGoogleSheetsCSV(url);
 
-            const csvText = await response.text();
-            const lines = csvText.split('\n');
-            if (lines.length === 0) return null;
+            if (!result || !result.data) return;
 
-            const firstLine = lines[0].trim();
-            // Simple parser for the first line
-            const cells = firstLine.split(',').map(c => c.trim().replace(/^"|"$/g, ''));
+            const cachedDataStr = localStorage.getItem(CACHE_KEY);
+            const newDataStr = JSON.stringify(result.data);
 
-            if (cells[0] === 'LASTMOD' && cells[1]) {
-                return cells[1];
+            if (cachedDataStr !== newDataStr) {
+                console.log('🔄 Data content has changed (ignoring timestamp diff), refreshing...');
+                // Update State
+                setData(result.data);
+                // Update Cache
+                localStorage.setItem(CACHE_KEY, newDataStr);
+                localStorage.setItem(TIMESTAMP_KEY, result.timestamp);
+            } else {
+                // Content is identical. Do nothing.
+                // We do NOT update the timestamp in cache, to keep the "original" one.
+                // debug: console.log('✓ Content unchanged.');
             }
-            return null;
         } catch (err) {
-            console.error('Error checking timestamp:', err);
-            return null;
+            console.warn('Background update check failed', err);
         }
     }, []);
 
@@ -83,17 +93,6 @@ export const useLineup = () => {
             setLoading(false);
         }
     }, []);
-
-    const checkForUpdates = useCallback(async () => {
-        const cachedTimestamp = localStorage.getItem(TIMESTAMP_KEY);
-        if (cachedTimestamp) {
-            const currentTimestamp = await checkTimestampOnly();
-            if (currentTimestamp && currentTimestamp !== cachedTimestamp) {
-                console.log('New data detected on Google Sheets, refreshing...');
-                await loadData(true);
-            }
-        }
-    }, [checkTimestampOnly, loadData]);
 
     useEffect(() => {
         // Charger les deux jeux de données en parallèle

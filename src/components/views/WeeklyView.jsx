@@ -4,6 +4,7 @@ import { useLineup } from '../../hooks/useLineup'; // Assuming this hook exists 
 import { STAGE_CONFIG, INTEREST_LEVELS } from '../../constants';
 // Reuse timeToMinutes for layout calcs
 import { timeToMinutes } from '../../utils/statsUtils';
+import TagMenu from '../common/TagMenu';
 import './WeeklyView.css';
 
 const START_HOUR = 10; // Start at 10:00
@@ -168,9 +169,36 @@ const calculateFavoritesLayout = (groupsToLayout) => {
 };
 
 const WeeklyView = ({ groups, onGroupClick }) => {
-    const { state, getInterestColor, getBandTag } = useCheckedState();
+    const { state, getInterestColor, getBandTag, cycleInterest } = useCheckedState();
     const [filterMode, setFilterMode] = useState('favorites'); // 'favorites' or 'all'
     const [selectedScenes, setSelectedScenes] = useState(() => Object.keys(STAGE_CONFIG));
+    const [tagMenuState, setTagMenuState] = useState({ open: false, groupId: null, position: { x: 0, y: 0 } });
+
+    // Handle Right Click (Context Menu)
+    const handleContextMenu = (e, group) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const menuWidth = 240;
+        const menuHeight = 350;
+        let x = e.clientX;
+        let y = e.clientY;
+
+        if (x + menuWidth > window.innerWidth) x = window.innerWidth - menuWidth - 10;
+        if (y + menuHeight > window.innerHeight) y = window.innerHeight - menuHeight - 10;
+
+        setTagMenuState({ open: true, groupId: group.id, position: { x, y } });
+    };
+
+    const closeTagMenu = () => {
+        setTagMenuState({ open: false, groupId: null, position: { x: 0, y: 0 } });
+    };
+
+    // Handle Double Click (Quick Cycle)
+    const handleDoubleClick = (e, group) => {
+        e.stopPropagation();
+        cycleInterest(group.id);
+    };
 
     // Toggle scene visibility
     const toggleScene = (sceneId) => {
@@ -356,36 +384,168 @@ const WeeklyView = ({ groups, onGroupClick }) => {
                 });
 
             } else {
-                // --- STRATEGY A: SANDWICH LAYOUT (Favorites) ---
-                // V6.1.5 Algorithm ported from Legacy MyRoDay.js
-                // This algorithm respects Scene Priority contexts (MS > WZ > AT...)
-                const layoutResults = calculateFavoritesLayout(dayBands);
+                // --- STRATEGY A: CLUSTERED CLASHFINDER (Favorites) ---
+                // 1. Group connected bands into clusters to ensure consistent grid sizing.
+                // 2. Within clusters, assign columns prioritizing Mainstage -> Left.
 
-                layoutResults.forEach(item => {
-                    const { band, start, end, widthPct, leftPct } = item;
+                const dayBandsWithGeometry = dayBands.map(band => {
+                    const start = timeToMinutes(band.DEBUT);
+                    const end = timeToMinutes(band.FIN);
                     const duration = end - start;
-                    const originalTop = (start - (START_HOUR * 60)) * PIXELS_PER_MINUTE;
                     const height = Math.max(20, duration * PIXELS_PER_MINUTE);
-
-                    // Reverse logic
+                    const originalTop = (start - (START_HOUR * 60)) * PIXELS_PER_MINUTE;
                     const TOTAL_MINUTES = 18 * 60;
                     const MAX_HEIGHT = TOTAL_MINUTES * PIXELS_PER_MINUTE;
-                    // For reverse, we use MAX - (TOP + HEIGHT)
-                    const top = state.reverse
-                        ? originalTop
-                        : MAX_HEIGHT - (originalTop + height);
+                    const top = state.reverse ? originalTop : MAX_HEIGHT - (originalTop + height);
 
-                    positionedBands.push({
-                        band,
-                        start,
-                        end,
-                        top,
-                        height,
-                        widthPct,
-                        leftPct
-                    });
+                    return {
+                        band, start, end, top, height,
+                        id: band.id,
+                        sceneIndex: SCENE_ORDER.indexOf(SCENE_COUPLES[band.SCENE] || 'UNKNOWN')
+                    };
                 });
 
+                // Helper: Check overlap
+                const overlaps = (a, b) => a.start < b.end && a.end > b.start;
+
+                // Build Clusters (Connected Components)
+                const visited = new Set();
+                const clusters = [];
+
+                dayBandsWithGeometry.forEach(item => {
+                    if (visited.has(item.id)) return;
+
+                    const cluster = [];
+                    const queue = [item];
+                    visited.add(item.id);
+
+                    while (queue.length > 0) {
+                        const current = queue.shift();
+                        cluster.push(current);
+
+                        // Find neighbors
+                        dayBandsWithGeometry.forEach(other => {
+                            if (!visited.has(other.id) && overlaps(current, other)) {
+                                visited.add(other.id);
+                                queue.push(other);
+                            }
+                        });
+                    }
+                    clusters.push(cluster);
+                });
+
+                // Process Each Cluster
+                clusters.forEach(cluster => {
+                    // Sort by Scene Priority (MS First) then Time
+                    // This ensures MS gets Col 0.
+                    cluster.sort((a, b) => {
+                        if (a.sceneIndex !== b.sceneIndex) return a.sceneIndex - b.sceneIndex;
+                        return a.start - b.start;
+                    });
+
+                    // Assign Columns (Greedy)
+                    const columns = []; // Array of end times per column
+
+                    cluster.forEach(item => {
+                        let placed = false;
+                        for (let i = 0; i < columns.length; i++) {
+                            // Can fit in col i?
+                            // Need to check specific overlap with items ALREADY in col i?
+                            // Simplified: Just track all items in col i? 
+                            // Using a simple "Latest End Time" per column isn't enough if there are gaps.
+                            // But for a dense cluster, gaps are small.
+                            // Better: Check against all items assigned to col i. (Filtered check).
+
+                            // Actually, since we sorted by Priority, we just want the first *valid* column.
+                            // But wait, if we put MS in Col 0 (23h), and earlier band (22h) in Col 0?
+                            // Priority sort puts MS first. MS (23h) takes Col 0.
+                            // Earlier Band (22h - 23h50). Overlaps MS.
+                            // Earlier Band comes LATER in sort? (if Priority > Time).
+                            // If Earlier Band is NOT MS (e.g. Altar), it has higher sceneIndex.
+                            // So MS (23h) is processed first -> Col 0.
+                            // Altar (22h) is processed second -> Clashes with Col 0 -> Col 1.
+                            // Visual: Col 0 starts at 23h. Col 1 starts at 22h.
+                            // Result: MS is Left. Altar is Right.
+                            // This is what the user wants ("Sabaton à gauche"). YES.
+
+                            const canFit = !cluster.some(other =>
+                                other.subColIndex === i && overlaps(item, other)
+                            );
+
+                            if (canFit) {
+                                item.subColIndex = i;
+                                placed = true;
+                                break;
+                            }
+                        }
+                        if (!placed) {
+                            item.subColIndex = columns.length;
+                            columns.push(true); // new col
+                        }
+                    });
+
+                    const totalSubCols = columns.length;
+                    const gridUnit = 100 / totalSubCols;
+
+                    // Finalize Position
+                    cluster.forEach(item => {
+                        let widthPct = gridUnit;
+
+                        // Smart Expansion (within cluster context)
+                        // Can we expand right?
+                        // Check neighbors in cluster with index > item.subColIndex
+                        const rightBlockers = cluster.filter(other =>
+                            other.subColIndex > item.subColIndex && overlaps(item, other)
+                        );
+
+                        if (rightBlockers.length === 0) {
+                            // Expand to edge
+                            const span = totalSubCols - item.subColIndex;
+                            widthPct = span * gridUnit;
+                        } else {
+                            // Expand to nearest neighbor
+                            const minNextCol = Math.min(...rightBlockers.map(o => o.subColIndex));
+                            const span = minNextCol - item.subColIndex;
+                            widthPct = span * gridUnit;
+                        }
+
+                        // Cap Width 50%
+                        widthPct = Math.min(widthPct, 50);
+
+                        // Layout
+                        // Shift used to center if wide? 
+                        // "Mettre tous les favoris dans une meme colonne centrée... sauf en cas de clashs"
+                        // If totalSubCols = 1, width limited to 50%.
+                        // Shift = (100 - 50)/2 = 25%.
+
+                        // If totalSubCols = 2. Unit = 50.
+                        // Item at 0. Width 50. Left 0.
+                        // Item at 1. Width 50. Left 50.
+
+                        // If we expanded:
+                        // availableWidth = span * gridUnit.
+                        // assignedWidth = widthPct (capped).
+                        // shift = (availableWidth - assignedWidth) / 2.
+
+                        const availableWidth = ((widthPct >= 50 && (100 / totalSubCols) < 50) ? widthPct : widthPct); // Logic trickery?
+                        // Actually:
+                        // SpanWidth is the full slots we cover.
+                        // widthPct is the potentially capped width.
+
+                        // Re-calculate Span Width (raw)
+                        let spanRaw = 1;
+                        if (rightBlockers.length === 0) spanRaw = totalSubCols - item.subColIndex;
+                        else spanRaw = Math.min(...rightBlockers.map(o => o.subColIndex)) - item.subColIndex;
+                        const fullSpanPct = spanRaw * gridUnit;
+
+                        const shift = (fullSpanPct - widthPct) / 2;
+
+                        item.widthPct = widthPct;
+                        item.leftPct = (item.subColIndex * gridUnit) + shift;
+
+                        positionedBands.push(item);
+                    });
+                });
             }
 
             columns[day] = positionedBands;
@@ -508,7 +668,9 @@ const WeeklyView = ({ groups, onGroupClick }) => {
                                             borderLeftColor: stageColor
                                         }}
                                         onClick={() => onGroupClick(item.band)}
-                                        title={`${item.band.GROUPE} (${item.band.SCENE})`}
+                                        onContextMenu={(e) => handleContextMenu(e, item.band)}
+                                        onDoubleClick={(e) => handleDoubleClick(e, item.band)}
+                                    // title={`${item.band.GROUPE} (${item.band.SCENE})`} // Disabled as per user request
                                     >
                                         <div className="weekly-band-content">
                                             <div className="weekly-band-name">{item.band.GROUPE}</div>
@@ -531,6 +693,14 @@ const WeeklyView = ({ groups, onGroupClick }) => {
                     </div>
                 ))}
             </div>
+
+            {tagMenuState.open && (
+                <TagMenu
+                    groupId={tagMenuState.groupId}
+                    position={tagMenuState.position}
+                    onClose={closeTagMenu}
+                />
+            )}
         </div>
     );
 };
