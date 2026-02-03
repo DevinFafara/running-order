@@ -20,18 +20,24 @@ function AppContent() {
 
   // SWIPE LOGIC
   const swipeHandlers = useSwipeable({
-    onSwipedLeft: () => {
+    onSwipedLeft: (eventData) => {
+      // Ignore swipes on the GroupCard
+      if (eventData.event.target.closest('.group-card')) return;
+
       // Next Day
-      if (viewMode === 'day' && !selectedGroup) {
+      if (viewMode === 'day') {
         const currentIndex = DAYS.indexOf(state.day);
         if (currentIndex !== -1 && currentIndex < DAYS.length - 1) {
           setDay(DAYS[currentIndex + 1]);
         }
       }
     },
-    onSwipedRight: () => {
+    onSwipedRight: (eventData) => {
+      // Ignore swipes on the GroupCard
+      if (eventData.event.target.closest('.group-card')) return;
+
       // Previous Day
-      if (viewMode === 'day' && !selectedGroup) {
+      if (viewMode === 'day') {
         const currentIndex = DAYS.indexOf(state.day);
         if (currentIndex > 0) {
           setDay(DAYS[currentIndex - 1]);
