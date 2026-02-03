@@ -108,11 +108,29 @@ const WeeklyView = ({ groups, onGroupClick }) => {
                         const start = timeToMinutes(band.DEBUT);
                         const end = timeToMinutes(band.FIN);
                         const duration = end - start;
-                        const top = (start - (START_HOUR * 60)) * PIXELS_PER_MINUTE;
+                        // Define height FIRST because inverted top depends on it
                         const height = Math.max(20, duration * PIXELS_PER_MINUTE);
+
+                        // STANDARD vertical assignment
+                        const originalTop = (start - (START_HOUR * 60)) * PIXELS_PER_MINUTE;
+
+                        // If reverse, flip axis: 
+                        // Total Height = (24 + 2 - 10) * 60 * 0.8? 
+                        // Actually the ruler goes from 10h to 04h (18h range).
+                        const TOTAL_MINUTES = 18 * 60;
+                        const MAX_HEIGHT = TOTAL_MINUTES * PIXELS_PER_MINUTE;
+
+                        // New Top Calculation
+                        // If Reverse: Top is calculated from the BOTTOM up.
+                        // Or rather, 0px = Late Night.
+                        // Let's mirror it: NewTop = MAX_HEIGHT - (OriginalTop + Height)
+                        const top = state.reverse
+                            ? MAX_HEIGHT - (originalTop + height)
+                            : originalTop;
 
                         // Find local sub-column (overlap index)
                         let subColIndex = 0;
+                        let safety = 0;
                         while (true) {
                             const isFree = !localPositioned.some(pb =>
                                 pb.subColIndex === subColIndex &&
@@ -120,6 +138,10 @@ const WeeklyView = ({ groups, onGroupClick }) => {
                             );
                             if (isFree) break;
                             subColIndex++;
+                            if (safety++ > 50) { // Safety break
+                                console.warn('Possible infinite loop in subCol assignment', band);
+                                break;
+                            }
                         }
 
                         localPositioned.push({
@@ -165,10 +187,18 @@ const WeeklyView = ({ groups, onGroupClick }) => {
                     const start = timeToMinutes(band.DEBUT);
                     const end = timeToMinutes(band.FIN);
                     const duration = end - start;
-                    const top = (start - (START_HOUR * 60)) * PIXELS_PER_MINUTE;
+                    const originalTop = (start - (START_HOUR * 60)) * PIXELS_PER_MINUTE;
                     const height = Math.max(20, duration * PIXELS_PER_MINUTE);
 
+                    // Reverse logic
+                    const TOTAL_MINUTES = 18 * 60;
+                    const MAX_HEIGHT = TOTAL_MINUTES * PIXELS_PER_MINUTE;
+                    const top = state.reverse
+                        ? MAX_HEIGHT - (originalTop + height)
+                        : originalTop;
+
                     let colIndex = 0;
+                    let safety = 0;
                     while (true) {
                         const isFree = !positionedBands.some(pb =>
                             pb.colIndex === colIndex &&
@@ -176,6 +206,10 @@ const WeeklyView = ({ groups, onGroupClick }) => {
                         );
                         if (isFree) break;
                         colIndex++;
+                        if (safety++ > 50) {
+                            console.warn('Possible infinite loop in favorites col assignment', band);
+                            break;
+                        }
                     }
 
                     positionedBands.push({
@@ -263,11 +297,26 @@ const WeeklyView = ({ groups, onGroupClick }) => {
                     {Array.from({ length: 18 }).map((_, i) => {
                         const h = START_HOUR + i;
                         const label = h >= 24 ? `${h - 24}h` : `${h}h`;
+
+                        // Calculate position
+                        const minutesFromStart = i * 60;
+                        const originalTop = minutesFromStart * PIXELS_PER_MINUTE;
+                        const TOTAL_MINUTES = 18 * 60;
+                        const MAX_HEIGHT = TOTAL_MINUTES * PIXELS_PER_MINUTE;
+
+                        // For markers, they are 0-height lines usually, but 'top' position matters.
+                        // Inverted: NewTop = MAX_HEIGHT - OriginalTop
+                        // Wait, if 10h is at 0px originally.
+                        // Inverted: 10h should be at Bottom (MAX_HEIGHT).
+                        const top = state.reverse
+                            ? MAX_HEIGHT - originalTop
+                            : originalTop;
+
                         return (
                             <div
                                 key={i}
                                 className="time-marker"
-                                style={{ top: i * 60 * PIXELS_PER_MINUTE }}
+                                style={{ top: top }}
                             >
                                 {label}
                             </div>
