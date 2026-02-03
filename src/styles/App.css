@@ -672,11 +672,22 @@ nav button:hover {
     /* Use JS measured height */
     max-height: 80vh !important;
     /* Allow more space if content is long */
-    transform: none !important;
+    /* transform: none !important; - REMOVED to allow animation */
     /* Override position logic */
     box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.5);
     border: none;
     border-top: 1px solid #444;
+    animation: slide-up 0.4s cubic-bezier(0.1, 0.9, 0.2, 1) forwards !important;
+  }
+
+  @keyframes slide-up {
+    from {
+      transform: translateY(100%);
+    }
+
+    to {
+      transform: translateY(0);
+    }
   }
 
   .card-body {
