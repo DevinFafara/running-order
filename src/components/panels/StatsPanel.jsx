@@ -214,9 +214,18 @@ const StatsPanel = ({ onClose }) => {
                                         <div className="daily-rank-icon">
                                             <i className="fa-solid fa-medal"></i>
                                         </div>
-                                        <div className="daily-rank-title">Simple festivalier</div>
+                                        <div className="daily-rank-title">
+                                            {data.persona?.title || "Simple Festivalier"}
+                                        </div>
                                     </div>
                                 </div>
+
+                                {/* DEBUG SCORES (Temporary) */}
+                                {data.persona?.scores && Object.keys(data.persona.scores).length > 0 && (
+                                    <div style={{ fontSize: '0.6rem', color: '#666', padding: '5px', textAlign: 'center', fontStyle: 'italic' }}>
+                                        Scores: {Object.entries(data.persona.scores).map(([k, v]) => `${k}=${v}`).join(', ')}
+                                    </div>
+                                )}
 
                                 {/* Stage Distribution Bar (Logos) */}
                                 <div className="stats-panel-stage-logos-row">
@@ -291,19 +300,7 @@ const StatsPanel = ({ onClose }) => {
                     })}
                 </div>
 
-                {/* --- STYLE DISTRIBUTION --- */}
-                <div className="stats-panel-section-title">Répartition des Styles</div>
-                <div className="stats-panel-style-chips">
-                    {Object.entries(stats.styles)
-                        .sort(([, a], [, b]) => b - a)
-                        .slice(0, 6)
-                        .map(([style, count]) => (
-                            <div key={style} className="stats-panel-style-chip">
-                                <span className="stats-panel-style-name">{style}</span>
-                                <span className="stats-panel-style-count">{count}</span>
-                            </div>
-                        ))}
-                </div>
+
 
             </div>
         </div>
