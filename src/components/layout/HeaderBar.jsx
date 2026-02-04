@@ -6,7 +6,7 @@ import CreditsPanel from '../panels/CreditsPanel';
 
 import StatsPanel from '../panels/StatsPanel';
 
-const HeaderBar = ({ viewMode, onViewChange }) => {
+const HeaderBar = ({ viewMode, onViewChange, onInteraction }) => {
     const [playlistOpen, setPlaylistOpen] = useState(false);
     const [filterOpen, setFilterOpen] = useState(false);
     const [settingsOpen, setSettingsOpen] = useState(false);
@@ -24,7 +24,10 @@ const HeaderBar = ({ viewMode, onViewChange }) => {
                     <button
                         className={`toolbar-btn ${viewMode === 'week' ? 'active' : ''}`}
                         title={viewMode === 'week' ? "Vue Journalière" : "Vue Semaine"}
-                        onClick={() => onViewChange(viewMode === 'week' ? 'day' : 'week')}
+                        onClick={() => {
+                            if (onInteraction) onInteraction();
+                            onViewChange(viewMode === 'week' ? 'day' : 'week');
+                        }}
                     >
                         <i className={`fa-solid ${viewMode === 'week' ? 'fa-calendar-day' : 'fa-calendar-week'}`}></i>
                     </button>
@@ -32,35 +35,50 @@ const HeaderBar = ({ viewMode, onViewChange }) => {
                     <button
                         className={`toolbar-btn ${statsOpen ? 'active' : ''}`}
                         title="Mes Stats"
-                        onClick={() => setStatsOpen(true)}
+                        onClick={() => {
+                            if (onInteraction) onInteraction();
+                            setStatsOpen(true);
+                        }}
                     >
                         <i className="fa-solid fa-chart-pie"></i>
                     </button>
                     <button
                         className={`toolbar-btn ${filterOpen ? 'active' : ''}`}
                         title="Filtres"
-                        onClick={() => setFilterOpen(true)}
+                        onClick={() => {
+                            if (onInteraction) onInteraction();
+                            setFilterOpen(true);
+                        }}
                     >
                         <i className="fa-solid fa-filter"></i>
                     </button>
                     <button
                         className={`toolbar-btn ${playlistOpen ? 'active' : ''}`}
                         title="Playlists"
-                        onClick={() => setPlaylistOpen(true)}
+                        onClick={() => {
+                            if (onInteraction) onInteraction();
+                            setPlaylistOpen(true);
+                        }}
                     >
                         <i className="fa-solid fa-music"></i>
                     </button>
                     <button
                         className={`toolbar-btn ${settingsOpen ? 'active' : ''}`}
                         title="Paramètres"
-                        onClick={() => setSettingsOpen(true)}
+                        onClick={() => {
+                            if (onInteraction) onInteraction();
+                            setSettingsOpen(true);
+                        }}
                     >
                         <i className="fa-solid fa-gear"></i>
                     </button>
                     <button
                         className={`toolbar-btn ${creditsOpen ? 'active' : ''}`}
                         title="Crédits"
-                        onClick={() => setCreditsOpen(true)}
+                        onClick={() => {
+                            if (onInteraction) onInteraction();
+                            setCreditsOpen(true);
+                        }}
                     >
                         <i className="fa-solid fa-heart"></i>
                     </button>

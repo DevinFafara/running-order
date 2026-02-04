@@ -5,13 +5,25 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+input,
+textarea,
+[contenteditable="true"] {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
 }
 
 html {
   background-color: black;
   scrollbar-width: none;
   -webkit-touch-callout: none;
-  user-select: none;
 }
 
 html::-webkit-scrollbar {

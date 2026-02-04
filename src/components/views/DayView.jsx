@@ -320,10 +320,7 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day }) => {
 
                         {/* BANDS */}
                         <div className="scene-bands" style={{ height: getSceneBandsHeight() }}>
-                            {/* Heures en background */}
-                            {hours.map((hour, i) => (
-                                <HourTag key={i} hour={hour} i={i} />
-                            ))}
+                            {/* Pas d'heures en mode compact car deux scènes se partagent la colonne */}
 
                             {/* Groupes Scène 1 */}
                             {isSceneVisible(scene1) && groups1.map(group => (

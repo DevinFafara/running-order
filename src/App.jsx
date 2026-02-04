@@ -83,7 +83,11 @@ function AppContent() {
 
   return (
     <div className={`App ${selectedGroup ? 'group-selected' : ''}`}>
-      <HeaderBar viewMode={viewMode} onViewChange={setViewMode} />
+      <HeaderBar
+        viewMode={viewMode}
+        onViewChange={setViewMode}
+        onInteraction={() => setSelectedGroup(null)}
+      />
 
       {viewMode === 'day' && <Navigation />}
 
