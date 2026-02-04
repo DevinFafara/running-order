@@ -219,10 +219,10 @@ export const calculateStats = (lineup, taggedBands) => {
     // 4. Calcul du taux de complétion (Completion Rate)
     // Basé sur les créneaux horaires "actifs" (Daily Windows)
     const DAILY_WINDOWS = {
-        'Jeudi': { start: '15:30', end: '02:00' }, // 10.5h = 630 min
-        'Vendredi': { start: '10:30', end: '02:00' }, // 15.5h = 930 min
-        'Samedi': { start: '10:30', end: '02:00' }, // 15.5h = 930 min
-        'Dimanche': { start: '10:30', end: '00:00' }  // 13.5h = 810 min
+        'Jeudi': { start: '16:30', end: '02:05' },    // 9h35 = 575 min
+        'Vendredi': { start: '10:30', end: '02:10' }, // 15h40 = 940 min
+        'Samedi': { start: '10:30', end: '02:00' },   // 15h30 = 930 min
+        'Dimanche': { start: '10:30', end: '00:30' }  // 14h00 = 840 min
     };
 
     Object.entries(stats.days).forEach(([day, data]) => {
@@ -277,6 +277,14 @@ export const calculateStats = (lineup, taggedBands) => {
         // Taux de complétion : (Temps Total - Temps Libre) / Temps Total
         // C'est à dire le pourcentage de temps "occupé" (Musique + Marche)
         const completionRate = Math.round(((totalWindowMinutes - freeMinutes) / totalWindowMinutes) * 100);
+
+        console.log(`[Stats DEBUG Day] ${day}:`, {
+            totalWindow: totalWindowMinutes,
+            occupied: occupiedMinutes,
+            transitions: transitionMalus,
+            freeTime: freeMinutes,
+            rate: completionRate
+        });
 
         stats.days[day].completionRate = completionRate;
 
