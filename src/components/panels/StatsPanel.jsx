@@ -205,10 +205,7 @@ const StatsPanel = ({ onClose }) => {
                                     </div>
                                     <div className="stats-panel-day-column right">
                                         <div className="daily-rank-icon">
-                                            <i className="fa-solid fa-user-astronaut" title="Astronaute"></i>
-                                            <i className="fa-solid fa-hat-wizard" title="Sorcier"></i>
-                                            <i className="fa-solid fa-ghost" title="Esprit"></i>
-                                            <i className="fa-solid fa-dragon" title="Dragon"></i>
+                                            <i className="fa-solid fa-medal"></i>
                                         </div>
                                         <div className="daily-rank-title">Simple festivalier</div>
                                     </div>
@@ -233,7 +230,6 @@ const StatsPanel = ({ onClose }) => {
                                                     className="stage-logo-item"
                                                     style={{
                                                         flex: count,
-                                                        minWidth: '30px',
                                                         backgroundColor: config.themeColor || 'rgba(255,255,255,0.1)'
                                                     }}
                                                     title={`${config.name}: ${count} groupes`}
