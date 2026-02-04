@@ -163,6 +163,11 @@ const GroupCard = ({ group, position, onClose, onPositionChange }) => {
             document.addEventListener('mouseup', handleMouseUp);
         }
 
+        return () => {
+            document.removeEventListener('mousemove', handleMouseMove);
+            document.removeEventListener('mouseup', handleMouseUp);
+        };
+
     }, [isDragging, dragOffset, onPositionChange]);
     // Touch Drag Handlers (Mobile Resize)
     const touchStartRef = useRef({ y: 0, height: 0 });
