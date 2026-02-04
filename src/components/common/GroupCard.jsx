@@ -204,8 +204,8 @@ const GroupCard = ({ group, position, onClose, onPositionChange }) => {
         // MAX: Fixed limit requested by user.
         const maxHeight = 475;
 
-        // MIN: Provide enough space to be grabbable, plus safe area.
-        const minHeight = 80;
+        // MIN: Provide enough space for header only (header ~50px)
+        const minHeight = 55;
 
         if (newHeight > maxHeight) newHeight = maxHeight;
         if (newHeight < minHeight) newHeight = minHeight;
