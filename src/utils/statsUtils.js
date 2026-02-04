@@ -216,6 +216,91 @@ export const calculateStats = (lineup, taggedBands) => {
     // Let's keep it empty and rely on `clashesExtended` in the UI to avoid duplicate data confusion.
     stats.clashes = [];
 
+    // 4. Calcul du taux de complétion (Completion Rate)
+    // Basé sur les créneaux horaires "actifs" (Daily Windows)
+    const DAILY_WINDOWS = {
+        'Jeudi': { start: '15:30', end: '02:00' }, // 10.5h = 630 min
+        'Vendredi': { start: '10:30', end: '02:00' }, // 15.5h = 930 min
+        'Samedi': { start: '10:30', end: '02:00' }, // 15.5h = 930 min
+        'Dimanche': { start: '10:30', end: '00:00' }  // 13.5h = 810 min
+    };
+
+    Object.entries(stats.days).forEach(([day, data]) => {
+        const window = DAILY_WINDOWS[day];
+        if (!window) return;
+
+        const windowStart = timeToMinutes(window.start);
+        const windowEnd = timeToMinutes(window.end);
+        const totalWindowMinutes = windowEnd - windowStart;
+
+        // Calcul des minutes non occupées par des concerts ("Free Time")
+        // On fusionne les intervalles de concerts pour obtenir le temps occupé (Occupied Time)
+        // 1. Récupérer les concerts du jour
+        const dailyBands = myBands.filter(b => b.DAY === day);
+        if (dailyBands.length === 0) {
+            stats.days[day].completionRate = 0;
+            return;
+        }
+
+        // 2. Fusionner les intervalles
+        const intervals = dailyBands.map(b => [timeToMinutes(b.DEBUT), timeToMinutes(b.FIN)]).sort((a, b) => a[0] - b[0]);
+        let mergedIntervals = [];
+        if (intervals.length > 0) {
+            let [currStart, currEnd] = intervals[0];
+            for (let i = 1; i < intervals.length; i++) {
+                const [nextStart, nextEnd] = intervals[i];
+                if (nextStart < currEnd) {
+                    currEnd = Math.max(currEnd, nextEnd);
+                } else {
+                    mergedIntervals.push([currStart, currEnd]);
+                    currStart = nextStart;
+                    currEnd = nextEnd;
+                }
+            }
+            mergedIntervals.push([currStart, currEnd]);
+        }
+
+        const occupiedMinutes = mergedIntervals.reduce((acc, [start, end]) => acc + (end - start), 0);
+
+        // 3. Appliquer le "Malus de Transition" (5 min pour bouger entre chaque concert)
+        // On soustrait 5 min par groupe favori, SAUF si c'est un clash (déjà compté dans l'occupation ou impossible de bouger)
+        const favCount = stats.days[day]?.count || 0;
+        const dayClashes = stats.clashesExtended.filter(c => c.day === day).length;
+        // On retire les clashs du compte des transitions car on ne bouge pas "plus"
+        // On ne peut pas descendre en dessous de 0
+        const transitionMalus = Math.max(0, (favCount - dayClashes) * 5);
+
+        // 4. Calcul final
+        // Le temps "Libre" réel = Fenêtre Totale - Temps Occupé (Musique) - Temps de Transition (Marche)
+        const freeMinutes = Math.max(0, totalWindowMinutes - occupiedMinutes - transitionMalus);
+
+        // Taux de complétion : (Temps Total - Temps Libre) / Temps Total
+        // C'est à dire le pourcentage de temps "occupé" (Musique + Marche)
+        const completionRate = Math.round(((totalWindowMinutes - freeMinutes) / totalWindowMinutes) * 100);
+
+        stats.days[day].completionRate = completionRate;
+
+        // Optionnel : stocker freeMinutes pour affichage debug ou autre
+        stats.days[day].freeMinutes = freeMinutes;
+    });
+
+    // 5. Moyenne globale sur les jours ACTIFS seulement
+    const activeDays = Object.values(stats.days).filter(d => d.count > 0);
+    if (activeDays.length > 0) {
+        const totalCompletion = activeDays.reduce((sum, d) => sum + (d.completionRate || 0), 0);
+        stats.averageCompletion = Math.round(totalCompletion / activeDays.length);
+    } else {
+        stats.averageCompletion = 0;
+    }
+
+    // Détermination du Rang
+    // 5 paliers : 0-20 (Touriste), 20-40 (Petit Joueur), 40-60 (Amateur), 60-80 (Festivalier), 80+ (Trve)
+    if (stats.averageCompletion < 20) stats.rank = "Touriste";
+    else if (stats.averageCompletion < 40) stats.rank = "Petit Joueur";
+    else if (stats.averageCompletion < 60) stats.rank = "Amateur";
+    else if (stats.averageCompletion < 80) stats.rank = "Festivalier";
+    else stats.rank = "Trve";
+
     return stats;
 };
 

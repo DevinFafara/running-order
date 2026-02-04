@@ -26,405 +26,542 @@
     position: relative;
     color: #eee;
     font-family: 'Roboto', sans-serif;
-}
 
-.stats-panel-title {
-    text-align: center;
-    margin-top: 0;
-    margin-bottom: 20px;
-    font-family: 'Metal Mania', cursive, sans-serif;
-    color: #FFD700;
-    text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
-}
-
-.stats-panel-close-btn {
-    position: absolute;
-    top: 15px;
-    right: 20px;
-    background: none;
-    border: none;
-    color: #888;
-    font-size: 2rem;
-    cursor: pointer;
-    line-height: 1;
-}
-
-/* --- ID CARD --- */
-.stats-panel-id-card {
-    background: linear-gradient(135deg, #222, #333);
-    border-radius: 15px;
-    padding: 20px;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    border: 1px solid #555;
-    margin-bottom: 25px;
-    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
-}
-
-.stats-panel-avatar-section {
-    flex: 0 0 80px;
-    text-align: center;
-    margin-right: 20px;
-}
-
-.stats-panel-avatar-circle {
-    width: 70px;
-    height: 70px;
-    background: #444;
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 2.5rem;
-    border: 2px solid #FFD700;
-    margin: 0 auto 5px;
-}
-
-.stats-panel-rank-badge {
-    background: #FFD700;
-    color: #000;
-    font-size: 0.7rem;
-    font-weight: bold;
-    padding: 2px 8px;
-    border-radius: 10px;
-    display: inline-block;
-}
-
-.stats-panel-info-section {
-    flex: 1;
-}
-
-.stats-panel-subtitle {
-    margin: 0;
-    color: #fff;
-    font-size: 1.2rem;
-}
-
-.stats-panel-main-stat {
-    margin: 5px 0;
-}
-
-.stats-panel-number {
-    font-size: 1.8rem;
-    font-weight: bold;
-    color: #eee;
-    margin-right: 5px;
-}
-
-.stats-panel-sub-stat {
-    font-size: 0.9rem;
-    color: #aaa;
-}
-
-.stats-panel-class-section {
-    width: 100%;
-    margin-top: 15px;
-    padding-top: 10px;
-    border-top: 1px dashed #555;
-    font-size: 0.9rem;
-    display: flex;
-    justify-content: space-between;
-}
-
-.stats-panel-value {
-    color: #FFD700;
-    font-weight: bold;
-    text-transform: uppercase;
-}
-
-/* --- CLASH ALERT --- */
-.stats-panel-clash-alert {
-    background: rgba(220, 40, 41, 0.15);
-    border: 1px solid #dc2829;
-    border-radius: 10px;
-    padding: 15px;
-    margin-bottom: 25px;
-}
-
-.stats-panel-clash-header {
-    display: flex;
-    align-items: center;
-    margin-bottom: 10px;
-}
-
-.stats-panel-warning-title {
-    margin: 0 0 0 10px;
-    font-size: 1rem;
-    color: #ff6b6b;
-}
-
-.stats-panel-clash-item {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.85rem;
-    padding: 5px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.stats-panel-clash-item:last-child {
-    border-bottom: none;
-}
-
-.stats-panel-duel {
-    flex: 1;
-    text-align: center;
-    padding: 0 10px;
-}
-
-.stats-panel-vs {
-    color: #dc2829;
-    font-weight: bold;
-    margin: 0 5px;
-    font-style: italic;
-}
-
-.stats-panel-no-clash {
-    background: rgba(35, 156, 96, 0.15);
-    border: 1px solid #239c60;
-    color: #239c60;
-    padding: 15px;
-    border-radius: 10px;
-    text-align: center;
-    margin-bottom: 25px;
-    font-weight: bold;
-}
-
-/* --- INTENSITY --- */
-.stats-panel-section-title {
-    font-size: 0.9rem;
-    text-transform: uppercase;
-    color: #888;
-    margin-bottom: 10px;
-    letter-spacing: 1px;
-}
-
-.stats-panel-intensity-grid {
-    margin-bottom: 25px;
-}
-
-.stats-panel-day-intensity {
-    margin-bottom: 10px;
-}
-
-.stats-panel-day-label {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.85rem;
-    margin-bottom: 3px;
-}
-
-.stats-panel-progress-bar-bg {
-    background: #333;
-    height: 8px;
-    border-radius: 4px;
-    overflow: hidden;
-}
-
-.stats-panel-progress-bar-fill {
-    height: 100%;
-    border-radius: 4px;
-    transition: width 0.5s ease;
-}
-
-.stats-panel-progress-bar-fill.low {
-    background: #50C878;
-}
-
-.stats-panel-progress-bar-fill.medium {
-    background: #FFD700;
-}
-
-.stats-panel-progress-bar-fill.high {
-    background: #dc2829;
-    box-shadow: 0 0 8px #dc2829;
-}
-
-.stats-panel-warning-text {
-    font-size: 0.75rem;
-    color: #dc2829;
-    margin-top: 2px;
-    font-style: italic;
-    text-align: right;
-}
-
-.stats-panel-warning-text.low {
-    color: #50C878;
-}
-
-.stats-panel-warning-text.medium {
-    color: #FFD700;
-}
-
-.stats-panel-warning-text.high {
-    color: #dc2829;
-}
-
-/* --- STYLE CHIPS --- */
-.stats-panel-style-chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-.stats-panel-style-chip {
-    background: #333;
-    padding: 5px 12px;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    display: flex;
-    align-items: center;
-}
-
-.stats-panel-style-count {
-    background: #555;
-    color: #fff;
-    border-radius: 50%;
-    width: 18px;
-    height: 18px;
-    font-size: 0.7rem;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-left: 8px;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
+    /* --- NEW RANK GAUGE WIDGET --- */
+    .stats-panel-rank-widget {
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid #444;
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 25px;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        position: relative;
+        /* Ensure no float behavior */
     }
 
-    to {
-        opacity: 1;
+    /* --- LEFT: GAUGE AREA --- */
+    .rank-gauge-area {
+        position: relative;
+        width: 220px;
+        height: 300px;
+        margin-right: 20px;
+        flex-shrink: 0;
     }
-}
 
-/* --- NEW CLASH COUNTERS --- */
-.stats-panel-clash-counts {
-    display: flex;
-    gap: 8px;
-    margin-top: 5px;
-    margin-left: 10px;
-}
+    /* Container for the bar logic - Absolute positioning for independence */
+    .rank-gauge-bar-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 40px;
+        height: 100%;
+        background: #222;
+        border-radius: 20px;
+        border: 2px solid #555;
+        overflow: hidden;
+        /* CLIPS THE FILL */
+        z-index: 10;
+    }
 
-.badge-simple,
-.badge-triple,
-.badge-quad,
-.badge-penta {
-    padding: 2px 8px;
-    border-radius: 4px;
-    font-size: 0.75rem;
-    font-weight: bold;
-    color: #000;
-}
+    .rank-gauge-bar-fill {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background: linear-gradient(to top, #50C878 0%, #FFD700 50%, #dc2829 100%);
+        transition: height 1.5s cubic-bezier(0.22, 1, 0.36, 1);
+        box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+    }
 
-.badge-simple {
-    background-color: #FFA500;
-    /* Orange */
-}
+    /* Container for labels - Overlays the bar but extends right */
+    .rank-gauge-labels {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 5;
+    }
 
-.badge-triple {
-    background-color: #FF4500;
-    /* Red-Orange */
-    color: #fff;
-}
+    .rank-label {
+        position: absolute;
+        left: 45px;
+        /* Right of the bar */
+        transform: translateY(50%);
+        /* Center on the tick */
+        font-size: 0.8rem;
+        color: #666;
+        display: flex;
+        align-items: center;
+        transition: color 0.3s, text-shadow 0.3s;
+    }
 
-.badge-quad {
-    background-color: #DC143C;
-    /* Crimson */
-    color: #fff;
-}
+    .rank-label::before {
+        content: '';
+        display: block;
+        width: 10px;
+        height: 1px;
+        background: #444;
+        margin-right: 8px;
+    }
 
-.badge-penta {
-    background-color: #800080;
-    /* Purple */
-    color: #fff;
-    border: 1px solid white;
-}
+    .rank-label.active {
+        color: #fff;
+        font-weight: bold;
+        text-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+    }
 
-.stats-panel-duel.vertical {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    text-align: left;
-    margin-left: 10px;
-}
+    .rank-label.active::before {
+        background: #fff;
+        height: 2px;
+    }
 
-.clash-band-row {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-}
+    /* --- RIGHT: INFO AREA --- */
+    .stats-panel-rank-info {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding-left: 10px;
+    }
 
-.clash-time-hint {
-    font-size: 0.7rem;
-    color: #aaa;
-    font-style: italic;
-}
+    .stats-main-counter {
+        margin-bottom: 10px;
+    }
 
-.stats-panel-clash-type {
-    font-weight: bold;
-    color: #666;
-    margin-left: 10px;
-    align-self: center;
-    white-space: nowrap;
-}
+    .stats-count-val {
+        font-size: 3rem;
+        font-weight: bold;
+        color: #FFD700;
+        line-height: 1;
+        margin-right: 10px;
+    }
 
-/* --- COLLAPSIBLE CLASHES (Embedded) --- */
-.stats-panel-day-clashes {
-    margin-top: 8px;
-    background: rgba(220, 40, 41, 0.1);
-    border-radius: 6px;
-    border: 1px solid rgba(220, 40, 41, 0.3);
-    overflow: hidden;
-}
+    .stats-count-label {
+        font-size: 1rem;
+        color: #aaa;
+        text-transform: uppercase;
+    }
 
-.stats-panel-clash-trigger {
-    display: flex;
-    align-items: center;
-    padding: 6px 10px;
-    cursor: pointer;
-    font-size: 0.8rem;
-    color: #ff6b6b;
-    transition: background 0.2s;
-}
+    .stats-rank-display {
+        font-size: 1.4rem;
+        color: #fff;
+        margin-bottom: 10px;
+    }
 
-.stats-panel-clash-trigger:hover {
-    background: rgba(220, 40, 41, 0.15);
-}
+    .stats-rank-name {
+        color: #FFD700;
+        font-family: 'Metal Mania', cursive, sans-serif;
+        letter-spacing: 1px;
+    }
 
-.clash-trigger-icon {
-    margin-right: 8px;
-}
+    .stats-completion-text,
+    .stats-music-time {
+        font-size: 0.9rem;
+        color: #aaa;
+        margin-top: 5px;
+    }
 
-.clash-trigger-text {
-    flex: 1;
-    font-weight: bold;
-}
+    .stats-panel-title {
+        text-align: center;
+        margin-top: 0;
+        margin-bottom: 20px;
+        font-family: 'Metal Mania', cursive, sans-serif;
+        color: #FFD700;
+        text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+    }
 
-.clash-chevron {
-    font-size: 0.7rem;
-    transition: transform 0.3s ease;
-}
+    .stats-panel-close-btn {
+        position: absolute;
+        top: 15px;
+        right: 20px;
+        background: none;
+        border: none;
+        color: #888;
+        font-size: 2rem;
+        cursor: pointer;
+        line-height: 1;
+    }
 
-.clash-chevron.open {
-    transform: rotate(180deg);
-}
+    /* --- ID CARD --- */
+    .stats-panel-id-card {
+        background: linear-gradient(135deg, #222, #333);
+        border-radius: 15px;
+        padding: 20px;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        border: 1px solid #555;
+        margin-bottom: 25px;
+        box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+    }
 
-.stats-panel-clash-list.embedded {
-    padding: 0 10px 10px 10px;
-    border-top: 1px solid rgba(220, 40, 41, 0.2);
-    animation: fadeIn 0.2s ease;
-}
+    .stats-panel-avatar-section {
+        flex: 0 0 80px;
+        text-align: center;
+        margin-right: 20px;
+    }
 
-.stats-panel-clash-item.embedded {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.8rem;
-    padding: 6px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
+    .stats-panel-avatar-circle {
+        width: 70px;
+        height: 70px;
+        background: #444;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 2.5rem;
+        border: 2px solid #FFD700;
+        margin: 0 auto 5px;
+    }
 
-.stats-panel-clash-item.embedded:last-child {
-    border-bottom: none;
-}
+    .stats-panel-rank-badge {
+        background: #FFD700;
+        color: #000;
+        font-size: 0.7rem;
+        font-weight: bold;
+        padding: 2px 8px;
+        border-radius: 10px;
+        display: inline-block;
+    }
+
+    .stats-panel-info-section {
+        flex: 1;
+    }
+
+    .stats-panel-subtitle {
+        margin: 0;
+        color: #fff;
+        font-size: 1.2rem;
+    }
+
+    .stats-panel-main-stat {
+        margin: 5px 0;
+    }
+
+    .stats-panel-number {
+        font-size: 1.8rem;
+        font-weight: bold;
+        color: #eee;
+        margin-right: 5px;
+    }
+
+    .stats-panel-sub-stat {
+        font-size: 0.9rem;
+        color: #aaa;
+    }
+
+    .stats-panel-class-section {
+        width: 100%;
+        margin-top: 15px;
+        padding-top: 10px;
+        border-top: 1px dashed #555;
+        font-size: 0.9rem;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .stats-panel-value {
+        color: #FFD700;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+
+    /* --- CLASH ALERT --- */
+    .stats-panel-clash-alert {
+        background: rgba(220, 40, 41, 0.15);
+        border: 1px solid #dc2829;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 25px;
+    }
+
+    .stats-panel-clash-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+    .stats-panel-warning-title {
+        margin: 0 0 0 10px;
+        font-size: 1rem;
+        color: #ff6b6b;
+    }
+
+    .stats-panel-clash-item {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.85rem;
+        padding: 5px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .stats-panel-clash-item:last-child {
+        border-bottom: none;
+    }
+
+    .stats-panel-duel {
+        flex: 1;
+        text-align: center;
+        padding: 0 10px;
+    }
+
+    .stats-panel-vs {
+        color: #dc2829;
+        font-weight: bold;
+        margin: 0 5px;
+        font-style: italic;
+    }
+
+    .stats-panel-no-clash {
+        background: rgba(35, 156, 96, 0.15);
+        border: 1px solid #239c60;
+        color: #239c60;
+        padding: 15px;
+        border-radius: 10px;
+        text-align: center;
+        margin-bottom: 25px;
+        font-weight: bold;
+    }
+
+    /* --- INTENSITY --- */
+    .stats-panel-section-title {
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        color: #888;
+        margin-bottom: 10px;
+        letter-spacing: 1px;
+    }
+
+    .stats-panel-intensity-grid {
+        margin-bottom: 25px;
+    }
+
+    .stats-panel-day-intensity {
+        margin-bottom: 10px;
+    }
+
+    .stats-panel-day-label {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.85rem;
+        margin-bottom: 3px;
+    }
+
+    .stats-panel-progress-bar-bg {
+        background: #333;
+        height: 8px;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .stats-panel-progress-bar-fill {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.5s ease;
+    }
+
+    .stats-panel-progress-bar-fill.low {
+        background: #50C878;
+    }
+
+    .stats-panel-progress-bar-fill.medium {
+        background: #FFD700;
+    }
+
+    .stats-panel-progress-bar-fill.high {
+        background: #dc2829;
+        box-shadow: 0 0 8px #dc2829;
+    }
+
+    .stats-panel-warning-text {
+        font-size: 0.75rem;
+        color: #dc2829;
+        margin-top: 2px;
+        font-style: italic;
+        text-align: right;
+    }
+
+    .stats-panel-warning-text.low {
+        color: #50C878;
+    }
+
+    .stats-panel-warning-text.medium {
+        color: #FFD700;
+    }
+
+    .stats-panel-warning-text.high {
+        color: #dc2829;
+    }
+
+    /* --- STYLE CHIPS --- */
+    .stats-panel-style-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .stats-panel-style-chip {
+        background: #333;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+    }
+
+    .stats-panel-style-count {
+        background: #555;
+        color: #fff;
+        border-radius: 50%;
+        width: 18px;
+        height: 18px;
+        font-size: 0.7rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-left: 8px;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+
+        to {
+            opacity: 1;
+        }
+    }
+
+    /* --- NEW CLASH COUNTERS --- */
+    .stats-panel-clash-counts {
+        display: flex;
+        gap: 8px;
+        margin-top: 5px;
+        margin-left: 10px;
+    }
+
+    .badge-simple,
+    .badge-triple,
+    .badge-quad,
+    .badge-penta {
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: bold;
+        color: #000;
+    }
+
+    .badge-simple {
+        background-color: #FFA500;
+        /* Orange */
+    }
+
+    .badge-triple {
+        background-color: #FF4500;
+        /* Red-Orange */
+        color: #fff;
+    }
+
+    .badge-quad {
+        background-color: #DC143C;
+        /* Crimson */
+        color: #fff;
+    }
+
+    .badge-penta {
+        background-color: #800080;
+        /* Purple */
+        color: #fff;
+        border: 1px solid white;
+    }
+
+    .stats-panel-duel.vertical {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        text-align: left;
+        margin-left: 10px;
+    }
+
+    .clash-band-row {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+    }
+
+    .clash-time-hint {
+        font-size: 0.7rem;
+        color: #aaa;
+        font-style: italic;
+    }
+
+    .stats-panel-clash-type {
+        font-weight: bold;
+        color: #666;
+        margin-left: 10px;
+        align-self: center;
+        white-space: nowrap;
+    }
+
+    /* --- COLLAPSIBLE CLASHES (Embedded) --- */
+    .stats-panel-day-clashes {
+        margin-top: 8px;
+        background: rgba(220, 40, 41, 0.1);
+        border-radius: 6px;
+        border: 1px solid rgba(220, 40, 41, 0.3);
+        overflow: hidden;
+    }
+
+    .stats-panel-clash-trigger {
+        display: flex;
+        align-items: center;
+        padding: 6px 10px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        color: #ff6b6b;
+        transition: background 0.2s;
+    }
+
+    .stats-panel-clash-trigger:hover {
+        background: rgba(220, 40, 41, 0.15);
+    }
+
+    .clash-trigger-icon {
+        margin-right: 8px;
+    }
+
+    .clash-trigger-text {
+        flex: 1;
+        font-weight: bold;
+    }
+
+    .clash-chevron {
+        font-size: 0.7rem;
+        transition: transform 0.3s ease;
+    }
+
+    .clash-chevron.open {
+        transform: rotate(180deg);
+    }
+
+    .stats-panel-clash-list.embedded {
+        padding: 0 10px 10px 10px;
+        border-top: 1px solid rgba(220, 40, 41, 0.2);
+        animation: fadeIn 0.2s ease;
+    }
+
+    .stats-panel-clash-item.embedded {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.8rem;
+        padding: 6px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .stats-panel-clash-item.embedded:last-child {
+        border-bottom: none;
+    }

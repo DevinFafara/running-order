@@ -9,6 +9,8 @@ const StatsPanel = ({ onClose }) => {
     const { state } = useCheckedState();
     const { data: groups, sideStagesData } = useLineup();
     const [expandedDays, setExpandedDays] = useState({});
+    const [gaugeHeight, setGaugeHeight] = useState(0);
+    const [animatedTotal, setAnimatedTotal] = useState(0);
 
     // Merge data if needed
     const allGroups = useMemo(() => {
@@ -21,13 +23,49 @@ const StatsPanel = ({ onClose }) => {
         return calculateStats(allGroups, state.taggedBands);
     }, [allGroups, state.taggedBands]);
 
+    const hoursTotal = Math.round(stats.totalMinutes / 60);
+
+    // Animation Effect
+    React.useEffect(() => {
+        // Delay slighty for enter animation
+        const timer = setTimeout(() => {
+            setGaugeHeight(stats.averageCompletion);
+        }, 300);
+
+        // Counter Animation
+        let start = 0;
+        const end = stats.totalBands;
+
+        if (start === end) return;
+
+        const duration = 1500;
+        const incrementTime = end > 0 ? (duration / end) * 0.8 : 0;
+
+        if (end > 0) {
+            const timerCounter = setInterval(() => {
+                start += 1;
+                setAnimatedTotal(start);
+                if (start >= end) clearInterval(timerCounter);
+            }, Math.max(incrementTime, 20));
+
+            return () => {
+                clearTimeout(timer);
+                clearInterval(timerCounter);
+            };
+        }
+    }, [stats.averageCompletion, stats.totalBands]);
+
     const toggleDay = (day) => {
         setExpandedDays(prev => ({ ...prev, [day]: !prev[day] }));
     };
 
-    // Le titre est basé sur le COMPTEUR EFFECTIF (plafonné par jour)
-    const levelTitle = getLevelTitle(stats.effectiveTotal);
-    const hoursTotal = Math.round(stats.totalMinutes / 60);
+    const RANKS = [
+        { label: "TRVE", bottom: "80%" },
+        { label: "FESTIVALIER", bottom: "60%" },
+        { label: "AMATEUR", bottom: "40%" },
+        { label: "PETIT JOUEUR", bottom: "20%" },
+        { label: "TOURISTE", bottom: "0%" }
+    ];
 
     return (
         <div className="stats-panel-overlay" onClick={onClose}>
@@ -36,31 +74,59 @@ const StatsPanel = ({ onClose }) => {
 
                 <h2 className="stats-panel-title">My Hellfest DNA 🧬</h2>
 
-                {/* --- CARD ID --- */}
-                <div className="stats-panel-id-card">
-                    <div className="stats-panel-avatar-section">
-                        <div className="stats-panel-avatar-circle">
-                            <span role="img" aria-label="avatar">🤘</span>
+                <div className="stats-panel-rank-widget">
+
+                    {/* LEFT: GAUGE + LABELS */}
+                    <div className="rank-gauge-area">
+                        {/* The Actual Gauge Bar (Clipped) */}
+                        <div className="rank-gauge-bar-container">
+                            <div
+                                className="rank-gauge-bar-fill"
+                                style={{ height: `${gaugeHeight}%` }}
+                            ></div>
                         </div>
-                        <div className="stats-panel-rank-badge">{levelTitle}</div>
+
+                        {/* The Labels (Absolute positioned relative to area, visible) */}
+                        <div className="rank-gauge-labels">
+                            {RANKS.map((rank, i) => (
+                                <div
+                                    key={i}
+                                    className={`rank-label ${stats.averageCompletion >= parseInt(rank.bottom) ? 'active' : ''}`}
+                                    style={{ bottom: rank.bottom }}
+                                >
+                                    {rank.label}
+                                </div>
+                            ))}
+                        </div>
                     </div>
-                    <div className="stats-panel-info-section">
-                        <h3 className="stats-panel-subtitle">Festivalier</h3>
-                        <div className="stats-panel-main-stat">
-                            <span className="stats-panel-number">{stats.totalBands}</span>
-                            <span className="stats-panel-label">Concerts</span>
+
+                    {/* RIGHT: INFO & COUNTERS */}
+                    <div className="stats-panel-rank-info">
+                        <div className="stats-main-counter">
+                            <span className="stats-count-val">{animatedTotal}</span>
+                            <span className="stats-count-label">Groupes vus</span>
                         </div>
-                        <div className="stats-panel-sub-stat">
-                            <span>(Effectif pour le grade : {stats.effectiveTotal})</span>
+
+                        <div className="stats-rank-display">
+                            Rang : <span className="stats-rank-name">{stats.rank?.toUpperCase() || "TOURISTE"}</span>
                         </div>
-                        <div className="stats-panel-sub-stat">
+
+                        <div className="stats-completion-text">
+                            Taux de complétion moyen : <strong>{stats.averageCompletion}%</strong>
+                        </div>
+                        <div className="stats-music-time">
                             <span>≈ {hoursTotal}h de musique</span>
                         </div>
                     </div>
-                    <div className="stats-panel-class-section">
-                        <span className="stats-panel-label">Classe :</span>
-                        <span className="stats-panel-value">{stats.topStyle}</span>
-                    </div>
+
+                </div>
+
+                <div style={{ clear: 'both' }}></div>
+
+                {/* --- STYLE DISTRIBUTION --- */}
+                <div className="stats-panel-class-section">
+                    <span>Classe dominante:</span>
+                    <span className="stats-panel-value">{stats.topStyle}</span>
                 </div>
 
                 {/* --- DAY INTENSITY with CLASHES --- */}
