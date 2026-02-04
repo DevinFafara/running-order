@@ -109,39 +109,26 @@ const StatsPanel = ({ onClose }) => {
                         <div className="stats-rank-display">
                             Rang : <span className="stats-rank-name">{stats.rank?.toUpperCase() || "TOURISTE"}</span>
                         </div>
-
-                        <div className="stats-completion-text">
-                            Taux de complétion moyen : <strong>{stats.averageCompletion}%</strong>
-                        </div>
-                        <div className="stats-music-time">
-                            <span>≈ {hoursTotal}h de musique</span>
-                        </div>
                     </div>
 
                 </div>
 
                 <div style={{ clear: 'both' }}></div>
 
-                {/* --- STYLE DISTRIBUTION --- */}
-                <div className="stats-panel-class-section">
-                    <span>Classe dominante:</span>
-                    <span className="stats-panel-value">{stats.topStyle}</span>
-                </div>
-
                 {/* --- DAY INTENSITY with CLASHES --- */}
-                <div className="stats-panel-section-title">Intensité & Conflits par Jour</div>
+                <div className="stats-panel-section-title">MES STATS PAR JOUR</div>
                 <div className="stats-panel-intensity-grid">
                     {Object.entries(stats.days).map(([day, data]) => {
-                        const percentage = data.intensity;
-                        let colorClass = 'low'; // Green (< 75%)
-                        let message = "Rythme confort 😎";
+                        const percentage = data.completionRate || 0; // Use completion rate for intensity
+                        let colorClass = 'low';
+                        let message = "Ça va le faire 😎";
 
-                        if (percentage >= 75 && percentage <= 100) {
-                            colorClass = 'medium'; // Yellow
-                            message = "Pensez à vous hydrater 🍺";
-                        } else if (percentage > 100) {
-                            colorClass = 'high'; // Red
-                            message = "Gourmandise ! (Journée chargée) 😈";
+                        if (percentage >= 50 && percentage < 80) {
+                            colorClass = 'medium';
+                            message = "Rythme soutenu 🤘";
+                        } else if (percentage >= 80) {
+                            colorClass = 'high';
+                            message = "Grosse journée en vue ! 😈";
                         }
 
                         // Filter Clashes for this day
@@ -153,7 +140,7 @@ const StatsPanel = ({ onClose }) => {
                             <div key={day} className="stats-panel-day-intensity">
                                 <div className="stats-panel-day-label">
                                     <span>{day}</span>
-                                    <span className="stats-panel-count">{data.count} groupes</span>
+                                    <span className="stats-panel-count">{data.count} groupes prévu(s)</span>
                                 </div>
                                 <div className="stats-panel-progress-bar-bg">
                                     <div
@@ -163,7 +150,7 @@ const StatsPanel = ({ onClose }) => {
                                 </div>
                                 <div className={`stats-panel-warning-text ${colorClass}`}>{message}</div>
 
-                                {hasClashes && (
+                                {hasClashes ? (
                                     <div className="stats-panel-day-clashes">
                                         <div
                                             className="stats-panel-clash-trigger"
@@ -193,6 +180,13 @@ const StatsPanel = ({ onClose }) => {
                                                 ))}
                                             </div>
                                         )}
+                                    </div>
+                                ) : (
+                                    <div className="stats-panel-day-clashes no-conflict">
+                                        <div className="stats-panel-clash-trigger no-conflict">
+                                            <span className="clash-trigger-icon">👍</span>
+                                            <span className="clash-trigger-text">Aucun conflit</span>
+                                        </div>
                                     </div>
                                 )}
                             </div>

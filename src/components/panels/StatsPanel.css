@@ -568,3 +568,18 @@
     .stats-panel-clash-item.embedded:last-child {
         border-bottom: none;
     }
+
+    /* --- NO CONFLICT STYLE --- */
+    .stats-panel-day-clashes.no-conflict {
+        background: rgba(35, 156, 96, 0.1);
+        border: 1px solid rgba(35, 156, 96, 0.3);
+    }
+
+    .stats-panel-clash-trigger.no-conflict {
+        color: #239c60;
+        cursor: default;
+    }
+
+    .stats-panel-clash-trigger.no-conflict:hover {
+        background: none;
+    }}

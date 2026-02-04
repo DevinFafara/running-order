@@ -69,7 +69,6 @@ export const calculateStats = (lineup, taggedBands) => {
             'Dimanche': { count: 0, minutes: 0 },
         },
         clashes: [],
-        topStyle: 'Hellbanger',
     };
 
     if (!lineup || !taggedBands) return stats;
@@ -111,14 +110,7 @@ export const calculateStats = (lineup, taggedBands) => {
         data.intensity = Math.min(100, Math.round((data.count / limit) * 100));
     });
 
-    // 2. Déterminer le Top Style pour le titre
-    let maxStyleCount = 0;
-    Object.entries(stats.styles).forEach(([style, count]) => {
-        if (count > maxStyleCount) {
-            maxStyleCount = count;
-            stats.topStyle = style + (style.endsWith('s') ? '' : ' Warrior');
-        }
-    });
+
 
     // 3. Clash Detection (Concurrency Based)
     // We use all bands the user has expressed interest in (Must See, Interested, Curious)
