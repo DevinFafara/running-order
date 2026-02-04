@@ -127,20 +127,36 @@ const StatsPanel = ({ onClose }) => {
                 <div className="stats-panel-intensity-grid">
                     {Object.entries(stats.days).map(([day, data]) => {
                         const percentage = data.completionRate || 0; // Use completion rate for intensity
-                        let colorClass = 'low';
-                        let message = "Ça va le faire 😎";
-
-                        if (percentage >= 50 && percentage < 80) {
-                            colorClass = 'medium';
-                            message = "Rythme soutenu 🤘";
-                        } else if (percentage >= 80) {
-                            colorClass = 'high';
-                            message = "Grosse journée en vue ! 😈";
-                        }
-
                         // Filter Clashes for this day
                         const dayClashes = stats.clashesExtended ? stats.clashesExtended.filter(c => c.day === day) : [];
                         const hasClashes = dayClashes.length > 0;
+                        const clashCount = dayClashes.length;
+
+                        // LOGIC: Badge Message & Color
+                        let colorClass = 'low';
+                        let message = "Promenade de santé ☁️";
+
+                        // 1. Percentage Rules
+                        if (percentage >= 50 && percentage < 75) {
+                            colorClass = 'medium';
+                            message = "Rythme de croisière 😎";
+                        } else if (percentage >= 75 && percentage < 90) {
+                            colorClass = 'high';
+                            message = "Grosse journée 🔥";
+                        } else if (percentage >= 90) {
+                            colorClass = 'critical';
+                            message = "Mode Berserker ⚔️";
+                        }
+
+                        // 2. Clash Override Rules
+                        if (clashCount > 2) {
+                            colorClass = 'critical'; // Force critical
+                            // Only override message if not already critical "Berserker"
+                            if (percentage < 90) {
+                                message = "Sprint infernal 🏃";
+                            }
+                        }
+
                         const isExpanded = expandedDays[day];
 
                         return (
@@ -158,46 +174,6 @@ const StatsPanel = ({ onClose }) => {
                                         style={{ width: `${Math.min(percentage, 100)}%` }}
                                     ></div>
                                 </div>
-
-                                {/* Stage Distribution Bar (Logos) */}
-                                <div className="stats-panel-stage-logos-row">
-                                    {[...MAIN_STAGES]
-                                        .filter(stageKey => (data.stages && data.stages[stageKey]) > 0)
-                                        .sort((a, b) => {
-                                            const countA = (data.stages && data.stages[a]) || 0;
-                                            const countB = (data.stages && data.stages[b]) || 0;
-                                            if (countB !== countA) return countB - countA; // Descending
-                                            return MAIN_STAGES.indexOf(a) - MAIN_STAGES.indexOf(b); // Tie-breaker
-                                        })
-                                        .map(stageKey => {
-                                            const count = data.stages[stageKey];
-                                            const config = STAGE_CONFIG[stageKey];
-                                            return (
-                                                <div
-                                                    key={stageKey}
-                                                    className="stage-logo-item"
-                                                    style={{
-                                                        flex: count,
-                                                        backgroundColor: config.themeColor || 'rgba(255,255,255,0.1)'
-                                                    }}
-                                                    title={`${config.name}: ${count} groupes`}
-                                                >
-                                                    <img src={config.icon} alt={config.name} className="stage-logo-img" />
-                                                </div>
-                                            );
-                                        })}
-                                </div>
-
-                                {/* Daily Persona Title Only (Pie Chart Removed) */}
-                                <div className="daily-rank-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginTop: '10px', marginBottom: '10px' }}>
-                                    <div className="daily-rank-icon">
-                                        <i className="fa-solid fa-medal"></i>
-                                    </div>
-                                    <div className="daily-rank-title">
-                                        {data.persona?.title || "Simple Festivalier"}
-                                    </div>
-                                </div>
-
 
                                 {hasClashes ? (
                                     <div className="stats-panel-day-clashes">
@@ -238,6 +214,45 @@ const StatsPanel = ({ onClose }) => {
                                         </div>
                                     </div>
                                 )}
+
+                                {/* Stage Distribution Bar (Logos) */}
+                                <div className="stats-panel-stage-logos-row">
+                                    {[...MAIN_STAGES]
+                                        .filter(stageKey => (data.stages && data.stages[stageKey]) > 0)
+                                        .sort((a, b) => {
+                                            const countA = (data.stages && data.stages[a]) || 0;
+                                            const countB = (data.stages && data.stages[b]) || 0;
+                                            if (countB !== countA) return countB - countA; // Descending
+                                            return MAIN_STAGES.indexOf(a) - MAIN_STAGES.indexOf(b); // Tie-breaker
+                                        })
+                                        .map(stageKey => {
+                                            const count = data.stages[stageKey];
+                                            const config = STAGE_CONFIG[stageKey];
+                                            return (
+                                                <div
+                                                    key={stageKey}
+                                                    className="stage-logo-item"
+                                                    style={{
+                                                        flex: count,
+                                                        backgroundColor: config.themeColor || 'rgba(255,255,255,0.1)'
+                                                    }}
+                                                    title={`${config.name}: ${count} groupes`}
+                                                >
+                                                    <img src={config.icon} alt={config.name} className="stage-logo-img" />
+                                                </div>
+                                            );
+                                        })}
+                                </div>
+
+                                {/* Daily Persona Title Only (Pie Chart Removed) */}
+                                <div className="daily-rank-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginTop: '10px', marginBottom: '10px' }}>
+                                    <div className="daily-rank-icon">
+                                        <i className="fa-solid fa-medal"></i>
+                                    </div>
+                                    <div className="daily-rank-title">
+                                        {data.persona?.title || "Simple Festivalier"}
+                                    </div>
+                                </div>
                             </div>
                         );
                     })}
