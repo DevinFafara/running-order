@@ -227,6 +227,13 @@ export const CheckedStateProvider = ({ children }) => {
         }));
     };
 
+    const clearAllFavorites = () => {
+        setState(prev => ({
+            ...prev,
+            taggedBands: {}
+        }));
+    };
+
     return (
         <CheckedStateContext.Provider value={{
             state,
@@ -242,7 +249,8 @@ export const CheckedStateProvider = ({ children }) => {
             resetInterestColors,
             updateNote,
             toggleScene,
-            setScenes
+            setScenes,
+            clearAllFavorites
         }}>
             {children}
         </CheckedStateContext.Provider>

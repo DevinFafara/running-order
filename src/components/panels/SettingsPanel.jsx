@@ -3,8 +3,9 @@ import { useCheckedState } from '../../context/CheckedStateContext';
 import { INTEREST_LEVELS, INTEREST_ORDER } from '../../constants';
 
 const SettingsPanel = ({ isOpen, onClose }) => {
-    const { state, setState, getInterestColor, setInterestColor, resetInterestColors } = useCheckedState();
+    const { state, setState, getInterestColor, setInterestColor, resetInterestColors, clearAllFavorites } = useCheckedState();
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+    const [confirmDelete, setConfirmDelete] = useState(false);
 
     useEffect(() => {
         const handleResize = () => setWindowWidth(window.innerWidth);
@@ -127,6 +128,39 @@ const SettingsPanel = ({ isOpen, onClose }) => {
                     </label>
 
 
+                </div>
+
+                {/* Zone de danger */}
+                <div className="settings-section">
+                    <h3>Zone de danger</h3>
+                    <button
+                        className="settings-reset-btn danger"
+                        style={{
+                            width: '100%',
+                            marginTop: '10px',
+                            backgroundColor: confirmDelete ? '#b91c1c' : '#dc2829',
+                            fontWeight: confirmDelete ? 'bold' : 'normal'
+                        }}
+                        onClick={() => {
+                            if (confirmDelete) {
+                                clearAllFavorites();
+                                onClose();
+                                setConfirmDelete(false);
+                            } else {
+                                setConfirmDelete(true);
+                                // Reset confirmation after 3 seconds if not clicked
+                                setTimeout(() => setConfirmDelete(false), 3000);
+                            }
+                        }}
+                    >
+                        <i className={`fa-solid ${confirmDelete ? 'fa-triangle-exclamation' : 'fa-trash'}`} style={{ marginRight: '8px' }}></i>
+                        {confirmDelete ? "CONFIRMER LA SUPPRESSION ?" : "Effacer tous les favoris"}
+                    </button>
+                    {confirmDelete && (
+                        <p style={{ color: '#ff6b6b', fontSize: '0.8em', marginTop: '5px', textAlign: 'center' }}>
+                            Action irréversible.
+                        </p>
+                    )}
                 </div>
             </div>
         </div>
