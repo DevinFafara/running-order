@@ -37,6 +37,17 @@ const CreditsPanel = ({ isOpen, onClose }) => {
                                 Hellfest Open Air
                             </a>
                         </li>
+                        <li>
+                            <span className="credit-label">La communauté</span>
+                            <a
+                                href="https://forum.hellfest.fr/"
+                                target="_blank"
+                                rel="noreferrer"
+                                className="credit-link"
+                            >
+                                Hellfest Forum
+                            </a>
+                        </li>
                     </ul>
 
                     <div className="credits-footer">

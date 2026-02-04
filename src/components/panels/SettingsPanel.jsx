@@ -104,28 +104,7 @@ const SettingsPanel = ({ isOpen, onClose }) => {
                         </div>
                     </label>
 
-                    <label className={`settings-option ${!canUseExtendedView ? 'disabled' : ''}`}>
-                        <div className="settings-option-info">
-                            <i className="fa-solid fa-table-columns"></i>
-                            <div>
-                                <span className="settings-option-title">Vue étendue</span>
-                                <span className="settings-option-desc">
-                                    {canUseExtendedView
-                                        ? 'Afficher chaque scène séparément'
-                                        : 'Nécessite un écran ≥1200px'}
-                                </span>
-                            </div>
-                        </div>
-                        <div className="toggle-switch">
-                            <input
-                                type="checkbox"
-                                checked={!state.compact && canUseExtendedView}
-                                onChange={toggleCompact}
-                                disabled={!canUseExtendedView}
-                            />
-                            <span className="toggle-slider"></span>
-                        </div>
-                    </label>
+                    {/* (Option Vue étendue déplacée dans DayView) */}
 
 
                 </div>

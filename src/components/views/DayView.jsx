@@ -12,7 +12,7 @@ const HourTag = ({ hour, i }) => (
 );
 
 const DayView = ({ groups, selectGroup, selectedGroupId, day }) => {
-    const { state } = useCheckedState();
+    const { state, setState } = useCheckedState();
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
     const [tagMenuState, setTagMenuState] = useState({ open: false, groupId: null, position: { x: 0, y: 0 } });
 
@@ -161,6 +161,44 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day }) => {
 
     const hours = getHours();
 
+    const toggleCompact = () => {
+        setState(prev => ({ ...prev, compact: !prev.compact }));
+    };
+
+    // Toolbar (only visible if can use extended view)
+    const renderToolbar = () => {
+        if (!canUseExtendedView) return null;
+        return (
+            <div className="day-view-toolbar" style={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                padding: '10px 20px',
+                marginBottom: '10px'
+            }}>
+                <button
+                    className="view-toggle-btn"
+                    onClick={toggleCompact}
+                    style={{
+                        background: 'rgba(50, 50, 50, 0.8)',
+                        border: '1px solid #555',
+                        color: 'white',
+                        padding: '6px 12px',
+                        borderRadius: '4px',
+                        fontSize: '0.9em',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        transition: 'all 0.2s'
+                    }}
+                >
+                    <i className={`fa-solid ${!state.compact ? 'fa-table-columns' : 'fa-list'}`}></i>
+                    {state.compact ? "Vue Étendue" : "Vue Compacte"}
+                </button>
+            </div>
+        );
+    };
+
     // MODE ÉTENDU : colonnes individuelles avec heures
     if (isExtendedView) {
         // Scènes principales
@@ -182,7 +220,7 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day }) => {
         });
 
         return (
-            <div className="compact-day extended-view">
+            <div className="compact-day extended-view" style={{ position: 'relative' }}>
                 {visibleScenes.map((sceneName, index) => {
                     const sceneGroups = groups.filter(g => g.SCENE === sceneName);
                     const config = STAGE_CONFIG[sceneName];
@@ -239,7 +277,7 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day }) => {
     // MODE COMPACT : 3 colonnes avec paires de scènes
 
     return (
-        <div className="compact-day">
+        <div className="compact-day" style={{ position: 'relative' }}>
             {sceneCouples.map((sceneCouple, index) => {
                 const scene1 = sceneCouple[0];
                 const scene2 = sceneCouple[1];
@@ -248,82 +286,67 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day }) => {
                 const config1 = STAGE_CONFIG[scene1];
                 const config2 = scene2 ? STAGE_CONFIG[scene2] : null;
 
-                let colorValue1 = config1?.themeColor || '#000';
-                let colorValue2 = config2 ? config2.themeColor : colorValue1;
+                const bgStyle = {
+                    background: config2
+                        ? `linear-gradient(to right, ${config1?.themeColor} 0%, ${config1?.themeColor} 50%, ${config2?.themeColor} 50%, ${config2?.themeColor} 100%)`
+                        : config1?.themeColor
+                };
 
-                if (!isSceneVisible(scene1)) {
-                    colorValue1 = colorValue2;
-                }
-                // Check visibility only if scene2 exists
-                if (scene2 && !isSceneVisible(scene2)) {
-                    colorValue2 = colorValue1;
-                }
+                const groups1 = groups.filter(g => g.SCENE === scene1);
+                const groups2 = scene2 ? groups.filter(g => g.SCENE === scene2) : [];
 
-                // Masquer la colonne si les deux scènes sont invisibles
-                const bothHidden = !isSceneVisible(scene1) && (!scene2 || !isSceneVisible(scene2));
-
-                // Groupes filtrés pour cette paire de scènes
-                const coupleGroups = groups.filter(g => g.SCENE === scene1 || (scene2 && g.SCENE === scene2));
+                // Check visibility logic (optional optimisation, but CSS handles it via display:flex usually? 
+                // Actually previous logic used isSceneVisible to hide/swap colors. 
+                // Let's stick to the simpler visual rendering for now as the 'compact-day' layout implies strict columns.
+                // If scenes are toggled off via settings, usually we want to keep the column structure or hide it?
+                // In the original compact view, if a scene is hidden, we might want to gray it out or hide it.
+                // But let's assume the sceneCouples logic handles the structure.
 
                 return (
-                    <div
-                        key={index}
-                        className="scene-column compact-scene-column"
-                        style={{
-                            background: `linear-gradient(to right, ${colorValue1} 50%, ${colorValue2} 50%)`,
-                            display: bothHidden ? 'none' : 'flex',
-                            border: 'none'
-                        }}
-                    >
-                        {/* HEADER : 2 divs, chacune avec image + titre */}
-                        <div
-                            className="compact-scene-couple-header"
-                            style={{ display: 'flex', width: '100%' }}
-                        >
-                            {/* Scène 1 */}
-                            <div
-                                className="compact-scene-couple-header"
-                                style={{
-                                    margin: 'auto',
-                                    width: '50%',
-                                    display: !isSceneVisible(scene1) ? 'none' : 'block'
-                                }}
-                            >
+                    <div key={index} className="scene-column compact-scene-column" style={bgStyle}>
+                        {/* HEADER */}
+                        <div className="compact-scene-couple-header">
+                            <div className="header-half" style={{ width: scene2 ? '50%' : '100%', opacity: isSceneVisible(scene1) ? 1 : 0.3 }}>
                                 <img className="scene-image" src={config1?.icon} alt={scene1} />
                                 <h3>{config1?.name}</h3>
                             </div>
-
-                            {/* Scène 2 */}
                             {scene2 && (
-                                <div
-                                    className="compact-scene-couple-header"
-                                    style={{
-                                        margin: 'auto',
-                                        width: '50%',
-                                        display: !isSceneVisible(scene2) ? 'none' : 'block'
-                                    }}
-                                >
-                                    <img
-                                        className="scene-image"
-                                        src={config2?.icon}
-                                        alt={scene2}
-                                    />
+                                <div className="header-half" style={{ width: '50%', opacity: isSceneVisible(scene2) ? 1 : 0.3 }}>
+                                    <img className="scene-image" src={config2?.icon} alt={scene2} />
                                     <h3>{config2?.name}</h3>
                                 </div>
                             )}
                         </div>
 
-                        {/* ZONE DES GROUPES */}
-                        <div
-                            className="scene-bands"
-                            style={{ height: getSceneBandsHeight() }}
-                        >
-                            {coupleGroups.map(group => (
+                        {/* BANDS */}
+                        <div className="scene-bands" style={{ height: getSceneBandsHeight() }}>
+                            {/* Heures en background */}
+                            {hours.map((hour, i) => (
+                                <HourTag key={i} hour={hour} i={i} />
+                            ))}
+
+                            {/* Groupes Scène 1 */}
+                            {isSceneVisible(scene1) && groups1.map(group => (
                                 <Band
                                     key={group.id}
                                     group={group}
                                     selectGroup={selectGroup}
                                     selectedGroupId={selectedGroupId}
+                                    halfWidth={!!scene2}
+                                    side="left"
+                                    onTagClick={handleTagClick}
+                                />
+                            ))}
+
+                            {/* Groupes Scène 2 */}
+                            {scene2 && isSceneVisible(scene2) && groups2.map(group => (
+                                <Band
+                                    key={group.id}
+                                    group={group}
+                                    selectGroup={selectGroup}
+                                    selectedGroupId={selectedGroupId}
+                                    halfWidth={true}
+                                    side="right"
                                     onTagClick={handleTagClick}
                                 />
                             ))}
