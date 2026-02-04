@@ -60,11 +60,10 @@ const StatsPanel = ({ onClose }) => {
     };
 
     const RANKS = [
-        { label: "TRVE", bottom: "80%" },
-        { label: "FESTIVALIER", bottom: "60%" },
-        { label: "AMATEUR", bottom: "40%" },
-        { label: "PETIT JOUEUR", bottom: "20%" },
-        { label: "TOURISTE", bottom: "0%" }
+        { label: "Trve", bottom: "90%" },
+        { label: "Hellbanger", bottom: "60%" },
+        { label: "Amateur", bottom: "30%" },
+        { label: "Touriste", bottom: "0%" }
     ];
 
     return (
@@ -72,7 +71,7 @@ const StatsPanel = ({ onClose }) => {
             <div className="stats-panel-container" onClick={e => e.stopPropagation()}>
                 <button className="stats-panel-close-btn" onClick={onClose}>×</button>
 
-                <h2 className="stats-panel-title">My Hellfest DNA 🧬</h2>
+                <h2 className="stats-panel-title">Mon Profil</h2>
 
                 <div className="stats-panel-rank-widget">
 

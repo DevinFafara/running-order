@@ -294,11 +294,10 @@ export const calculateStats = (lineup, taggedBands) => {
     }
 
     // Détermination du Rang
-    // 5 paliers : 0-20 (Touriste), 20-40 (Petit Joueur), 40-60 (Amateur), 60-80 (Festivalier), 80+ (Trve)
-    if (stats.averageCompletion < 20) stats.rank = "Touriste";
-    else if (stats.averageCompletion < 40) stats.rank = "Petit Joueur";
+    // 4 paliers : 0-30 (Touriste), 30-60 (Amateur), 60-90 (Hellbanger), 90+ (Trve)
+    if (stats.averageCompletion < 30) stats.rank = "Touriste";
     else if (stats.averageCompletion < 60) stats.rank = "Amateur";
-    else if (stats.averageCompletion < 80) stats.rank = "Festivalier";
+    else if (stats.averageCompletion < 90) stats.rank = "Hellbanger";
     else stats.rank = "Trve";
 
     return stats;
