@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState } from 'react';
 import { useCheckedState } from '../../context/CheckedStateContext';
 import { useLineup } from '../../hooks/useLineup';
@@ -147,8 +146,11 @@ const StatsPanel = ({ onClose }) => {
                         return (
                             <div key={day} className="stats-panel-day-intensity">
                                 <div className="stats-panel-day-label">
-                                    <span>{day}</span>
-                                    <span className="stats-panel-count">{data.count} groupes prévu(s)</span>
+                                    <span style={{ fontWeight: 600 }}>{day}</span>
+                                    {message && <span className={`intensity-badge ${colorClass}`}>{message}</span>}
+                                </div>
+                                <div className="stats-panel-day-meta">
+                                    Taux d'occupation : {Math.round(percentage)}%
                                 </div>
                                 <div className="stats-panel-progress-bar-bg">
                                     <div
@@ -156,76 +158,6 @@ const StatsPanel = ({ onClose }) => {
                                         style={{ width: `${Math.min(percentage, 100)}%` }}
                                     ></div>
                                 </div>
-                                <div className={`stats-panel-warning-text ${colorClass}`}>{message}</div>
-
-                                {/* Detailed Columns: Stage Dist & Daily Rank */}
-                                {/* Detailed Columns: Stage Dist & Daily Rank */}
-                                <div className="stats-panel-day-columns">
-                                    <div className="stats-panel-day-column left">
-                                        <div className="stage-pie-svg-container">
-                                            {(() => {
-                                                if (!data.stages || data.count === 0) return (
-                                                    <div style={{ width: 45, height: 45, borderRadius: '50%', background: '#333' }} />
-                                                );
-
-                                                // Calculate totals
-                                                let totalStageCount = 0;
-                                                const segments = [];
-                                                Object.entries(data.stages).forEach(([stage, count]) => {
-                                                    totalStageCount += count;
-                                                    segments.push({ stage, count });
-                                                });
-
-                                                // Handle unknown stages/missing data
-                                                // Should we use data.count or totalStageCount as denominator? 
-                                                // Using totalStageCount ensures full circle.
-                                                if (totalStageCount === 0) return null;
-
-                                                let currentAngle = 0;
-                                                return (
-                                                    <svg width="45" height="45" viewBox="0 0 32 32">
-                                                        {segments.map((seg, i) => {
-                                                            const percentage = seg.count / totalStageCount;
-                                                            const angle = percentage * 360;
-
-                                                            // Calculate path
-                                                            const x1 = 16 + 16 * Math.cos(Math.PI * (currentAngle - 90) / 180);
-                                                            const y1 = 16 + 16 * Math.sin(Math.PI * (currentAngle - 90) / 180);
-                                                            const x2 = 16 + 16 * Math.cos(Math.PI * (currentAngle + angle - 90) / 180);
-                                                            const y2 = 16 + 16 * Math.sin(Math.PI * (currentAngle + angle - 90) / 180);
-
-                                                            const largeArc = angle > 180 ? 1 : 0;
-
-                                                            const pathData = totalStageCount === seg.count
-                                                                ? "M 16 0 A 16 16 0 1 1 15.99 0" // Full circle approximation
-                                                                : `M 16 16 L ${x1} ${y1} A 16 16 0 ${largeArc} 1 ${x2} ${y2} Z`;
-
-                                                            const color = STAGE_CONFIG[seg.stage]?.themeColor || '#555';
-
-                                                            currentAngle += angle;
-                                                            return <path key={i} d={pathData} fill={color} />;
-                                                        })}
-                                                    </svg>
-                                                );
-                                            })()}
-                                        </div>
-                                    </div>
-                                    <div className="stats-panel-day-column right">
-                                        <div className="daily-rank-icon">
-                                            <i className="fa-solid fa-medal"></i>
-                                        </div>
-                                        <div className="daily-rank-title">
-                                            {data.persona?.title || "Simple Festivalier"}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* DEBUG SCORES (Temporary) */}
-                                {data.persona?.scores && Object.keys(data.persona.scores).length > 0 && (
-                                    <div style={{ fontSize: '0.6rem', color: '#666', padding: '5px', textAlign: 'center', fontStyle: 'italic' }}>
-                                        Scores: {Object.entries(data.persona.scores).map(([k, v]) => `${k}=${v}`).join(', ')}
-                                    </div>
-                                )}
 
                                 {/* Stage Distribution Bar (Logos) */}
                                 <div className="stats-panel-stage-logos-row">
@@ -256,6 +188,17 @@ const StatsPanel = ({ onClose }) => {
                                         })}
                                 </div>
 
+                                {/* Daily Persona Title Only (Pie Chart Removed) */}
+                                <div className="daily-rank-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginTop: '10px', marginBottom: '10px' }}>
+                                    <div className="daily-rank-icon">
+                                        <i className="fa-solid fa-medal"></i>
+                                    </div>
+                                    <div className="daily-rank-title">
+                                        {data.persona?.title || "Simple Festivalier"}
+                                    </div>
+                                </div>
+
+
                                 {hasClashes ? (
                                     <div className="stats-panel-day-clashes">
                                         <div
@@ -263,7 +206,7 @@ const StatsPanel = ({ onClose }) => {
                                             onClick={() => toggleDay(day)}
                                         >
                                             <span className="clash-trigger-icon">⚠️</span>
-                                            <span className="clash-trigger-text">{dayClashes.length} Conflit{dayClashes.length > 1 ? 's' : ''} (Afficher)</span>
+                                            <span className="clash-trigger-text">{data.count} groupes — {dayClashes.length} Conflit{dayClashes.length > 1 ? 's' : ''} (Afficher)</span>
                                             <span className={`clash-chevron ${isExpanded ? 'open' : ''}`}>▼</span>
                                         </div>
 
@@ -291,7 +234,7 @@ const StatsPanel = ({ onClose }) => {
                                     <div className="stats-panel-day-clashes no-conflict">
                                         <div className="stats-panel-clash-trigger no-conflict">
                                             <span className="clash-trigger-icon">👍</span>
-                                            <span className="clash-trigger-text">Aucun conflit</span>
+                                            <span className="clash-trigger-text">{data.count} groupes — Aucun conflit</span>
                                         </div>
                                     </div>
                                 )}

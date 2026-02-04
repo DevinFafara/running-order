@@ -44,7 +44,7 @@
     /* --- LEFT: GAUGE AREA --- */
     .rank-gauge-area {
         position: relative;
-        width: 200px;
+        width: 100px;
         height: 150px;
         /* Reduced by 50% */
         margin-right: 20px;
@@ -355,21 +355,90 @@
     }
 
     .stats-panel-day-intensity {
-        margin-bottom: 10px;
+        margin-bottom: 20px;
+        padding: 15px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 8px;
     }
 
+    /* --- NEW HEADER LAYOUT --- */
     .stats-panel-day-label {
         display: flex;
         justify-content: space-between;
-        font-size: 0.85rem;
-        margin-bottom: 3px;
+        align-items: center;
+        font-size: 0.95rem;
+        /* A bit larger for header */
+
+        /* Pull out toward edges of parent padding (15px) */
+        margin: -15px -15px 15px -15px;
+        padding: 10px 15px;
+
+        background: rgba(0, 0, 0, 0.2);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 8px 8px 0 0;
+        /* Match parent radius top */
     }
 
+    .stats-panel-day-meta {
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        color: #888;
+        margin-bottom: 4px;
+        letter-spacing: 0.5px;
+    }
+
+    /* Compact Progress Bar */
     .stats-panel-progress-bar-bg {
         background: #333;
-        height: 8px;
+        height: 6px;
+        /* Reduced from 8px */
+        border-radius: 3px;
+        overflow: hidden;
+        margin-bottom: 8px;
+        /* Spacing before logos */
+    }
+
+    /* Compact Stage Logos */
+    .stats-panel-stage-logos-row {
+        display: flex;
+        height: 18px;
+        /* Reduced from default/block height */
         border-radius: 4px;
         overflow: hidden;
+        margin-bottom: 8px;
+        /* Spacing before Title */
+    }
+
+    .stage-logo-item {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+    }
+
+    .stage-logo-img {
+        max-height: 80%;
+        /* Fit within new smaller height */
+        max-width: 80%;
+        object-fit: contain;
+        opacity: 0.9;
+    }
+
+    /* Compact Title Container */
+    .daily-rank-container {
+        margin-top: 4px !important;
+        margin-bottom: 8px !important;
+    }
+
+    .daily-rank-title {
+        color: #FFD700;
+        font-weight: 700;
+        font-size: 0.85rem;
+        /* Slightly smaller */
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
     }
 
     .stats-panel-progress-bar-fill {
@@ -593,6 +662,46 @@
 
     .stats-panel-clash-trigger.no-conflict:hover {
         background: none;
+    }
+
+    /* --- PREMIUM BADGES & TITLES --- */
+    .intensity-badge {
+        font-size: 0.65rem;
+        padding: 2px 8px;
+        border-radius: 12px;
+        margin-left: 10px;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: inline-block;
+        vertical-align: middle;
+    }
+
+    .intensity-badge.low {
+        background: rgba(80, 200, 120, 0.2);
+        color: #50C878;
+        border: 1px solid rgba(80, 200, 120, 0.3);
+    }
+
+    .intensity-badge.medium {
+        background: rgba(255, 215, 0, 0.2);
+        color: #FFD700;
+        border: 1px solid rgba(255, 215, 0, 0.3);
+    }
+
+    .intensity-badge.high {
+        background: rgba(220, 40, 41, 0.2);
+        color: #dc2829;
+        border: 1px solid rgba(220, 40, 41, 0.3);
+    }
+
+    .daily-rank-title {
+        color: #FFD700;
+        font-weight: 700;
+        font-size: 0.95rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        text-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
     }
 
     /* --- DAILY COLUMNS (Pie + Rank) --- */
