@@ -216,25 +216,32 @@ const StatsPanel = ({ onClose }) => {
 
                                 {/* Stage Distribution Bar (Logos) */}
                                 <div className="stats-panel-stage-logos-row">
-                                    {MAIN_STAGES.map(stageKey => {
-                                        const count = (data.stages && data.stages[stageKey]) || 0;
-                                        if (count === 0) return null;
-                                        const config = STAGE_CONFIG[stageKey];
-                                        return (
-                                            <div
-                                                key={stageKey}
-                                                className="stage-logo-item"
-                                                style={{
-                                                    flex: count,
-                                                    minWidth: '30px',
-                                                    backgroundColor: config.themeColor || 'rgba(255,255,255,0.1)'
-                                                }}
-                                                title={`${config.name}: ${count} groupes`}
-                                            >
-                                                <img src={config.icon} alt={config.name} className="stage-logo-img" />
-                                            </div>
-                                        );
-                                    })}
+                                    {[...MAIN_STAGES]
+                                        .filter(stageKey => (data.stages && data.stages[stageKey]) > 0)
+                                        .sort((a, b) => {
+                                            const countA = (data.stages && data.stages[a]) || 0;
+                                            const countB = (data.stages && data.stages[b]) || 0;
+                                            if (countB !== countA) return countB - countA; // Descending
+                                            return MAIN_STAGES.indexOf(a) - MAIN_STAGES.indexOf(b); // Tie-breaker
+                                        })
+                                        .map(stageKey => {
+                                            const count = data.stages[stageKey];
+                                            const config = STAGE_CONFIG[stageKey];
+                                            return (
+                                                <div
+                                                    key={stageKey}
+                                                    className="stage-logo-item"
+                                                    style={{
+                                                        flex: count,
+                                                        minWidth: '30px',
+                                                        backgroundColor: config.themeColor || 'rgba(255,255,255,0.1)'
+                                                    }}
+                                                    title={`${config.name}: ${count} groupes`}
+                                                >
+                                                    <img src={config.icon} alt={config.name} className="stage-logo-img" />
+                                                </div>
+                                            );
+                                        })}
                                 </div>
 
                                 {hasClashes ? (
