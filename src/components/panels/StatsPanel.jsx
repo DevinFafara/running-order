@@ -88,15 +88,22 @@ const StatsPanel = ({ onClose }) => {
 
                         {/* The Labels (Absolute positioned relative to area, visible) */}
                         <div className="rank-gauge-labels">
-                            {RANKS.map((rank, i) => (
-                                <div
-                                    key={i}
-                                    className={`rank-label ${stats.averageCompletion >= parseInt(rank.bottom) ? 'active' : ''}`}
-                                    style={{ bottom: rank.bottom }}
-                                >
-                                    {rank.label}
-                                </div>
-                            ))}
+                            {RANKS.map((rank, i) => {
+                                const isCurrent = stats.rank.toLowerCase() === rank.label.toLowerCase();
+                                const isPassed = !isCurrent && stats.averageCompletion >= parseInt(rank.bottom);
+                                const isEmpty = stats.averageCompletion < parseInt(rank.bottom);
+                                const isActive = stats.averageCompletion >= parseInt(rank.bottom);
+
+                                return (
+                                    <div
+                                        key={i}
+                                        className={`rank-label ${isActive ? 'active' : ''} ${isPassed ? 'passed' : ''}`}
+                                        style={{ bottom: rank.bottom }}
+                                    >
+                                        {rank.label}
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
 
@@ -104,7 +111,7 @@ const StatsPanel = ({ onClose }) => {
                     <div className="stats-panel-rank-info">
                         <div className="stats-main-counter">
                             <span className="stats-count-val">{animatedTotal}</span>
-                            <span className="stats-count-label">Groupes vus</span>
+                            <span className="stats-count-label">Groupes prévus</span>
                         </div>
 
                         <div className="stats-rank-display">

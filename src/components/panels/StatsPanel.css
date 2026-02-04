@@ -122,13 +122,24 @@
         height: 2px;
     }
 
+    .rank-label.passed {
+        text-decoration: line-through;
+        text-shadow: none;
+        opacity: 0.5;
+        color: #aaa;
+    }
+
     /* --- RIGHT: INFO AREA --- */
     .stats-panel-rank-info {
-        flex-grow: 1;
+        flex: 1;
         display: flex;
         flex-direction: column;
         justify-content: center;
-        padding-left: 10px;
+        align-items: center;
+        /* Center horizontally */
+        text-align: center;
+        /* Center text */
+        gap: 10px;
     }
 
     .stats-main-counter {
@@ -650,6 +661,7 @@
         background: rgba(255, 255, 255, 0.05);
         border-radius: 4px;
         transition: transform 0.2s;
+        container-type: inline-size;
     }
 
     .stage-logo-item:hover {
@@ -665,5 +677,12 @@
         filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
         padding: 4px;
         /* Added padding */
+    }
+
+    /* Hide image if container is too small */
+    @container (max-width: 25px) {
+        .stage-logo-img {
+            display: none;
+        }
     }
 }
