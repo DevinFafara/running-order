@@ -727,6 +727,11 @@ nav button:hover {
     transition: padding-bottom 0.1s ease;
     /* Faster transition for drag sync */
   }
+
+  /* Compact header on mobile */
+  .card-header {
+    padding: 10px 15px !important;
+  }
 }
 
 /* === LOADING & ERROR === */

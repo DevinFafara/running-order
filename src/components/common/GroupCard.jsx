@@ -411,8 +411,9 @@ const GroupCard = ({ group, position, onClose, onPositionChange }) => {
                         left: '50%',
                         transform: 'translateX(-50%)',
                         width: '40px',
-                        height: '4px',
-                        backgroundColor: 'rgba(255,255,255,0.3)',
+                        height: '0',
+                        borderTop: '4px solid rgba(255,255,255,0.3)',
+                        backgroundColor: 'transparent',
                         borderRadius: '2px',
                         cursor: 'grab',
                         zIndex: 10
