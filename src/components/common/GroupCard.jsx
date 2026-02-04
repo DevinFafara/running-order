@@ -64,10 +64,21 @@ const GroupCard = ({ group, position, onClose, onPositionChange }) => {
                 if (cardRef.current) {
                     const rect = cardRef.current.getBoundingClientRect();
                     setMeasuredHeight(rect.height);
+                    // Sync global padding if not manually overridden or just generally
+                    if (!manualHeight) {
+                        document.documentElement.style.setProperty('--group-card-height', `${rect.height + 20}px`);
+                    }
                 }
             });
         }
-    }, [activeTab, group.id]);
+    }, [activeTab, group.id, manualHeight]);
+
+    // Also sync on manual height change
+    useEffect(() => {
+        if (manualHeight) {
+            document.documentElement.style.setProperty('--group-card-height', `${manualHeight + 20}px`);
+        }
+    }, [manualHeight]);
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -201,6 +212,9 @@ const GroupCard = ({ group, position, onClose, onPositionChange }) => {
 
         // Apply height directly
         cardRef.current.style.setProperty('--mobile-height', `${newHeight}px`);
+
+        // Broadcast to app level (for padding adjustment)
+        document.documentElement.style.setProperty('--group-card-height', `${newHeight + 20}px`); // +20px buffer
     };
 
     const handleTouchEnd = () => {
