@@ -3,6 +3,7 @@ import React, { useMemo, useState } from 'react';
 import { useCheckedState } from '../../context/CheckedStateContext';
 import { useLineup } from '../../hooks/useLineup';
 import { calculateStats, getLevelTitle } from '../../utils/statsUtils';
+import { STAGE_CONFIG, MAIN_STAGES } from '../../constants';
 import './StatsPanel.css';
 
 const StatsPanel = ({ onClose }) => {
@@ -149,6 +150,92 @@ const StatsPanel = ({ onClose }) => {
                                     ></div>
                                 </div>
                                 <div className={`stats-panel-warning-text ${colorClass}`}>{message}</div>
+
+                                {/* Detailed Columns: Stage Dist & Daily Rank */}
+                                {/* Detailed Columns: Stage Dist & Daily Rank */}
+                                <div className="stats-panel-day-columns">
+                                    <div className="stats-panel-day-column left">
+                                        <div className="stage-pie-svg-container">
+                                            {(() => {
+                                                if (!data.stages || data.count === 0) return (
+                                                    <div style={{ width: 45, height: 45, borderRadius: '50%', background: '#333' }} />
+                                                );
+
+                                                // Calculate totals
+                                                let totalStageCount = 0;
+                                                const segments = [];
+                                                Object.entries(data.stages).forEach(([stage, count]) => {
+                                                    totalStageCount += count;
+                                                    segments.push({ stage, count });
+                                                });
+
+                                                // Handle unknown stages/missing data
+                                                // Should we use data.count or totalStageCount as denominator? 
+                                                // Using totalStageCount ensures full circle.
+                                                if (totalStageCount === 0) return null;
+
+                                                let currentAngle = 0;
+                                                return (
+                                                    <svg width="45" height="45" viewBox="0 0 32 32">
+                                                        {segments.map((seg, i) => {
+                                                            const percentage = seg.count / totalStageCount;
+                                                            const angle = percentage * 360;
+
+                                                            // Calculate path
+                                                            const x1 = 16 + 16 * Math.cos(Math.PI * (currentAngle - 90) / 180);
+                                                            const y1 = 16 + 16 * Math.sin(Math.PI * (currentAngle - 90) / 180);
+                                                            const x2 = 16 + 16 * Math.cos(Math.PI * (currentAngle + angle - 90) / 180);
+                                                            const y2 = 16 + 16 * Math.sin(Math.PI * (currentAngle + angle - 90) / 180);
+
+                                                            const largeArc = angle > 180 ? 1 : 0;
+
+                                                            const pathData = totalStageCount === seg.count
+                                                                ? "M 16 0 A 16 16 0 1 1 15.99 0" // Full circle approximation
+                                                                : `M 16 16 L ${x1} ${y1} A 16 16 0 ${largeArc} 1 ${x2} ${y2} Z`;
+
+                                                            const color = STAGE_CONFIG[seg.stage]?.themeColor || '#555';
+
+                                                            currentAngle += angle;
+                                                            return <path key={i} d={pathData} fill={color} />;
+                                                        })}
+                                                    </svg>
+                                                );
+                                            })()}
+                                        </div>
+                                    </div>
+                                    <div className="stats-panel-day-column right">
+                                        <div className="daily-rank-icon">
+                                            <i className="fa-solid fa-user-astronaut" title="Astronaute"></i>
+                                            <i className="fa-solid fa-hat-wizard" title="Sorcier"></i>
+                                            <i className="fa-solid fa-ghost" title="Esprit"></i>
+                                            <i className="fa-solid fa-dragon" title="Dragon"></i>
+                                        </div>
+                                        <div className="daily-rank-title">Simple festivalier</div>
+                                    </div>
+                                </div>
+
+                                {/* Stage Distribution Bar (Logos) */}
+                                <div className="stats-panel-stage-logos-row">
+                                    {MAIN_STAGES.map(stageKey => {
+                                        const count = (data.stages && data.stages[stageKey]) || 0;
+                                        if (count === 0) return null;
+                                        const config = STAGE_CONFIG[stageKey];
+                                        return (
+                                            <div
+                                                key={stageKey}
+                                                className="stage-logo-item"
+                                                style={{
+                                                    flex: count,
+                                                    minWidth: '30px',
+                                                    backgroundColor: config.themeColor || 'rgba(255,255,255,0.1)'
+                                                }}
+                                                title={`${config.name}: ${count} groupes`}
+                                            >
+                                                <img src={config.icon} alt={config.name} className="stage-logo-img" />
+                                            </div>
+                                        );
+                                    })}
+                                </div>
 
                                 {hasClashes ? (
                                     <div className="stats-panel-day-clashes">

@@ -63,10 +63,10 @@ export const calculateStats = (lineup, taggedBands) => {
         totalMinutes: 0,
         styles: {},
         days: {
-            'Jeudi': { count: 0, minutes: 0 },
-            'Vendredi': { count: 0, minutes: 0 },
-            'Samedi': { count: 0, minutes: 0 },
-            'Dimanche': { count: 0, minutes: 0 },
+            'Jeudi': { count: 0, minutes: 0, stages: {} },
+            'Vendredi': { count: 0, minutes: 0, stages: {} },
+            'Samedi': { count: 0, minutes: 0, stages: {} },
+            'Dimanche': { count: 0, minutes: 0, stages: {} },
         },
         clashes: [],
     };
@@ -93,8 +93,22 @@ export const calculateStats = (lineup, taggedBands) => {
             if (stats.days[group.DAY]) {
                 stats.days[group.DAY].count++;
                 stats.days[group.DAY].minutes += duration;
+
+                // Stage Distribution (using SCENE)
+                let stageName = group.SCENE;
+                // Try to handle case differences if needed, or just assume consistent data.
+                // STAGE_CONFIG uses uppercase keys often in HF apps.
+                // But let's verify if we need to map. 
+                // We will store the raw name first.
+                // Actually, let's normalize to UPPERCASE to match STAGE_CONFIG keys if possible
+                // assuming STAGE_CONFIG keys are 'MAINSTAGE 1' etc.
+                if (stageName) {
+                    const normalized = stageName.toUpperCase();
+                    stats.days[group.DAY].stages[normalized] = (stats.days[group.DAY].stages[normalized] || 0) + 1;
+                }
             }
         }
+        // ...
 
         // Style Analysis
         const family = getStyleFamily(group.STYLE);
