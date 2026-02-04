@@ -11,7 +11,103 @@ const HourTag = ({ hour, i }) => (
     </div>
 );
 
-const DayView = ({ groups, selectGroup, selectedGroupId, day }) => {
+const CustomEventOverlay = ({ event, hours, onDelete }) => {
+    // 1. Calculate Top Position
+    const [startH, startM] = event.startTime.split(':').map(Number);
+    const [endH, endM] = event.endTime.split(':').map(Number);
+
+    // Find index of the start hour in the hours array
+    // We need to robustly match "HH:00" or just "HH"
+    const startHourStr = `${String(startH).padStart(2, '0')}:00`;
+    let startIndex = hours.indexOf(startHourStr);
+
+    // Fallback logic if start hour not found (e.g. event starts before first hour)
+    if (startIndex === -1) {
+        // Simple heuristic: if day starts 10:00 and event 09:00 -> -1 index? 
+        // For now, let's assume valid times within range. 
+        // If not found, check if it's "00" vs "24"? Hellfest data uses "00:00".
+        return null;
+    }
+
+    const top = (startIndex * 60) + startM;
+
+    // 2. Calculate Height
+    // Duration in minutes
+    // Handle midnight crossing for duration calculation
+    let startTotal = startH * 60 + startM;
+    let endTotal = endH * 60 + endM;
+
+    // Correction for crossing midnight (e.g. 23:00 to 01:00)
+    // In minutes of the day: 23*60 = 1380. 01*60 = 60.
+    // If end < start, add 24h (1440 min)
+    if (endTotal < startTotal) {
+        endTotal += 1440;
+    }
+
+    const duration = endTotal - startTotal;
+    const height = duration; // 1 min = 1 px
+
+    return (
+        <div
+            className="custom-event-overlay"
+            style={{
+                position: 'absolute',
+                top: `${top}px`,
+                height: `${height}px`,
+                left: '60px', // Right of Hours column
+                right: '10px',
+                backgroundColor: 'rgba(255, 215, 0, 0.15)', // Gold transparent
+                border: '2px dashed #FFD700',
+                borderRadius: '8px',
+                zIndex: 50, // Above everything
+                pointerEvents: 'auto', // Allow clicking delete
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '0 15px',
+                color: '#FFD700',
+                textShadow: '0 1px 2px rgba(0,0,0,0.8)',
+                backdropFilter: 'blur(2px)'
+            }}
+        >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '1.5rem' }}>
+                    {event.type === 'apero' && '🍺'}
+                    {event.type === 'repas' && '🍔'}
+                    {event.type === 'dodo' && '💤'}
+                    {event.type === 'autre' && '📍'}
+                </span>
+                <div>
+                    <div style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>{event.title}</div>
+                    <div style={{ fontSize: '0.8rem', opacity: 0.8 }}>{event.startTime} - {event.endTime}</div>
+                </div>
+            </div>
+
+            <button
+                onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(event.id);
+                }}
+                style={{
+                    background: 'rgba(0,0,0,0.5)',
+                    border: 'none',
+                    color: '#fff',
+                    borderRadius: '50%',
+                    width: '30px',
+                    height: '30px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                }}
+            >
+                <i className="fa-solid fa-trash"></i>
+            </button>
+        </div>
+    );
+};
+
+const DayView = ({ groups, selectGroup, selectedGroupId, day, customEvents = [], onDeleteCustomEvent }) => {
     const { state, setState } = useCheckedState();
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
     const [tagMenuState, setTagMenuState] = useState({ open: false, groupId: null, position: { x: 0, y: 0 } });
@@ -161,6 +257,9 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day }) => {
 
     const hours = getHours();
 
+    // Filter Custom Events for this day
+    const todaysEvents = customEvents.filter(e => e.day === currentDay);
+
     const toggleCompact = () => {
         setState(prev => ({ ...prev, compact: !prev.compact }));
     };
@@ -270,6 +369,16 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day }) => {
                         onClose={closeTagMenu}
                     />
                 )}
+
+                {/* Custom Events Overlay (Extended Mode) */}
+                {todaysEvents.map(event => (
+                    <CustomEventOverlay
+                        key={event.id}
+                        event={event}
+                        hours={hours}
+                        onDelete={onDeleteCustomEvent}
+                    />
+                ))}
             </div>
         );
     }
@@ -359,6 +468,16 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day }) => {
                     onClose={closeTagMenu}
                 />
             )}
+
+            {/* Custom Events Overlay (Compact Mode) */}
+            {todaysEvents.map(event => (
+                <CustomEventOverlay
+                    key={event.id}
+                    event={event}
+                    hours={hours}
+                    onDelete={onDeleteCustomEvent}
+                />
+            ))}
         </div>
     );
 };

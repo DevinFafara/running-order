@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSwipeable } from 'react-swipeable';
 import { HashRouter as Router, Route, Routes } from 'react-router-dom';
 import { DAYS } from './constants';
@@ -11,12 +11,35 @@ import WeeklyView from './components/views/WeeklyView';
 import GroupCard from './components/common/GroupCard';
 import './styles/App.css';
 
+import CustomEventModal from './components/modals/CustomEventModal';
+
 function AppContent() {
   const { data: groups, sideStagesData, loading, error } = useLineup();
   const { state, setDay } = useCheckedState();
   const [selectedGroup, setSelectedGroup] = useState(null);
-  const [popoverPosition, setPopoverPosition] = useState(null);
+  const [popoverPosition, setPopoverPosition] = useState(null); // This state is no longer used for GroupCard, but kept for now if other uses exist.
   const [viewMode, setViewMode] = useState('day'); // 'day' or 'week'
+
+  // Custom Events State
+  const [customEvents, setCustomEvents] = useState(() => {
+    const saved = localStorage.getItem('customEvents');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
+
+  // Save to LocalStorage
+  useEffect(() => {
+    localStorage.setItem('customEvents', JSON.stringify(customEvents));
+  }, [customEvents]);
+
+  const handleAddCustomEvent = (event) => {
+    setCustomEvents([...customEvents, event]);
+  };
+
+  const handleDeleteCustomEvent = (id) => {
+    setCustomEvents(customEvents.filter(e => e.id !== id));
+  };
+
 
   // SWIPE LOGIC
   const swipeHandlers = useSwipeable({
@@ -51,6 +74,8 @@ function AppContent() {
   const handleGroupSelect = (group, event) => {
     if (group) {
       setSelectedGroup(group);
+      // The popoverPosition logic is no longer directly used for GroupCard rendering in the new structure
+      // but keeping it here for now if it's used elsewhere or for future changes.
       if (event && !selectedGroup) {
         setPopoverPosition({ x: event.clientX + 20, y: event.clientY });
       }
@@ -87,6 +112,7 @@ function AppContent() {
         viewMode={viewMode}
         onViewChange={setViewMode}
         onInteraction={() => setSelectedGroup(null)}
+        onAddCustomEvent={() => setIsCustomModalOpen(true)}
       />
 
       {viewMode === 'day' && <Navigation />}
@@ -100,6 +126,8 @@ function AppContent() {
                 selectGroup={handleGroupSelect}
                 selectedGroupId={selectedGroup?.id}
                 day={state.day}
+                customEvents={customEvents}
+                onDeleteCustomEvent={handleDeleteCustomEvent}
               />
             ) : (
               <WeeklyView
@@ -109,17 +137,30 @@ function AppContent() {
             )
           } />
         </Routes>
-
-        {/* Modal Logic Reuse */}
-        {selectedGroup && popoverPosition && (
-          <GroupCard
-            group={selectedGroup}
-            position={popoverPosition}
-            onClose={() => handleGroupSelect(null)}
-            onPositionChange={setPopoverPosition}
-          />
-        )}
       </main>
+
+      {/* Custom Event Modal */}
+      <CustomEventModal
+        isOpen={isCustomModalOpen}
+        onClose={() => setIsCustomModalOpen(false)}
+        onSave={handleAddCustomEvent}
+        defaultDay={state.day}
+      />
+
+      {selectedGroup && (
+        <>
+          <div
+            className="group-card-overlay"
+            onClick={() => setSelectedGroup(null)}
+          />
+          <div className="group-card-container">
+            <GroupCard
+              group={selectedGroup}
+              onClose={() => setSelectedGroup(null)}
+            />
+          </div>
+        </>
+      )}
     </div>
   );
 }

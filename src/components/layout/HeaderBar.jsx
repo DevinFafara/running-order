@@ -6,7 +6,7 @@ import CreditsPanel from '../panels/CreditsPanel';
 
 import StatsPanel from '../panels/StatsPanel';
 
-const HeaderBar = ({ viewMode, onViewChange, onInteraction }) => {
+const HeaderBar = ({ viewMode, onViewChange, onInteraction, onAddCustomEvent }) => {
     const [playlistOpen, setPlaylistOpen] = useState(false);
     const [filterOpen, setFilterOpen] = useState(false);
     const [settingsOpen, setSettingsOpen] = useState(false);
@@ -21,6 +21,18 @@ const HeaderBar = ({ viewMode, onViewChange, onInteraction }) => {
                 </div>
 
                 <div className="toolbar">
+                    <button
+                        className="toolbar-btn"
+                        title="Ajouter un créneau perso"
+                        onClick={() => {
+                            if (onInteraction) onInteraction();
+                            onAddCustomEvent();
+                        }}
+                        style={{ border: '1px solid #FFD700', color: '#FFD700' }}
+                    >
+                        <i className="fa-solid fa-plus"></i>
+                    </button>
+
                     <button
                         className={`toolbar-btn ${viewMode === 'week' ? 'active' : ''}`}
                         title={viewMode === 'week' ? "Vue Journalière" : "Vue Semaine"}
