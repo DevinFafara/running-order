@@ -676,9 +676,13 @@ nav button:hover {
     border-radius: 12px 12px 0 0;
     height: var(--mobile-height, auto) !important;
     /* Use JS measured height */
-    max-height: 80vh !important;
-    /* Allow more space if content is long */
-    /* transform: none !important; - REMOVED to allow animation */
+    max-height: 475px !important;
+    /* User defined fixed limit */
+
+    /* Layout for scrolling */
+    display: flex;
+    flex-direction: column;
+
     /* Override position logic */
     box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.5);
     border: none;
@@ -689,14 +693,22 @@ nav button:hover {
     padding-bottom: env(safe-area-inset-bottom);
   }
 
-  .group-card.expanded {
-    height: 85vh !important;
-    max-height: 85vh !important;
-  }
+  /* Remove expanded class logic as manual drag replaces it */
 
   .drag-handle,
   .resize-btn {
     display: block;
+    touch-action: none;
+    /* Prevent browser scrolling on handle */
+  }
+
+  /* Flex body calculation */
+  .card-body {
+    flex: 1;
+    overflow-y: auto;
+    max-height: none !important;
+    min-height: 0;
+    /* Fix for nested flex scroll */
   }
 
   @keyframes slide-up {
@@ -707,15 +719,6 @@ nav button:hover {
     to {
       transform: translateY(0);
     }
-  }
-
-  .card-body {
-    max-height: 55vh;
-    transition: max-height 0.3s ease;
-  }
-
-  .group-card.expanded .card-body {
-    max-height: 75vh;
   }
 
   /* Padding when GroupCard is open to show content behind it */

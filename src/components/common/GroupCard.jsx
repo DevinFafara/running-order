@@ -23,6 +23,7 @@ const GroupCard = ({ group, position, onClose, onPositionChange }) => {
     const [measuredHeight, setMeasuredHeight] = useState(null);
     const [showTagDropdown, setShowTagDropdown] = useState(false);
     const [expanded, setExpanded] = useState(false);
+    const [manualHeight, setManualHeight] = useState(null);
 
     // Swipe logic for resizing
     const swipeHandlers = useSwipeable({
@@ -189,8 +190,8 @@ const GroupCard = ({ group, position, onClose, onPositionChange }) => {
         // Constraints
         // MAX: Header touches Toolbar. Toolbar ~50px.
         // Constraints
-        // MAX: Header touches Toolbar. Toolbar is 40px in CSS.
-        const maxHeight = window.innerHeight - 40;
+        // MAX: Fixed limit requested by user.
+        const maxHeight = 475;
 
         // MIN: Provide enough space to be grabbable, plus safe area.
         const minHeight = 80;
@@ -213,6 +214,12 @@ const GroupCard = ({ group, position, onClose, onPositionChange }) => {
 
             // Re-apply transition slightly for UX feel or keep raw?
             cardRef.current.style.transition = '';
+
+            // Save manual height to state
+            const currentVar = cardRef.current.style.getPropertyValue('--mobile-height');
+            if (currentVar && currentVar.endsWith('px')) {
+                setManualHeight(parseFloat(currentVar));
+            }
         }
     };
 
@@ -271,6 +278,7 @@ const GroupCard = ({ group, position, onClose, onPositionChange }) => {
                                 marginBottom: '10px',
                                 display: 'flex',
                                 justifyContent: 'center',
+                                backgroundColor: 'black',
                                 // removed background and padding
                             }}>
                                 <img
@@ -368,7 +376,7 @@ const GroupCard = ({ group, position, onClose, onPositionChange }) => {
                 left: cardPosition.x,
                 top: cardPosition.y,
                 '--scene-color': sceneColor,
-                '--mobile-height': activeTab === 'infos' ? 'auto' : (measuredHeight ? `${measuredHeight}px` : 'auto'),
+                '--mobile-height': manualHeight ? `${manualHeight}px` : (activeTab === 'infos' ? 'auto' : (measuredHeight ? `${measuredHeight}px` : 'auto')),
                 zIndex: isDragging ? 1100 : 1000
             }}
         >
@@ -384,12 +392,16 @@ const GroupCard = ({ group, position, onClose, onPositionChange }) => {
                 <div
                     className="drag-handle"
                     style={{
+                        position: 'absolute',
+                        top: '6px',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
                         width: '40px',
                         height: '4px',
                         backgroundColor: 'rgba(255,255,255,0.3)',
                         borderRadius: '2px',
-                        margin: '0 auto 10px',
-                        cursor: 'grab'
+                        cursor: 'grab',
+                        zIndex: 10
                     }}
                 />
 
