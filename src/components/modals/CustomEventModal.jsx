@@ -4,7 +4,6 @@ import '../panels/StatsPanel.css'; // Re-use panel styles or create new ones? Le
 const CustomEventModal = ({ isOpen, onClose, onSave, onDelete, defaultDay, eventToEdit }) => {
     const [title, setTitle] = useState('');
     const [day, setDay] = useState(defaultDay || 'Jeudi');
-    // Removed unused startTime/endTime as we use split H/M logic now
     const [type, setType] = useState('apero'); // apero, repas, dodo, autre
 
     // State for split time fields
@@ -13,8 +12,14 @@ const CustomEventModal = ({ isOpen, onClose, onSave, onDelete, defaultDay, event
     const [endH, setEndH] = useState('13');
     const [endM, setEndM] = useState('00');
 
+    // UX States
+    const [errorMessage, setErrorMessage] = useState('');
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
     useEffect(() => {
         if (isOpen) {
+            setErrorMessage('');
+            setShowDeleteConfirm(false);
             if (eventToEdit) {
                 setTitle(eventToEdit.title || '');
                 setDay(eventToEdit.day || defaultDay || 'Jeudi');
@@ -36,8 +41,6 @@ const CustomEventModal = ({ isOpen, onClose, onSave, onDelete, defaultDay, event
             }
         }
     }, [isOpen, defaultDay, eventToEdit]);
-
-
 
     // Icons mapping
     const icons = {
@@ -61,6 +64,21 @@ const CustomEventModal = ({ isOpen, onClose, onSave, onDelete, defaultDay, event
 
     const handleCustomSubmit = (e) => {
         e.preventDefault();
+        setErrorMessage(''); // Clear previous errors
+
+        // Duration validation (min 30 mins)
+        const sTotal = parseInt(startH) * 60 + parseInt(startM);
+        let eTotal = parseInt(endH) * 60 + parseInt(endM);
+
+        if (eTotal < sTotal) {
+            eTotal += 24 * 60;
+        }
+
+        if (eTotal - sTotal < 30) {
+            setErrorMessage("La durée de l'événement doit être d'au moins 30 minutes.");
+            return;
+        }
+
         onSave({
             id: eventToEdit ? eventToEdit.id : Date.now(),
             title,
@@ -210,10 +228,26 @@ const CustomEventModal = ({ isOpen, onClose, onSave, onDelete, defaultDay, event
                         </div>
                     </div>
 
+                    {/* Error Message */}
+                    {errorMessage && (
+                        <div style={{
+                            color: '#ff6b6b',
+                            background: 'rgba(255,107,107,0.1)',
+                            padding: '10px',
+                            borderRadius: '5px',
+                            fontSize: '0.9rem',
+                            textAlign: 'center',
+                            border: '1px solid rgba(255,107,107,0.3)'
+                        }}>
+                            <i className="fa-solid fa-triangle-exclamation" style={{ marginRight: '5px' }}></i>
+                            {errorMessage}
+                        </div>
+                    )}
+
                     <button
                         type="submit"
                         style={{
-                            marginTop: '20px',
+                            marginTop: '10px',
                             padding: '12px',
                             background: '#FFD700',
                             color: '#000',
@@ -229,29 +263,72 @@ const CustomEventModal = ({ isOpen, onClose, onSave, onDelete, defaultDay, event
                     </button>
 
                     {eventToEdit && (
-                        <button
-                            type="button"
-                            onClick={() => {
-                                if (window.confirm('Voulez-vous vraiment supprimer cet événement ?')) {
-                                    onDelete(eventToEdit.id);
-                                    onClose();
-                                }
-                            }}
-                            style={{
-                                marginTop: '10px',
-                                padding: '12px',
-                                background: 'rgba(255, 0, 0, 0.2)',
-                                color: '#ff6b6b',
-                                fontWeight: 'bold',
+                        !showDeleteConfirm ? (
+                            <button
+                                type="button"
+                                onClick={() => setShowDeleteConfirm(true)}
+                                style={{
+                                    marginTop: '5px',
+                                    padding: '12px',
+                                    background: 'rgba(255, 0, 0, 0.15)',
+                                    color: '#ff6b6b',
+                                    fontWeight: 'bold',
+                                    border: '1px solid #ff6b6b',
+                                    borderRadius: '8px',
+                                    fontSize: '1rem',
+                                    cursor: 'pointer',
+                                    textTransform: 'uppercase',
+                                    transition: 'all 0.2s'
+                                }}
+                            >
+                                Supprimer
+                            </button>
+                        ) : (
+                            <div style={{
+                                marginTop: '5px',
+                                padding: '15px',
+                                background: 'rgba(0, 0, 0, 0.4)',
                                 border: '1px solid #ff6b6b',
                                 borderRadius: '8px',
-                                fontSize: '1rem',
-                                cursor: 'pointer',
-                                textTransform: 'uppercase'
-                            }}
-                        >
-                            Supprimer
-                        </button>
+                                textAlign: 'center',
+                                animation: 'fadeIn 0.2s'
+                            }}>
+                                <p style={{ color: 'white', margin: '0 0 15px 0', fontSize: '0.95rem' }}>
+                                    Voulez-vous vraiment supprimer ce créneau ?
+                                </p>
+                                <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowDeleteConfirm(false)}
+                                        style={{
+                                            padding: '8px 20px',
+                                            background: 'transparent',
+                                            border: '1px solid #aaa',
+                                            color: '#ccc',
+                                            borderRadius: '6px',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        Non
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => { onDelete(eventToEdit.id); onClose(); }}
+                                        style={{
+                                            padding: '8px 20px',
+                                            background: '#ff6b6b',
+                                            border: 'none',
+                                            color: 'white',
+                                            borderRadius: '6px',
+                                            cursor: 'pointer',
+                                            fontWeight: 'bold'
+                                        }}
+                                    >
+                                        Oui
+                                    </button>
+                                </div>
+                            </div>
+                        )
                     )}
 
                 </form>
