@@ -375,28 +375,32 @@
         margin: 5mm;
     }
 
+    html,
     body {
-        margin: 0;
-        padding: 0;
-        background: #121212 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: white !important;
+        color: black !important;
+        width: 100% !important;
+        height: auto !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
-        color: white !important;
     }
 
+    /* Hide everything except the grid */
     .weekly-view {
+        background: white !important;
+        padding: 0 !important;
+        margin: 0 !important;
         height: auto !important;
         min-height: unset !important;
         overflow: visible !important;
-        padding: 0 !important;
-        background: #121212 !important;
         width: 100% !important;
     }
 
     .weekly-header,
-    .weekly-header-left,
-    .weekly-header-center,
-    .weekly-header-right,
+    nav,
+    .navbar,
     .export-pdf-btn,
     .scene-filter-tiny-btn,
     .weekly-filter-btn {
@@ -406,51 +410,87 @@
     .weekly-grid {
         display: grid !important;
         grid-template-columns: repeat(4, 1fr) !important;
-        grid-auto-rows: min-content !important;
         gap: 5px !important;
         width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
         min-height: unset !important;
     }
 
     .weekly-day-column {
-        min-height: 850px !important;
-        background: rgba(255, 255, 255, 0.02) !important;
-        border: 1px solid #444 !important;
+        background: white !important;
+        border: 1px solid #ddd !important;
+        min-height: 180mm !important;
+        /* Ensure good coverage of A4 height */
         page-break-inside: avoid;
         padding-left: 35px !important;
     }
 
-    .weekly-day-column .weekly-time-ruler {
-        display: block !important;
-        opacity: 0.5 !important;
-    }
-
     .weekly-day-header {
-        background: rgba(255, 255, 255, 0.1) !important;
-        color: white !important;
+        background: #f0f0f0 !important;
+        color: black !important;
         font-family: 'Metal Mania' !important;
-        font-size: 1rem !important;
-        height: 35px !important;
+        font-size: 1.1rem !important;
+        border-bottom: 2px solid #333 !important;
+        height: 40px !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
     }
 
+    .weekly-day-content {
+        background: white !important;
+        min-height: 170mm !important;
+    }
+
+    .weekly-time-ruler {
+        display: block !important;
+        border-right: 1px solid #eee !important;
+        opacity: 1 !important;
+    }
+
+    .time-marker {
+        border-top: 1px dashed #eee !important;
+        color: #888 !important;
+    }
+
+    .time-marker span {
+        background: white !important;
+        color: #666 !important;
+    }
+
     .weekly-band-card {
         box-shadow: none !important;
-        page-break-inside: avoid !important;
         border-width: 1px !important;
-        background-color: inherit !important;
-        /* Keep the color applied by style attribute */
+        page-break-inside: avoid !important;
+        background-color: #f5f5f5 !important;
+        /* Default light grey for print if no color */
     }
 
-    .weekly-day-content {
-        min-height: 800px !important;
+    /* Preserve scene colors if applied via inline style */
+    .weekly-band-card[style*="background-color"] {
+        /* This will be overridden by inline styles unless !important is used here, 
+           but we want to allow the specific scene colors to show through. */
+        background-color: inherit;
     }
 
-    /* Force background colors to show in print */
-    * {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
+    /* Force dark text for readability on light backgrounds */
+    .weekly-band-name,
+    .weekly-band-info {
+        color: black !important;
+    }
+
+    .weekly-band-star {
+        color: #d4af37 !important;
+        text-shadow: none !important;
+    }
+
+    /* Refine custom events for print */
+    .weekly-custom-event {
+        background-color: rgba(0, 0, 0, 0.05) !important;
+        border: 1px solid #ccc !important;
+        color: black !important;
+        box-shadow: none !important;
+        text-shadow: none !important;
     }
 }
