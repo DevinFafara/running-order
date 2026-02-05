@@ -618,40 +618,35 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
             </div>
 
             <div className="weekly-grid">
-                {/* Time Ruler (every hour) */}
-                <div className="weekly-time-ruler">
-                    {Array.from({ length: 18 }).map((_, i) => {
-                        const h = START_HOUR + i;
-                        const label = h >= 24 ? `${h - 24}h` : `${h}h`;
+                {['Jeudi', 'Vendredi', 'Samedi', 'Dimanche'].map((day, dayIdx) => (
+                    <div key={day} className={`weekly-day-column col-${dayIdx}`}>
+                        {/* Time Ruler (every hour) - Now inside each column for responsive 2x2 alignment */}
+                        <div className="weekly-time-ruler">
+                            {Array.from({ length: 18 }).map((_, i) => {
+                                const h = START_HOUR + i;
+                                const label = h >= 24 ? `${h - 24}h` : `${h}h`;
 
-                        // Calculate position
-                        const minutesFromStart = i * 60;
-                        const originalTop = minutesFromStart * PIXELS_PER_MINUTE;
-                        const TOTAL_MINUTES = 18 * 60;
-                        const MAX_HEIGHT = TOTAL_MINUTES * PIXELS_PER_MINUTE;
+                                // Calculate position
+                                const minutesFromStart = i * 60;
+                                const originalTop = minutesFromStart * PIXELS_PER_MINUTE;
+                                const TOTAL_MINUTES = 18 * 60;
+                                const MAX_HEIGHT = TOTAL_MINUTES * PIXELS_PER_MINUTE;
 
-                        // For markers, they are 0-height lines usually, but 'top' position matters.
-                        // Inverted: NewTop = MAX_HEIGHT - OriginalTop
-                        // Wait, if 10h is at 0px originally.
-                        // Inverted: 10h should be at Bottom (MAX_HEIGHT).
-                        const top = state.reverse
-                            ? originalTop
-                            : MAX_HEIGHT - originalTop;
+                                const top = state.reverse
+                                    ? originalTop
+                                    : MAX_HEIGHT - originalTop;
 
-                        return (
-                            <div
-                                key={i}
-                                className="time-marker"
-                                style={{ top: top }}
-                            >
-                                {label}
-                            </div>
-                        );
-                    })}
-                </div>
-
-                {['Jeudi', 'Vendredi', 'Samedi', 'Dimanche'].map(day => (
-                    <div key={day} className="weekly-day-column">
+                                return (
+                                    <div
+                                        key={i}
+                                        className="time-marker"
+                                        style={{ top: top }}
+                                    >
+                                        <span>{label}</span>
+                                    </div>
+                                );
+                            })}
+                        </div>
                         <div className="weekly-day-header">{day}</div>
                         <div className="weekly-day-content">
                             {dayColumns[day].map((item, idx) => {

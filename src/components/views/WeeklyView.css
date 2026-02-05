@@ -138,42 +138,95 @@
     grid-template-columns: repeat(4, 1fr);
     gap: 10px;
     min-height: 1020px;
-    /* Ensure scrolling */
     position: relative;
-    padding-left: 40px;
-    /* Space for time ruler */
     flex: 1;
 }
 
-/* Time Ruler */
+/* Time Ruler - Now inside day column */
 .weekly-time-ruler {
     position: absolute;
     left: 0;
     top: 40px;
-    /* Below headers */
-    width: 40px;
-    height: 100%;
-    border-right: 1px solid #333;
+    /* Below day header */
+    width: 35px;
+    height: calc(100% - 40px);
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+    z-index: 5;
+    pointer-events: none;
+    display: none;
+    /* Hidden by default, shown via column selectors */
 }
+
+/* Show ruler only on the first day of each row by default */
+.weekly-day-column.col-0 .weekly-time-ruler {
+    display: block;
+}
+
 
 .time-marker {
     position: absolute;
     width: 100%;
     text-align: right;
     padding-right: 5px;
-    font-size: 0.75rem;
-    color: #666;
-    border-top: 1px dashed #333;
+    font-size: 0.65rem;
+    color: #555;
+    border-top: 1px dashed rgba(255, 255, 255, 0.05);
+}
+
+.time-marker span {
+    background: #121212;
+    padding: 0 2px;
 }
 
 /* Day Columns */
 .weekly-day-column {
     position: relative;
-    background: rgba(255, 255, 255, 0.02);
+    background: rgba(255, 255, 255, 0.01);
     border-radius: 4px;
     border: 1px solid #222;
     display: flex;
     flex-direction: column;
+    padding-left: 0;
+    transition: padding 0.3s;
+}
+
+/* Add padding to days having a visible ruler */
+
+.weekly-day-column.col-0 {
+    padding-left: 35px;
+}
+
+@media (max-width: 1200px) {
+    .weekly-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+    }
+
+    /* In 2-col layout, show ruler on col 0 and 2 (start of each row) */
+    .weekly-day-column.col-2 .weekly-time-ruler {
+        display: block;
+    }
+
+    .weekly-day-column.col-2 {
+        padding-left: 35px;
+    }
+}
+
+@media (max-width: 768px) {
+    .weekly-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* In 1-col layout, show ruler on every day? or just first? 
+       Let's show on every day for clarity when scrolling mobile. */
+    .weekly-time-ruler {
+        display: block;
+    }
+
+    .weekly-day-column {
+        padding-left: 35px;
+        margin-bottom: 20px;
+    }
 }
 
 .weekly-day-header {
