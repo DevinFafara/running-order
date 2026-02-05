@@ -14,7 +14,7 @@ const CustomEventModal = ({ isOpen, onClose, onSave, defaultDay }) => {
         }
     }, [isOpen, defaultDay]);
 
-    if (!isOpen) return null;
+
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -70,6 +70,8 @@ const CustomEventModal = ({ isOpen, onClose, onSave, defaultDay }) => {
         });
         onClose();
     };
+
+    if (!isOpen) return null;
 
     return (
         <div className="stats-panel-overlay" onClick={onClose}>

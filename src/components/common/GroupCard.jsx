@@ -99,7 +99,7 @@ const GroupCard = ({ group, position, onClose, onPositionChange }) => {
 
     // Position adjustment logic (boundaries)
     useEffect(() => {
-        if (cardRef.current && !isDragging) {
+        if (cardRef.current && !isDragging && position) {
             const rect = cardRef.current.getBoundingClientRect();
             const viewportWidth = window.innerWidth;
             const viewportHeight = window.innerHeight;
@@ -392,8 +392,8 @@ const GroupCard = ({ group, position, onClose, onPositionChange }) => {
             ref={cardRef}
             className={`group-card ${expanded ? 'expanded' : ''}`}
             style={{
-                left: cardPosition.x,
-                top: cardPosition.y,
+                left: cardPosition?.x,
+                top: cardPosition?.y,
                 '--scene-color': sceneColor,
                 '--mobile-height': manualHeight ? `${manualHeight}px` : (activeTab === 'infos' ? 'auto' : (measuredHeight ? `${measuredHeight}px` : 'auto')),
                 zIndex: isDragging ? 1100 : 1000
