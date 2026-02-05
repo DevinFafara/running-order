@@ -111,7 +111,22 @@ const ProfileModal = ({ isOpen, onClose, onOpenPanel, onShare }) => {
                     fontSize: '0.8rem',
                     color: '#666'
                 }}>
-                    J - ?? avant l'Enfer
+                    {(() => {
+                        const now = new Date();
+                        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                        const festivalStart = new Date(2026, 5, 18); // 18 Juin 2026
+                        const festivalEnd = new Date(2026, 5, 21);   // 21 Juin 2026
+
+                        if (today < festivalStart) {
+                            const diffTime = festivalStart - today;
+                            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                            return `J - ${diffDays} avant l'Enfer`;
+                        } else if (today <= festivalEnd) {
+                            return "Bon Festival !";
+                        } else {
+                            return "See you next year !";
+                        }
+                    })()}
                 </div>
             </div>
         </div>
