@@ -60,7 +60,20 @@ const FilterPanel = ({ isOpen, onClose }) => {
                         <i className="fa-solid fa-filter"></i>
                         Filtres
                     </h2>
-                    <button className="panel-close" onClick={onClose}>
+                    <button
+                        onClick={onClose}
+                        style={{
+                            position: 'absolute',
+                            top: '15px',
+                            right: '15px',
+                            background: 'transparent',
+                            border: 'none',
+                            color: '#666',
+                            fontSize: '1.2rem',
+                            cursor: 'pointer',
+                            padding: '5px'
+                        }}
+                    >
                         <i className="fa-solid fa-xmark"></i>
                     </button>
                 </div>

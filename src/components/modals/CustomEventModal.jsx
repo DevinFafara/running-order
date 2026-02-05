@@ -97,10 +97,24 @@ const CustomEventModal = ({ isOpen, onClose, onSave, onDelete, defaultDay, event
             <div className="stats-panel-container" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px', maxHeight: 'auto' }}>
                 <div style={{ position: 'relative', marginBottom: '20px', textAlign: 'center' }}>
                     <h2 style={{ margin: 0, color: '#FFD700', fontSize: '1.2rem', textTransform: 'uppercase' }}>{eventToEdit ? 'Modifier' : 'Ajouter'} un créneau</h2>
-                    <button onClick={onClose} style={{ position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#fff', fontSize: '1.2rem', cursor: 'pointer' }}>
-                        <i className="fa-solid fa-times"></i>
-                    </button>
                 </div>
+
+                <button
+                    onClick={onClose}
+                    style={{
+                        position: 'absolute',
+                        top: '15px',
+                        right: '15px',
+                        background: 'transparent',
+                        border: 'none',
+                        color: '#666',
+                        fontSize: '1.2rem',
+                        cursor: 'pointer',
+                        padding: '5px'
+                    }}
+                >
+                    <i className="fa-solid fa-xmark"></i>
+                </button>
 
                 <form onSubmit={handleCustomSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
 

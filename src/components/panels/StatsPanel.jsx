@@ -75,13 +75,25 @@ const StatsPanel = ({ onClose, customEvents = [] }) => {
     return (
         <div className="stats-panel-overlay" onClick={onClose}>
             <div className="stats-panel-container" onClick={e => e.stopPropagation()}>
-                <button className="stats-panel-close-btn" onClick={onClose}>×</button>
+                <button
+                    onClick={onClose}
+                    style={{
+                        position: 'absolute',
+                        top: '15px',
+                        right: '15px',
+                        background: 'transparent',
+                        border: 'none',
+                        color: '#666',
+                        fontSize: '1.2rem',
+                        cursor: 'pointer',
+                        padding: '5px'
+                    }}
+                >
+                    <i className="fa-solid fa-xmark"></i>
+                </button>
 
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
                     <h2 className="stats-panel-title" style={{ margin: 0 }}>Mon Profil</h2>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
-                        <h2 className="stats-panel-title" style={{ margin: 0 }}>Mon Profil</h2>
-                    </div>
                 </div>
 
                 <div className="stats-panel-rank-widget">
