@@ -91,8 +91,13 @@ const ContactsPanel = ({ isOpen, onClose, contacts, onDeleteContact, onCheckCont
                                         <div style={{ fontWeight: 'bold', color: '#fff', fontSize: '1rem' }}>
                                             {contact.username}
                                         </div>
-                                        <div style={{ fontSize: '0.75rem', color: '#888' }}>
-                                            {Object.keys(contact.data.bands).length} groupes
+                                        <div style={{ fontSize: '0.75rem', color: '#888', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                            <span>{Object.keys(contact.data.bands).length} groupes</span>
+                                            {contact.importedAt && (
+                                                <span style={{ fontSize: '0.7rem', opacity: 0.8 }}>
+                                                    Importé le {new Date(contact.importedAt).toLocaleDateString('fr-FR')} à {new Date(contact.importedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                                                </span>
+                                            )}
                                         </div>
                                     </div>
 
