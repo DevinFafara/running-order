@@ -267,6 +267,41 @@ function AppContent() {
         onExitGuestMode={() => setGuestRo(null)}
       />
 
+      {isGuestMode && (
+        <div style={{
+          backgroundColor: '#2196F3',
+          color: 'white',
+          padding: '10px 15px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          fontSize: '0.9rem',
+          fontWeight: 'bold',
+          boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+          zIndex: 90
+        }}>
+          <span>
+            <i className="fa-solid fa-eye" style={{ marginRight: '8px' }}></i>
+            Running-Order de {guestRo.username || 'Un ami'}
+          </span>
+          <button
+            onClick={() => setGuestRo(null)}
+            style={{
+              background: 'rgba(0,0,0,0.2)',
+              border: 'none',
+              borderRadius: '4px',
+              color: 'white',
+              padding: '5px 10px',
+              cursor: 'pointer',
+              fontWeight: 600,
+              fontSize: '0.8rem'
+            }}
+          >
+            Sortir du mode invité
+          </button>
+        </div>
+      )}
+
       {viewMode === 'day' && <Navigation />}
 
       <main className="content" {...swipeHandlers}>

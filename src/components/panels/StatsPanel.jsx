@@ -7,7 +7,11 @@ import ShareModal from '../modals/ShareModal';
 import './StatsPanel.css';
 
 const StatsPanel = ({ onClose, customEvents = [] }) => {
-    const { state } = useCheckedState();
+    const { state, userState } = useCheckedState();
+    // Use userState (real user data) if available, otherwise fall back to state (display state)
+    // This ensures StatsPanel always shows the USER's stats, even in Guest Mode.
+    const effectiveState = userState || state;
+
     const { data: groups, sideStagesData } = useLineup();
     const [expandedDays, setExpandedDays] = useState({});
     const [gaugeHeight, setGaugeHeight] = useState(0);
@@ -16,14 +20,14 @@ const StatsPanel = ({ onClose, customEvents = [] }) => {
 
     // Merge data if needed
     const allGroups = useMemo(() => {
-        return state.sideScenes && sideStagesData
+        return effectiveState.sideScenes && sideStagesData
             ? [...groups, ...sideStagesData]
             : groups;
-    }, [groups, sideStagesData, state.sideScenes]);
+    }, [groups, sideStagesData, effectiveState.sideScenes]);
 
     const stats = useMemo(() => {
-        return calculateStats(allGroups, state.taggedBands);
-    }, [allGroups, state.taggedBands]);
+        return calculateStats(allGroups, effectiveState.taggedBands);
+    }, [allGroups, effectiveState.taggedBands]);
 
     const hoursTotal = Math.round(stats.totalMinutes / 60);
 
@@ -290,7 +294,7 @@ const StatsPanel = ({ onClose, customEvents = [] }) => {
                 <ShareModal
                     isOpen={isShareModalOpen}
                     onClose={() => setIsShareModalOpen(false)}
-                    taggedBands={state.taggedBands}
+                    taggedBands={effectiveState.taggedBands}
                     customEvents={customEvents}
                 />
             </div>

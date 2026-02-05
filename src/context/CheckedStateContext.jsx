@@ -252,7 +252,8 @@ export const CheckedStateProvider = ({ children }) => {
 
     return (
         <CheckedStateContext.Provider value={{
-            state: displayState, // Transparence : les consommateurs voient l'état actif
+            state: displayState, // Transparence : les consommateurs voient l'état actif (Invité ou User)
+            userState: state, // L'état réel de l'utilisateur (pour les stats, préférences, etc.)
             isGuestMode: !!guestRo,
             guestRo,
             setGuestRo,
