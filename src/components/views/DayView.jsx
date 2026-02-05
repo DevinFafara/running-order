@@ -80,6 +80,34 @@ const CustomEventOverlay = ({ event, hours, onDelete, onEdit, columnCount, windo
                 transition: 'all 0.2s ease'
             }}
         >
+            {/* Left Button: Mask/Unmask */}
+            <button
+                onClick={(e) => {
+                    e.stopPropagation();
+                    setIsMasked(!isMasked);
+                }}
+                style={{
+                    position: 'absolute',
+                    left: '15px',
+                    background: 'rgba(0,0,0,0.3)',
+                    border: 'none',
+                    color: '#fff',
+                    borderRadius: '50%',
+                    width: '32px',
+                    height: '32px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'background 0.2s',
+                    zIndex: 51,
+                    pointerEvents: 'auto'
+                }}
+                title={isMasked ? "Afficher" : "Masquer"}
+            >
+                <i className={isMasked ? "fa-solid fa-eye" : "fa-solid fa-eye-slash"}></i>
+            </button>
+
             <div style={{ display: 'flex', alignItems: 'center', gap: '15px', opacity: isMasked ? 0.1 : 1, transition: 'opacity 0.2s' }}>
                 <span style={{ fontSize: '1.8rem' }}>
                     {event.type === 'apero' && '🍺'}
@@ -94,28 +122,6 @@ const CustomEventOverlay = ({ event, hours, onDelete, onEdit, columnCount, windo
             </div>
 
             <div style={{ position: 'absolute', right: '15px', display: 'flex', gap: '8px', pointerEvents: 'auto' }}>
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        setIsMasked(!isMasked);
-                    }}
-                    style={{
-                        background: 'rgba(0,0,0,0.3)',
-                        border: 'none',
-                        color: '#fff',
-                        borderRadius: '50%',
-                        width: '32px',
-                        height: '32px',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        transition: 'background 0.2s'
-                    }}
-                    title={isMasked ? "Afficher" : "Masquer"}
-                >
-                    <i className={isMasked ? "fa-solid fa-eye" : "fa-solid fa-eye-slash"}></i>
-                </button>
                 <button
                     onClick={(e) => {
                         e.stopPropagation();
@@ -138,30 +144,6 @@ const CustomEventOverlay = ({ event, hours, onDelete, onEdit, columnCount, windo
                     title="Modifier"
                 >
                     <i className="fa-solid fa-pen"></i>
-                </button>
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        if (window.confirm('Voulez-vous vraiment supprimer cet événement ?')) {
-                            onDelete(event.id);
-                        }
-                    }}
-                    style={{
-                        background: 'rgba(0,0,0,0.3)',
-                        border: 'none',
-                        color: '#fff',
-                        borderRadius: '50%',
-                        width: '32px',
-                        height: '32px',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        transition: 'background 0.2s'
-                    }}
-                    title="Supprimer"
-                >
-                    <i className="fa-solid fa-trash"></i>
                 </button>
             </div>
         </div>

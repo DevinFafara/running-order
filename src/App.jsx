@@ -185,6 +185,7 @@ function AppContent() {
           setEditingEvent(null);
         }}
         onSave={handleAddCustomEvent}
+        onDelete={handleDeleteCustomEvent}
         defaultDay={state.day}
         eventToEdit={editingEvent}
       />

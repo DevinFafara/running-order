@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import '../panels/StatsPanel.css'; // Re-use panel styles or create new ones? Let's use simple inline or basic styles for now to be quick.
 
-const CustomEventModal = ({ isOpen, onClose, onSave, defaultDay, eventToEdit }) => {
+const CustomEventModal = ({ isOpen, onClose, onSave, onDelete, defaultDay, eventToEdit }) => {
     const [title, setTitle] = useState('');
     const [day, setDay] = useState(defaultDay || 'Jeudi');
     // Removed unused startTime/endTime as we use split H/M logic now
@@ -227,6 +227,32 @@ const CustomEventModal = ({ isOpen, onClose, onSave, defaultDay, eventToEdit }) 
                     >
                         {eventToEdit ? 'Enregistrer' : 'Créer le créneau'}
                     </button>
+
+                    {eventToEdit && (
+                        <button
+                            type="button"
+                            onClick={() => {
+                                if (window.confirm('Voulez-vous vraiment supprimer cet événement ?')) {
+                                    onDelete(eventToEdit.id);
+                                    onClose();
+                                }
+                            }}
+                            style={{
+                                marginTop: '10px',
+                                padding: '12px',
+                                background: 'rgba(255, 0, 0, 0.2)',
+                                color: '#ff6b6b',
+                                fontWeight: 'bold',
+                                border: '1px solid #ff6b6b',
+                                borderRadius: '8px',
+                                fontSize: '1rem',
+                                cursor: 'pointer',
+                                textTransform: 'uppercase'
+                            }}
+                        >
+                            Supprimer
+                        </button>
+                    )}
 
                 </form>
             </div>
