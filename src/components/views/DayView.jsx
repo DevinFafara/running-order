@@ -11,45 +11,65 @@ const HourTag = ({ hour, i }) => (
     </div>
 );
 
-const CustomEventOverlay = ({ event, hours, onDelete, onEdit, columnCount, windowWidth }) => {
-    // 1. Calculate Top Position
+const CustomEventOverlay = ({ event, onEdit, columnCount, windowWidth }) => {
+    const { state } = useCheckedState();
+
+    // 1. Parse times
     const [startH, startM] = event.startTime.split(':').map(Number);
     const [endH, endM] = event.endTime.split(':').map(Number);
 
-    // Find index of the start hour in the hours array
-    // We need to robustly match "HH:00" or just "HH"
-    const startHourStr = `${String(startH).padStart(2, '0')}:00`;
-    let startIndex = hours.indexOf(startHourStr);
+    // 2. Adjust for night hours (< 4h) - mirroring Band.jsx lines 19-24
+    let hDebut = startH;
+    let hFin = endH;
+    if (hDebut < 4) hDebut += 24;
+    // Special handling if end < start (e.g. 23:00 - 01:00) where 01 < 4 is true, so +24 -> 25. Correct.
+    if (hFin < 4) hFin += 24;
 
-    // Fallback logic if start hour not found (e.g. event starts before first hour)
-    if (startIndex === -1) {
-        // Simple heuristic: if day starts 10:00 and event 09:00 -> -1 index? 
-        // For now, let's assume valid times within range. 
-        // If not found, check if it's "00" vs "24"? Hellfest data uses "00:00".
-        return null;
-    }
+    const debutMinutes = hDebut * 60 + startM;
+    const finMinutes = hFin * 60 + endM;
+    const duration = finMinutes - debutMinutes;
+    const height = duration; // 1px = 1min
 
-    const top = (startIndex * 60) + startM;
+    // 3. Calculate Top - mirroring Band.jsx getTop logic
+    const getTop = () => {
+        const day = event.day;
+        let endOfDayMinutes, startOfDayMinutes;
+        const extendedEnd = state.sideScenes ? 28 * 60 : 26 * 60;
 
-    // 2. Calculate Height
-    // Duration in minutes
-    // Handle midnight crossing for duration calculation
-    let startTotal = startH * 60 + startM;
-    let endTotal = endH * 60 + endM;
+        if (day === 'Mercredi') {
+            endOfDayMinutes = 25 * 60;
+            startOfDayMinutes = 16 * 60;
+        } else if (day === 'Jeudi') {
+            endOfDayMinutes = extendedEnd;
+            startOfDayMinutes = state.sideScenes ? 11 * 60 : 16 * 60;
+        } else if (day === 'Dimanche') {
+            endOfDayMinutes = 25 * 60;
+            startOfDayMinutes = 10 * 60;
+        } else {
+            endOfDayMinutes = extendedEnd;
+            startOfDayMinutes = 10 * 60;
+        }
 
-    // Correction for crossing midnight (e.g. 23:00 to 01:00)
-    // In minutes of the day: 23*60 = 1380. 01*60 = 60.
-    // If end < start, add 24h (1440 min)
-    if (endTotal < startTotal) {
-        endTotal += 1440;
-    }
+        // Adjust for hours 00:00-05:59 that weren't caught by <4 check (e.g. 05:00)
+        let adjustedDebut = debutMinutes;
+        let adjustedFin = finMinutes;
 
-    const duration = endTotal - startTotal;
-    const height = duration; // 1 min = 1 px
+        if (debutMinutes < 6 * 60) adjustedDebut += 24 * 60;
+        if (finMinutes < 6 * 60) adjustedFin += 24 * 60;
 
-    const colWidth = 300 + (windowWidth * 0.02); // Reduced from 2% to match CSS (actually 1% margin on each side? No, margin is usually GAP. Let's trust user formula)
-    // Formula: (nb de scene-column) * (300px + 2%)
-    // Note: The CSS might be treating margins differently, but we follow the requested formula.
+        if (state.reverse) {
+            return adjustedDebut - startOfDayMinutes;
+        } else {
+            return endOfDayMinutes - adjustedFin;
+        }
+    };
+
+    // Offset due to Scene Header (~85px) + Margin (10px)
+    // Must match CSS .compact-scene-couple-header min-height + .scene-bands margin-top
+    const HEADER_OFFSET = 95;
+    const top = getTop() + HEADER_OFFSET;
+
+    const colWidth = 300 + (windowWidth * 0.02);
     const calculatedWidth = columnCount * colWidth;
 
     const [isMasked, setIsMasked] = useState(false);
@@ -418,8 +438,6 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day, customEvents = [],
                     <CustomEventOverlay
                         key={event.id}
                         event={event}
-                        hours={hours}
-                        onDelete={onDeleteCustomEvent}
                         onEdit={onEditCustomEvent}
                         columnCount={visibleScenes.length}
                         windowWidth={windowWidth}
@@ -533,8 +551,6 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day, customEvents = [],
                 <CustomEventOverlay
                     key={event.id}
                     event={event}
-                    hours={hours}
-                    onDelete={onDeleteCustomEvent}
                     onEdit={onEditCustomEvent}
                     columnCount={visibleCouples.length}
                     windowWidth={windowWidth}
