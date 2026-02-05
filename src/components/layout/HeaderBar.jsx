@@ -9,11 +9,39 @@ const HeaderBar = () => {
     const [filterOpen, setFilterOpen] = useState(false);
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [creditsOpen, setCreditsOpen] = useState(false);
+    const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+    React.useEffect(() => {
+        const handleOnline = () => setIsOnline(true);
+        const handleOffline = () => setIsOnline(false);
+
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+
+        return () => {
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+        };
+    }, []);
 
     return (
         <>
             <header>
-                <span className="header-title">Hellfest-RO</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span className="header-title">Hellfest-RO</span>
+                    {!isOnline && (
+                        <span
+                            title="Mode Hors-ligne (Données en cache)"
+                            style={{
+                                color: '#e74c3c',
+                                fontSize: '0.8rem',
+                                animation: 'pulse 2s infinite'
+                            }}
+                        >
+                            <i className="fa-solid fa-cloud-slash"></i>
+                        </span>
+                    )}
+                </div>
 
                 <div className="toolbar">
                     <button
