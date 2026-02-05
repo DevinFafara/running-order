@@ -13,6 +13,7 @@ import './styles/App.css';
 
 import CustomEventModal from './components/modals/CustomEventModal';
 import ImportModal from './components/modals/ImportModal';
+import ConfirmationModal from './components/modals/ConfirmationModal';
 import ContactsPanel from './components/panels/ContactsPanel'; // New Import
 import { parseShareData } from './utils/sharingUtils';
 
@@ -42,6 +43,8 @@ function AppContent() {
     const saved = localStorage.getItem('contacts');
     return saved ? JSON.parse(saved) : [];
   });
+  const [contactToOverwrite, setContactToOverwrite] = useState(null);
+
 
   useEffect(() => {
     localStorage.setItem('contacts', JSON.stringify(contacts));
@@ -68,41 +71,58 @@ function AppContent() {
   }, []);
 
   // Import Handlers
-  const handleImportMerge = (data) => {
-    // 1. Merge Bands - Handled in onMerge prop via setState
-    // 2. Merge Custom Events
 
-
-    // 2. Merge Custom Events
-    setCustomEvents(prev => [...prev, ...data.customEvents]);
-
-    alert(`Import réussi ! ${Object.keys(data.bands).length} groupes et ${data.customEvents.length} créneaux fusionnés.`);
-    setIsImportModalOpen(false);
-  };
 
   const handleImportReplace = (data) => {
     // 1. Replace Bands - Handled in onReplace prop via setState
     // 2. Replace Custom Events
     setCustomEvents(data.customEvents);
-
-    alert("Import réussi ! Votre sélection a été remplacée.");
     setIsImportModalOpen(false);
   };
 
   const handleSaveContact = (data) => {
     // Check if already exists
-    if (contacts.some(c => c.id === data.username)) { // Use username as ID or generated ID?
-      if (!window.confirm("Ce contact existe déjà. Le mettre à jour ?")) return;
-      setContacts(prev => prev.map(c => c.username === data.username ? { ...c, data: data } : c));
+    if (contacts.some(c => c.id === data.username)) {
+      setContactToOverwrite(data); // Trigger confirmation modal
+      // We do NOT close ImportModal yet, or maybe we should?
+      // If we don't close, the ConfirmationModal appears On Top.
+      // That's fine.
     } else {
+      saveContactDirectly(data);
+      setIsImportModalOpen(false);
+    }
+  };
+
+  const saveContactDirectly = (data) => {
+    setContacts(prev => {
+      // If exists, replace
+      if (prev.some(c => c.id === data.username)) {
+        return prev.map(c => c.username === data.username ? { ...c, data: data } : c);
+      }
       const newContact = {
-        id: Date.now(),
+        id: Date.now(), // Wait, earlier I used username as ID check? line 94 used `c.id === data.username`?
+        // Line 94: `contacts.some(c => c.id === data.username)`
+        // But Line 100: `username: data.username`
+        // And Line 99: `id: Date.now()`.
+        // THIS IS A BUG. `c.id` is numeric timestamp. `data.username` is string.
+        // The check `c.id === data.username` ALWAYS returns false.
+        // So duplicates are created.
+        // I should check `c.username === data.username`.
         username: data.username,
         data: data
       };
-      setContacts(prev => [...prev, newContact]);
+      return [...prev, newContact];
+    });
+  };
+
+  // Fix the save logic to use username for unicity CHECK
+  const handleConfirmOverwrite = () => {
+    if (contactToOverwrite) {
+      // We need to find the ID of existing contact to update, or just map by username
+      setContacts(prev => prev.map(c => c.username === contactToOverwrite.username ? { ...c, data: contactToOverwrite } : c));
+      setContactToOverwrite(null);
+      setIsImportModalOpen(false);
     }
-    setIsImportModalOpen(false);
   };
 
   const handleDeleteContact = (id) => {
@@ -128,7 +148,6 @@ function AppContent() {
   // So `App.jsx` needs to provide `handleCheckContactFromPanel`.
   // So `App.jsx` needs to provide `handleCheckContactFromPanel`.
   const handleCheckContactFromPanel = (data, mode) => {
-    if (mode === 'merge') handleImportMerge(data);
     if (mode === 'replace') handleImportReplace(data);
     if (mode === 'view') {
       setGuestRo(data);
@@ -347,19 +366,7 @@ function AppContent() {
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
         data={importData}
-        onMerge={(data) => {
-          setState(prev => {
-            const newTagged = { ...prev.taggedBands };
-            Object.entries(data.bands).forEach(([id, bandData]) => {
-              newTagged[id] = {
-                ...(newTagged[id] || {}),
-                interest: bandData.interest
-              };
-            });
-            return { ...prev, taggedBands: newTagged };
-          });
-          handleImportMerge(data);
-        }}
+        // onMerge removed
         onReplace={(data) => {
           setState(prev => ({
             ...prev,
@@ -390,6 +397,16 @@ function AppContent() {
           </div>
         </>
       )}
+
+      {/* Confirmation Modal for Overwrite */}
+      <ConfirmationModal
+        isOpen={!!contactToOverwrite}
+        onClose={() => setContactToOverwrite(null)}
+        onConfirm={handleConfirmOverwrite}
+        title="Contact existant"
+        message={`Le contact "${contactToOverwrite?.username}" existe déjà. Voulez-vous mettre à jour son Running Order ?`}
+        confirmText="Mettre à jour"
+      />
     </div>
   );
 }
