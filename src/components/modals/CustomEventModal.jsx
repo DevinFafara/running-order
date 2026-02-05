@@ -186,7 +186,14 @@ const CustomEventModal = ({ isOpen, onClose, onSave, onDelete, defaultDay, event
                                     value={startH}
                                     onChange={e => setStartH(e.target.value)}
                                     style={{
-                                        flex: 1, padding: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid #555', borderRadius: '4px', color: 'white'
+                                        flex: 1,
+                                        padding: '10px',
+                                        background: 'rgba(0,0,0,0.3)',
+                                        border: '1px solid #555',
+                                        borderRadius: '6px',
+                                        color: 'white',
+                                        fontSize: '16px', // Prevents iOS zoom and improves readability
+                                        height: '45px'
                                     }}
                                 >
                                     {hoursOptions.map(h => <option key={h} value={h}>{h}h</option>)}
@@ -195,7 +202,14 @@ const CustomEventModal = ({ isOpen, onClose, onSave, onDelete, defaultDay, event
                                     value={startM}
                                     onChange={e => setStartM(e.target.value)}
                                     style={{
-                                        flex: 1, padding: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid #555', borderRadius: '4px', color: 'white'
+                                        flex: 1,
+                                        padding: '10px',
+                                        background: 'rgba(0,0,0,0.3)',
+                                        border: '1px solid #555',
+                                        borderRadius: '6px',
+                                        color: 'white',
+                                        fontSize: '16px',
+                                        height: '45px'
                                     }}
                                 >
                                     {minutesOptions.map(m => <option key={m} value={m}>{m}</option>)}
@@ -211,7 +225,14 @@ const CustomEventModal = ({ isOpen, onClose, onSave, onDelete, defaultDay, event
                                     value={endH}
                                     onChange={e => setEndH(e.target.value)}
                                     style={{
-                                        flex: 1, padding: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid #555', borderRadius: '4px', color: 'white'
+                                        flex: 1,
+                                        padding: '10px',
+                                        background: 'rgba(0,0,0,0.3)',
+                                        border: '1px solid #555',
+                                        borderRadius: '6px',
+                                        color: 'white',
+                                        fontSize: '16px',
+                                        height: '45px'
                                     }}
                                 >
                                     {hoursOptions.map(h => <option key={h} value={h}>{h}h</option>)}
@@ -220,7 +241,14 @@ const CustomEventModal = ({ isOpen, onClose, onSave, onDelete, defaultDay, event
                                     value={endM}
                                     onChange={e => setEndM(e.target.value)}
                                     style={{
-                                        flex: 1, padding: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid #555', borderRadius: '4px', color: 'white'
+                                        flex: 1,
+                                        padding: '10px',
+                                        background: 'rgba(0,0,0,0.3)',
+                                        border: '1px solid #555',
+                                        borderRadius: '6px',
+                                        color: 'white',
+                                        fontSize: '16px',
+                                        height: '45px'
                                     }}
                                 >
                                     {minutesOptions.map(m => <option key={m} value={m}>{m}</option>)}
