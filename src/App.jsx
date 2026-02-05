@@ -333,6 +333,10 @@ function AppContent() {
           handleImportReplace(data);
         }}
         onSave={handleSaveContact}
+        onView={(data) => {
+          setGuestRo(data);
+          setIsImportModalOpen(false);
+        }}
       />
 
       {selectedGroup && (
