@@ -147,11 +147,11 @@ const SettingsPanel = ({ isOpen, onClose, onClearCustomEvents }) => {
                         }}
                     >
                         <i className={`fa-solid ${confirmDelete ? 'fa-triangle-exclamation' : 'fa-trash'}`} style={{ marginRight: '8px' }}></i>
-                        {confirmDelete ? "CONFIRMER LA SUPPRESSION ?" : "Effacer tous les favoris"}
+                        {confirmDelete ? "CONFIRMER LA RÉINITIALISATION ?" : "Réinitialiser mon Running Order"}
                     </button>
                     {confirmDelete && (
                         <p style={{ color: '#ff6b6b', fontSize: '0.8em', marginTop: '5px', textAlign: 'center' }}>
-                            Action irréversible.
+                            Action irréversible : Efface tous les favoris et les créneaux personnalisés.
                         </p>
                     )}
                 </div>
