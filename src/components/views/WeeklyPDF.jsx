@@ -30,8 +30,8 @@ const styles = StyleSheet.create({
     },
     dayColumn: {
         flex: 1,
-        borderRightWidth: 1,
-        borderRightColor: '#eeeeee',
+        borderRightWidth: 2,
+        borderRightColor: '#333333',
         position: 'relative',
         height: '100%',
     },
@@ -131,7 +131,7 @@ const WeeklyPDF = ({ groups, customEvents, selectedScenes, filterMode, colorMode
                     });
 
                     return (
-                        <View key={day} style={styles.dayColumn}>
+                        <View key={day} style={[styles.dayColumn, idx === days.length - 1 && { borderRightWidth: 0 }]}>
                             <Text style={styles.dayHeader}>{day.toUpperCase()}</Text>
 
                             <View style={styles.gridContent}>
