@@ -74,7 +74,12 @@ function AppContent() {
 
 
   const handleImportReplace = (data) => {
-    // 1. Replace Bands - Handled in onReplace prop via setState
+    // 1. Replace Bands
+    setState(prev => ({
+      ...prev,
+      taggedBands: data.bands
+    }));
+
     // 2. Replace Custom Events
     setCustomEvents(data.customEvents);
     setIsImportModalOpen(false);
@@ -367,13 +372,7 @@ function AppContent() {
         onClose={() => setIsImportModalOpen(false)}
         data={importData}
         // onMerge removed
-        onReplace={(data) => {
-          setState(prev => ({
-            ...prev,
-            taggedBands: data.bands
-          }));
-          handleImportReplace(data);
-        }}
+        onReplace={handleImportReplace}
         onSave={handleSaveContact}
         onView={(data) => {
           setGuestRo(data);
