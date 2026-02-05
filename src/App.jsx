@@ -71,13 +71,33 @@ function AppContent() {
     trackMouse: false
   });
 
+  const handleCardPositionChange = (newPos) => {
+    setPopoverPosition(newPos);
+  };
+
   const handleGroupSelect = (group, event) => {
     if (group) {
       setSelectedGroup(group);
-      // The popoverPosition logic is no longer directly used for GroupCard rendering in the new structure
-      // but keeping it here for now if it's used elsewhere or for future changes.
-      if (event && !selectedGroup) {
-        setPopoverPosition({ x: event.clientX + 20, y: event.clientY });
+
+      // Calculate optimized position (prevent overflow right/bottom)
+      // Only set initial position if NO group was selected previously
+      if (!selectedGroup && event) {
+        // Default offset
+        let x = event.clientX + 20;
+        let y = event.clientY;
+
+        // Simple boundary check (assuming card width ~350px, height ~400px)
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+
+        // If screen is large enough for popover behavior
+        if (viewportWidth > 600) {
+          if (x + 350 > viewportWidth) x = event.clientX - 370; // Show on left if too close to right edge
+          if (y + 400 > viewportHeight) y = viewportHeight - 420; // Shift up if too close to bottom
+          if (y < 60) y = 60; // Keep below header
+        }
+
+        setPopoverPosition({ x, y });
       }
 
       // Mobile Auto-Scroll Logic
@@ -157,6 +177,8 @@ function AppContent() {
             <GroupCard
               group={selectedGroup}
               onClose={() => setSelectedGroup(null)}
+              position={popoverPosition}
+              onPositionChange={handleCardPositionChange}
             />
           </div>
         </>
