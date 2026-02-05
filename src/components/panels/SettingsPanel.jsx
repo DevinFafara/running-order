@@ -31,7 +31,7 @@ const SettingsPanel = ({ isOpen, onClose }) => {
 
     return (
         <div className="panel-overlay" onClick={onClose}>
-            <div className="settings-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="settings-panel" onClick={(e) => e.stopPropagation()} style={{ position: 'relative' }}>
                 <div className="panel-header">
                     <h2>
                         <i className="fa-solid fa-gear"></i>

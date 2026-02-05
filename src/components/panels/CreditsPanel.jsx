@@ -5,7 +5,7 @@ const CreditsPanel = ({ isOpen, onClose }) => {
 
     return (
         <div className="panel-overlay" onClick={onClose}>
-            <div className="credits-panel" onClick={(e) => e.stopPropagation()}>
+            <div className="credits-panel" onClick={(e) => e.stopPropagation()} style={{ position: 'relative' }}>
                 <div className="panel-header">
                     <h2>
                         <i className="fa-solid fa-heart"></i>

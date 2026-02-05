@@ -80,17 +80,6 @@ const HeaderBar = ({ viewMode, onViewChange, onInteraction, onAddCustomEvent, cu
                     </button>
 
                     <button
-                        className={`toolbar-btn ${viewMode === 'week' ? 'active' : ''}`}
-                        title={viewMode === 'week' ? "Vue Journalière" : "Vue Semaine"}
-                        onClick={() => {
-                            if (onInteraction) onInteraction();
-                            onViewChange(viewMode === 'week' ? 'day' : 'week');
-                        }}
-                    >
-                        <i className={`fa-solid ${viewMode === 'week' ? 'fa-calendar-day' : 'fa-calendar-week'}`}></i>
-                    </button>
-
-                    <button
                         className={`toolbar-btn ${filterOpen ? 'active' : ''}`}
                         title="Filtres"
                         onClick={() => {
@@ -99,6 +88,17 @@ const HeaderBar = ({ viewMode, onViewChange, onInteraction, onAddCustomEvent, cu
                         }}
                     >
                         <i className="fa-solid fa-filter"></i>
+                    </button>
+
+                    <button
+                        className={`toolbar-btn ${viewMode === 'week' ? 'active' : ''}`}
+                        title={viewMode === 'week' ? "Vue Journalière" : "Vue Semaine"}
+                        onClick={() => {
+                            if (onInteraction) onInteraction();
+                            onViewChange(viewMode === 'week' ? 'day' : 'week');
+                        }}
+                    >
+                        <i className={`fa-solid ${viewMode === 'week' ? 'fa-calendar-day' : 'fa-calendar-week'}`}></i>
                     </button>
 
                     <button
