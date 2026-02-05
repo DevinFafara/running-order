@@ -3,13 +3,13 @@ import React from 'react';
 const ImportModal = ({ isOpen, onClose, data, onReplace, onSave, onView, isContactView = false }) => {
     const [confirmMode, setConfirmMode] = React.useState('none'); // 'none', 'replace'
 
-    if (!isOpen || !data) return null;
-
     // Reset state on close logic needs to happen in parent or effect?
     // Let's us Effect to reset when data/isOpen changes
     React.useEffect(() => {
         if (isOpen) setConfirmMode('none');
     }, [isOpen, data]);
+
+    if (!isOpen || !data) return null;
 
     return (
         <div style={{
