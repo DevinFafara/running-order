@@ -13,6 +13,7 @@ import './styles/App.css';
 
 import CustomEventModal from './components/modals/CustomEventModal';
 import ImportModal from './components/modals/ImportModal';
+import ContactsPanel from './components/panels/ContactsPanel'; // New Import
 import { parseShareData } from './utils/sharingUtils';
 
 function AppContent() {
@@ -34,6 +35,16 @@ function AppContent() {
   // Share/Import State
   const [importData, setImportData] = useState(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+
+  // Contacts State
+  const [contacts, setContacts] = useState(() => {
+    const saved = localStorage.getItem('contacts');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('contacts', JSON.stringify(contacts));
+  }, [contacts]);
 
   // Save to LocalStorage
   useEffect(() => {
@@ -76,6 +87,50 @@ function AppContent() {
     alert("Import réussi ! Votre sélection a été remplacée.");
     setIsImportModalOpen(false);
   };
+
+  const handleSaveContact = (data) => {
+    // Check if already exists
+    if (contacts.some(c => c.id === data.username)) { // Use username as ID or generated ID?
+      if (!window.confirm("Ce contact existe déjà. Le mettre à jour ?")) return;
+      setContacts(prev => prev.map(c => c.username === data.username ? { ...c, data: data } : c));
+    } else {
+      const newContact = {
+        id: Date.now(),
+        username: data.username,
+        data: data
+      };
+      setContacts(prev => [...prev, newContact]);
+    }
+    setIsImportModalOpen(false);
+  };
+
+  const handleDeleteContact = (id) => {
+    setContacts(prev => prev.filter(c => c.id !== id));
+  };
+
+  // Logic to view/merge/replace FROM a contact
+  // This is handled inside ContactsPanel which re-opens ImportModal or calls handlers directly.
+  // Actually, ContactsPanel will re-open ImportModal in "View Mode".
+  // And ImportModal will call onMerge/onReplace which are ALREADY defined here.
+  // So we just need to pass these handlers if ContactsPanel needs them?
+  // ContactsPanel receives `onCheckContact` which we need to support.
+  // My ContactsPanel implementation used: `onCheckContact(data, mode)`.
+  // Let's implement that in HeaderBar or pass handlers down.
+
+  // Wait, I implemented ContactsPanel to *internally* use ImportModal.
+  // BUT `App.jsx` handles the main "Check URL" ImportModal.
+  // `ContactsPanel` defines its OWN `ImportModal`? 
+  // Let's check `ContactsPanel.jsx`.
+  // Yes, lines 132-150: It renders `ImportModal`.
+  // And it calls `onCheckContact(data, 'merge')`.
+
+  // So `App.jsx` needs to provide `handleCheckContactFromPanel`.
+  const handleCheckContactFromPanel = ({ data, mode }) => {
+    if (mode === 'merge') handleImportMerge(data);
+    if (mode === 'replace') handleImportReplace(data);
+  };
+  // Wait, `onCheckContact` signature in `ContactsPanel`: `onCheckContact(data, 'merge')`.
+  // So `handleCheckContactFromPanel` takes `(data, mode)`.
 
   const handleAddCustomEvent = (event) => {
     setCustomEvents(prev => {
@@ -195,6 +250,16 @@ function AppContent() {
         onInteraction={() => setSelectedGroup(null)}
         onAddCustomEvent={() => setIsCustomModalOpen(true)}
         customEvents={customEvents}
+        contacts={contacts}
+        onSaveContact={handleSaveContact} // Not used directly by HeaderBar but maybe needed?
+        // Actually HeaderBar renders ContactsPanel. ContactsPanel handles Delete and "Check".
+        // "Check" means "Applying" the contact's RO.
+        // ContactsPanel calls `onCheckContact`.
+        onDeleteContact={handleDeleteContact}
+        onCheckContact={(data, mode) => {
+          if (mode === 'merge') handleImportMerge(data);
+          if (mode === 'replace') handleImportReplace(data);
+        }}
       />
 
       {viewMode === 'day' && <Navigation />}
@@ -262,6 +327,7 @@ function AppContent() {
           }));
           handleImportReplace(data);
         }}
+        onSave={handleSaveContact}
       />
 
       {selectedGroup && (

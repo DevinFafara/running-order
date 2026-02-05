@@ -3,15 +3,17 @@ import PlaylistPanel from '../panels/PlaylistPanel';
 import FilterPanel from '../panels/FilterPanel';
 import SettingsPanel from '../panels/SettingsPanel';
 import CreditsPanel from '../panels/CreditsPanel';
+import ContactsPanel from '../panels/ContactsPanel';
 
 import StatsPanel from '../panels/StatsPanel';
 
-const HeaderBar = ({ viewMode, onViewChange, onInteraction, onAddCustomEvent, customEvents }) => {
+const HeaderBar = ({ viewMode, onViewChange, onInteraction, onAddCustomEvent, customEvents, contacts, onDeleteContact, onCheckContact }) => {
     const [playlistOpen, setPlaylistOpen] = useState(false);
     const [filterOpen, setFilterOpen] = useState(false);
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [creditsOpen, setCreditsOpen] = useState(false);
     const [statsOpen, setStatsOpen] = useState(false);
+    const [contactsOpen, setContactsOpen] = useState(false);
 
     return (
         <>
@@ -84,6 +86,16 @@ const HeaderBar = ({ viewMode, onViewChange, onInteraction, onAddCustomEvent, cu
                         <i className="fa-solid fa-gear"></i>
                     </button>
                     <button
+                        className={`toolbar-btn ${contactsOpen ? 'active' : ''}`}
+                        title="Contacts"
+                        onClick={() => {
+                            if (onInteraction) onInteraction();
+                            setContactsOpen(true);
+                        }}
+                    >
+                        <i className="fa-solid fa-address-book"></i>
+                    </button>
+                    <button
                         className={`toolbar-btn ${creditsOpen ? 'active' : ''}`}
                         title="Crédits"
                         onClick={() => {
@@ -114,6 +126,14 @@ const HeaderBar = ({ viewMode, onViewChange, onInteraction, onAddCustomEvent, cu
             <CreditsPanel
                 isOpen={creditsOpen}
                 onClose={() => setCreditsOpen(false)}
+            />
+
+            <ContactsPanel
+                isOpen={contactsOpen}
+                onClose={() => setContactsOpen(false)}
+                contacts={contacts}
+                onDeleteContact={onDeleteContact}
+                onCheckContact={onCheckContact}
             />
 
             {statsOpen && (

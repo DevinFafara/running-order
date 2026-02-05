@@ -1,9 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { useCheckedState } from '../../context/CheckedStateContext';
 import { useLineup } from '../../hooks/useLineup';
-import { calculateStats, getLevelTitle } from '../../utils/statsUtils';
+import { calculateStats } from '../../utils/statsUtils';
 import { STAGE_CONFIG, MAIN_STAGES } from '../../constants';
-import { generateShareLink } from '../../utils/sharingUtils';
 import ShareModal from '../modals/ShareModal';
 import './StatsPanel.css';
 
@@ -14,7 +13,6 @@ const StatsPanel = ({ onClose, customEvents = [] }) => {
     const [gaugeHeight, setGaugeHeight] = useState(0);
     const [animatedTotal, setAnimatedTotal] = useState(0);
     const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-    const [shareUrl, setShareUrl] = useState('');
 
     // Merge data if needed
     const allGroups = useMemo(() => {
@@ -63,11 +61,7 @@ const StatsPanel = ({ onClose, customEvents = [] }) => {
         setExpandedDays(prev => ({ ...prev, [day]: !prev[day] }));
     };
 
-    const handleShare = () => {
-        const url = generateShareLink(state.taggedBands, customEvents);
-        setShareUrl(url);
-        setIsShareModalOpen(true);
-    };
+
 
     const RANKS = [
         { label: "Trve", bottom: "90%" },
@@ -84,7 +78,7 @@ const StatsPanel = ({ onClose, customEvents = [] }) => {
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
                     <h2 className="stats-panel-title" style={{ margin: 0 }}>Mon Profil</h2>
                     <button
-                        onClick={handleShare}
+                        onClick={() => setIsShareModalOpen(true)}
                         className="stats-panel-share-btn"
                         title="Partager mon Running Order"
                         style={{
@@ -296,7 +290,8 @@ const StatsPanel = ({ onClose, customEvents = [] }) => {
                 <ShareModal
                     isOpen={isShareModalOpen}
                     onClose={() => setIsShareModalOpen(false)}
-                    shareUrl={shareUrl}
+                    taggedBands={state.taggedBands}
+                    customEvents={customEvents}
                 />
             </div>
         </div>
