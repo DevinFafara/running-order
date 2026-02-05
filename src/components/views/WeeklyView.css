@@ -136,8 +136,9 @@
 .weekly-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
-    min-height: 1020px;
+    grid-auto-rows: min-content;
+    /* Ensure rows only take needed space */
+    gap: 15px;
     position: relative;
     flex: 1;
 }
@@ -186,6 +187,8 @@
     border: 1px solid #222;
     display: flex;
     flex-direction: column;
+    min-height: 1020px;
+    /* Each day needs full timeline height */
     padding-left: 0;
     transition: padding 0.3s;
 }
