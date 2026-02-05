@@ -75,7 +75,21 @@ export const CheckedStateProvider = ({ children }) => {
             console.error("Failed to load state", e);
         }
         return INITIAL_STATE;
+        return INITIAL_STATE;
     });
+
+    const [guestRo, setGuestRo] = useState(null); // { bands, customEvents, username }
+
+    // State utilisé pour l'affichage (User ou Guest)
+    const displayState = React.useMemo(() => {
+        if (guestRo && guestRo.bands) {
+            return {
+                ...state,
+                taggedBands: guestRo.bands
+            };
+        }
+        return state;
+    }, [state, guestRo]);
 
     useEffect(() => {
         localStorage.setItem('checkedState', JSON.stringify(state));
@@ -91,6 +105,7 @@ export const CheckedStateProvider = ({ children }) => {
 
     // Définir le niveau d'intérêt d'un groupe (null pour retirer)
     const setInterest = (groupId, interestLevel) => {
+        if (guestRo) return; // Read-only mode
         setState(prev => {
             const newTaggedBands = { ...prev.taggedBands };
             const existing = newTaggedBands[groupId] || {};
@@ -111,6 +126,7 @@ export const CheckedStateProvider = ({ children }) => {
 
     // Définir le contexte d'un groupe (null pour retirer)
     const setContext = (groupId, contextType) => {
+        if (guestRo) return; // Read-only mode
         setState(prev => {
             const newTaggedBands = { ...prev.taggedBands };
             const existing = newTaggedBands[groupId] || {};
@@ -150,7 +166,7 @@ export const CheckedStateProvider = ({ children }) => {
 
     // Obtenir les infos de tag d'un groupe (avec migration des anciens formats)
     const getBandTag = (groupId) => {
-        const tag = state.taggedBands?.[groupId];
+        const tag = displayState.taggedBands?.[groupId];
         if (!tag) return null;
 
         // Migration : si le tag est une ancienne chaîne (ex: 'color1' ou 'must_see')
@@ -236,7 +252,10 @@ export const CheckedStateProvider = ({ children }) => {
 
     return (
         <CheckedStateContext.Provider value={{
-            state,
+            state: displayState, // Transparence : les consommateurs voient l'état actif
+            isGuestMode: !!guestRo,
+            guestRo,
+            setGuestRo,
             setState,
             resetState,
             setDay,

@@ -18,10 +18,11 @@ import { parseShareData } from './utils/sharingUtils';
 
 function AppContent() {
   const { data: groups, sideStagesData, loading, error } = useLineup();
-  const { state, setDay, setState } = useCheckedState();
+  const { state, setDay, setState, isGuestMode, guestRo, setGuestRo } = useCheckedState();
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [popoverPosition, setPopoverPosition] = useState(null); // This state is no longer used for GroupCard, but kept for now if other uses exist.
   const [viewMode, setViewMode] = useState('day'); // 'day' or 'week'
+
 
   // Custom Events State
   const [customEvents, setCustomEvents] = useState(() => {
@@ -125,9 +126,16 @@ function AppContent() {
   // And it calls `onCheckContact(data, 'merge')`.
 
   // So `App.jsx` needs to provide `handleCheckContactFromPanel`.
+  // So `App.jsx` needs to provide `handleCheckContactFromPanel`.
   const handleCheckContactFromPanel = ({ data, mode }) => {
     if (mode === 'merge') handleImportMerge(data);
     if (mode === 'replace') handleImportReplace(data);
+    if (mode === 'view') {
+      setGuestRo(data);
+      // Also make sure we are not in modal
+      setIsImportModalOpen(false); // Should not be open if coming from ContactsPanel
+      // But just in case
+    }
   };
   // Wait, `onCheckContact` signature in `ContactsPanel`: `onCheckContact(data, 'merge')`.
   // So `handleCheckContactFromPanel` takes `(data, mode)`.
@@ -249,17 +257,14 @@ function AppContent() {
         onViewChange={setViewMode}
         onInteraction={() => setSelectedGroup(null)}
         onAddCustomEvent={() => setIsCustomModalOpen(true)}
-        customEvents={customEvents}
+        customEvents={isGuestMode ? (guestRo.customEvents || []) : customEvents}
         contacts={contacts}
-        onSaveContact={handleSaveContact} // Not used directly by HeaderBar but maybe needed?
-        // Actually HeaderBar renders ContactsPanel. ContactsPanel handles Delete and "Check".
-        // "Check" means "Applying" the contact's RO.
-        // ContactsPanel calls `onCheckContact`.
+        onSaveContact={handleSaveContact}
         onDeleteContact={handleDeleteContact}
-        onCheckContact={(data, mode) => {
-          if (mode === 'merge') handleImportMerge(data);
-          if (mode === 'replace') handleImportReplace(data);
-        }}
+        onCheckContact={handleCheckContactFromPanel}
+        isGuestMode={isGuestMode}
+        guestName={isGuestMode ? guestRo.username : null}
+        onExitGuestMode={() => setGuestRo(null)}
       />
 
       {viewMode === 'day' && <Navigation />}
@@ -273,16 +278,16 @@ function AppContent() {
                 selectGroup={handleGroupSelect}
                 selectedGroupId={selectedGroup?.id}
                 day={state.day}
-                customEvents={customEvents}
-                onDeleteCustomEvent={handleDeleteCustomEvent}
-                onEditCustomEvent={handleEditCustomEvent}
+                customEvents={isGuestMode ? (guestRo.customEvents || []) : customEvents}
+                onDeleteCustomEvent={isGuestMode ? () => { } : handleDeleteCustomEvent}
+                onEditCustomEvent={isGuestMode ? () => { } : handleEditCustomEvent}
               />
             ) : (
               <WeeklyView
                 groups={[...groups, ...sideStagesData]} // Always pass all groups including side stages
                 onGroupClick={(g) => handleGroupSelect(g, { clientX: window.innerWidth / 2 - 200, clientY: window.innerHeight / 2 - 200 })} // Mock position for now
-                customEvents={customEvents}
-                onEditCustomEvent={handleEditCustomEvent}
+                customEvents={isGuestMode ? (guestRo.customEvents || []) : customEvents}
+                onEditCustomEvent={isGuestMode ? () => { } : handleEditCustomEvent}
               />
             )
           } />
