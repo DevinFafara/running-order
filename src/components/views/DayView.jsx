@@ -11,56 +11,31 @@ const HourTag = ({ hour, i }) => (
     </div>
 );
 
-const CustomEventOverlay = ({ event, onEdit, columnCount, windowWidth }) => {
+const CustomEventOverlay = ({ event, onEdit, columnCount, windowWidth, dayStartMinutes, dayEndMinutes }) => {
     const { state } = useCheckedState();
 
     // 1. Parse times
     const [startH, startM] = event.startTime.split(':').map(Number);
     const [endH, endM] = event.endTime.split(':').map(Number);
 
-    // 2. Adjust for night hours (< 4h) - mirroring Band.jsx lines 19-24
+    // 2. Adjust for night hours (< 6h)
     let hDebut = startH;
     let hFin = endH;
-    if (hDebut < 4) hDebut += 24;
-    // Special handling if end < start (e.g. 23:00 - 01:00) where 01 < 4 is true, so +24 -> 25. Correct.
-    if (hFin < 4) hFin += 24;
+    if (hDebut < 6) hDebut += 24;
+    // Special handling if end < start (e.g. 23:00 - 01:00) where 01 < 6 is true, so +24 -> 25.
+    if (hFin < 6) hFin += 24;
 
     const debutMinutes = hDebut * 60 + startM;
     const finMinutes = hFin * 60 + endM;
     const duration = finMinutes - debutMinutes;
     const height = duration; // 1px = 1min
 
-    // 3. Calculate Top - mirroring Band.jsx getTop logic
+    // 3. Calculate Top using Dynamic Bounds
     const getTop = () => {
-        const day = event.day;
-        let endOfDayMinutes, startOfDayMinutes;
-        const extendedEnd = state.sideScenes ? 28 * 60 : 26 * 60;
-
-        if (day === 'Mercredi') {
-            endOfDayMinutes = 25 * 60;
-            startOfDayMinutes = 16 * 60;
-        } else if (day === 'Jeudi') {
-            endOfDayMinutes = extendedEnd;
-            startOfDayMinutes = state.sideScenes ? 11 * 60 : 16 * 60;
-        } else if (day === 'Dimanche') {
-            endOfDayMinutes = 25 * 60;
-            startOfDayMinutes = 10 * 60;
-        } else {
-            endOfDayMinutes = extendedEnd;
-            startOfDayMinutes = 10 * 60;
-        }
-
-        // Adjust for hours 00:00-05:59 that weren't caught by <4 check (e.g. 05:00)
-        let adjustedDebut = debutMinutes;
-        let adjustedFin = finMinutes;
-
-        if (debutMinutes < 6 * 60) adjustedDebut += 24 * 60;
-        if (finMinutes < 6 * 60) adjustedFin += 24 * 60;
-
         if (state.reverse) {
-            return adjustedDebut - startOfDayMinutes;
+            return debutMinutes - dayStartMinutes;
         } else {
-            return endOfDayMinutes - adjustedFin;
+            return dayEndMinutes - finMinutes;
         }
     };
 
@@ -84,7 +59,7 @@ const CustomEventOverlay = ({ event, onEdit, columnCount, windowWidth }) => {
                 left: '50%',
                 transform: 'translateX(-50%)',
                 width: `${calculatedWidth}px`,
-                maxWidth: '96%',
+                maxWidth: '98%',
                 backgroundColor: isMasked ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.45)',
                 border: isMasked ? '1px solid rgba(255, 255, 255, 0.5)' : '1px solid rgba(255, 255, 255, 0.4)',
                 borderRadius: '8px',
@@ -259,57 +234,124 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day, customEvents = [],
 
     const sceneCouples = buildSceneCouples();
 
-    // Déterminer le jour actuel (pour la hauteur dynamique des scene-bands)
-    // Hauteurs calculées : 1px = 1 minute
-    // - Mercredi: 16h00 → 01h00 = 9h = 540 minutes (scènes annexes uniquement)
-    // - Jeudi: 16h00 → 02h00 = 10h = 600 minutes (scènes principales)
-    //         11h00 → 04h00 = 17h = 1020 minutes (avec scènes annexes)
-    // - Vendredi/Samedi: 10h00 → 04h00 = 18h = 1080 minutes (avec scènes annexes)
-    // - Dimanche: 10h00 → 01h00 = 15h = 900 minutes
     const currentDay = day || (groups && groups.length > 0 ? groups[0].DAY : 'Vendredi');
-    const getSceneBandsHeight = () => {
-        if (currentDay === 'Mercredi') return '540px';
-        // Jeudi : 1020px si scènes annexes actives (commence à 11h, finit à 04h), sinon 600px
-        if (currentDay === 'Jeudi') return state.sideScenes ? '1020px' : '600px';
-        if (currentDay === 'Dimanche') return '900px';
-        // Vendredi et Samedi : 1080px si scènes annexes (jusqu'à 04h), sinon 960px
-        return state.sideScenes ? '1080px' : '960px';
-    };
 
-    // Génération des heures pour les tags (dynamique selon le jour)
-    const getHours = () => {
-        let hours;
-        // Extension des heures de fin si scènes annexes activées (sauf Dimanche et Mercredi)
-        // Metal Corner finit à 03h50
-        const extendHours = state.sideScenes;
-        const extraHours = extendHours ? ["04:00", "03:00"] : [];
+    // Filter Custom Events for this day
+    const todaysEvents = customEvents.filter(e => e.day === currentDay);
+
+    // --- DYNAMIC DAY BOUNDS ---
+    const getDayBounds = () => {
+        // 1. Base Defaults (based on previous logic)
+        let baseStart = 10 * 60; // 10:00 default
+        let baseEnd = 26 * 60;   // 02:00 default
+
+        const extendedEnd = state.sideScenes ? 28 * 60 : 26 * 60;
 
         if (currentDay === 'Mercredi') {
-            // Mercredi : 16h → 01h (scènes annexes uniquement)
-            hours = ["01:00", "00:00", "23:00", "22:00", "21:00", "20:00", "19:00", "18:00", "17:00", "16:00"];
+            baseStart = 16 * 60;
+            baseEnd = 25 * 60;
         } else if (currentDay === 'Jeudi') {
-            // Jeudi : heures étendues si scènes annexes actives
-            if (state.sideScenes) {
-                hours = [...extraHours, "02:00", "01:00", "00:00", "23:00", "22:00", "21:00", "20:00", "19:00", "18:00", "17:00", "16:00", "15:00", "14:00", "13:00", "12:00", "11:00"];
-            } else {
-                hours = ["02:00", "01:00", "00:00", "23:00", "22:00", "21:00", "20:00", "19:00", "18:00", "17:00", "16:00"];
-            }
+            baseStart = state.sideScenes ? 11 * 60 : 16 * 60;
+            baseEnd = extendedEnd;
         } else if (currentDay === 'Dimanche') {
-            // Dimanche : 10h → 01h (fin plus tôt)
-            hours = ["01:00", "00:00", "23:00", "22:00", "21:00", "20:00", "19:00", "18:00", "17:00", "16:00", "15:00", "14:00", "13:00", "12:00", "11:00", "10:00"];
+            baseStart = 10 * 60;
+            baseEnd = 25 * 60;
         } else {
-            // Vendredi/Samedi : 10h → 02h (schedule complet)
-            if (state.sideScenes) {
-                hours = [...extraHours, "02:00", "01:00", "00:00", "23:00", "22:00", "21:00", "20:00", "19:00", "18:00", "17:00", "16:00", "15:00", "14:00", "13:00", "12:00", "11:00", "10:00"];
-            } else {
-                hours = ["02:00", "01:00", "00:00", "23:00", "22:00", "21:00", "20:00", "19:00", "18:00", "17:00", "16:00", "15:00", "14:00", "13:00", "12:00", "11:00", "10:00"];
-            }
+            baseStart = 10 * 60;
+            baseEnd = extendedEnd;
         }
 
-        if (state.reverse) {
-            hours = [...hours].reverse();
+        let minStart = baseStart;
+        let maxEnd = baseEnd;
+
+        // 2. Check Custom Events
+        todaysEvents.forEach(event => {
+            const [sH, sM] = event.startTime.split(':').map(Number);
+            const [eH, eM] = event.endTime.split(':').map(Number);
+
+            // Adjust +24h if needed (consistent with Band/Overlay logic: < 6h is next day)
+            let startMins = sH * 60 + sM;
+            let endMins = eH * 60 + eM;
+
+            if (sH < 6) startMins += 24 * 60;
+            if (eH < 6) endMins += 24 * 60;
+            // Also if end is literally smaller than start (e.g. 23:00 - 01:00), end implies next day if not already caught
+            if (endMins < startMins) endMins += 24 * 60;
+
+            if (startMins < minStart) minStart = startMins;
+            if (endMins > maxEnd) maxEnd = endMins;
+        });
+
+        // 3. Check Groups (optional safety, theoretically covers official bounds but maybe there are outliers?)
+        // Skip for performance as official bounds usually cover official groups. 
+        // But if a group is added outside standard time, it should expand too? 
+        // Let's rely on standard logic for groups as they are static.
+
+        return { startMin: minStart, endMin: maxEnd };
+    };
+
+    const { startMin, endMin } = getDayBounds();
+    const dayStartMinutes = startMin;
+    const dayEndMinutes = endMin;
+
+    const getSceneBandsHeight = () => `${dayEndMinutes - dayStartMinutes}px`;
+
+    const getHours = () => {
+        const hours = [];
+        // Loop from start hour to end hour
+        // startMin / 60 rounded down
+        const startH = Math.floor(dayStartMinutes / 60);
+        const endH = Math.ceil(dayEndMinutes / 60);
+
+        for (let h = startH; h < endH; h++) { // < endH often enough? or <= ? Original seemed to cover full range.
+            // Original logic went backwards or unordered. Let's just generate linear list.
+            // We need string "HH:00".
+            // If h >= 24, display h-24.
+            const displayH = h >= 24 ? h - 24 : h;
+            hours.push(`${displayH.toString().padStart(2, '0')}:00`);
         }
-        return hours;
+
+        // Original logic was reverse if state.reverse.
+        // If reverse, we want higher times at TOP? No wait.
+        // Band.jsx Reverse: return adjustedDebut - startOfDayMinutes (Top is 0 at start of day)
+        // Band.jsx Normal: return endOfDayMinutes - adjustedFin (Top is 0 at end of day)
+
+        // So in "Normal" (bottom-up?), the HTML list order doesn't dictate position, 
+        // but `HourTag` uses `style={{ top: (i * 60) - 5 }}`. 
+        // This implies the standard HTML flow is Top-to-Bottom.
+        // Wait. `HourTag` logic: `top: i * 60`. 
+        // If I render 10:00, 11:00, 12:00... 
+        // 10:00 is at 0px. 11:00 at 60px.
+        // This corresponds to `adjustedDebut - startOfDayMinutes`. 
+        // So standard HTML flow is Time Increasing Downwards.
+
+        // Band.jsx "Reverse": `adjustedDebut - startOfDayMinutes`. 
+        // If adjustedDebut = 10h (600), start = 10h (600) -> 0px.
+        // If adjustedDebut = 11h (660) -> 60px.
+        // So "Reverse" mode corresponds to Time Increasing Downwards (Top to Bottom).
+
+        // Band.jsx "Normal": `endOfDayMinutes - adjustedFin`.
+        // If endOfday = 02h (26h=1560).
+        // If fin = 02h (1560) -> 0px.
+        // If fin = 01h (1500) -> 60px.
+        // So "Normal" mode corresponds to Time Increasing Upwards (Bottom to Top).
+
+        // So `getHours()` array order matters if `HourTag` uses index `i` for top position.
+
+        if (state.reverse) {
+            // "Reverse" = Time starts at Top (10:00) and goes down.
+            // Hours should be [10:00, 11:00, ...]
+            // Loop from startH to endH is correct.
+            return hours;
+        } else {
+            // "Normal" = Time starts at Bottom? 0px is Top.
+            // In Normal mode, 0px is End of Day.
+            // So we need labels starting from End of Day going down to Start of Day.
+            // i=0 -> Top=0px -> End of Day (02:00)
+            // i=1 -> Top=60px -> 01:00
+            // So we need reverse list.
+            return hours.reverse();
+        }
     };
 
     // Vue étendue (6+ colonnes) sur grands écrans
@@ -319,9 +361,6 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day, customEvents = [],
     if (!groups) return null;
 
     const hours = getHours();
-
-    // Filter Custom Events for this day
-    const todaysEvents = customEvents.filter(e => e.day === currentDay);
 
     const toggleCompact = () => {
         setState(prev => ({ ...prev, compact: !prev.compact }));
@@ -418,6 +457,8 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day, customEvents = [],
                                         selectGroup={selectGroup}
                                         selectedGroupId={selectedGroupId}
                                         onTagClick={handleTagClick}
+                                        dayStartMinutes={dayStartMinutes}
+                                        dayEndMinutes={dayEndMinutes}
                                     />
                                 ))}
                             </div>
@@ -441,6 +482,8 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day, customEvents = [],
                         onEdit={onEditCustomEvent}
                         columnCount={visibleScenes.length}
                         windowWidth={windowWidth}
+                        dayStartMinutes={dayStartMinutes}
+                        dayEndMinutes={dayEndMinutes}
                     />
                 ))}
             </div>
@@ -518,6 +561,8 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day, customEvents = [],
                                     halfWidth={showS1 && showS2}
                                     side="left"
                                     onTagClick={handleTagClick}
+                                    dayStartMinutes={dayStartMinutes}
+                                    dayEndMinutes={dayEndMinutes}
                                 />
                             ))}
 
@@ -531,6 +576,8 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day, customEvents = [],
                                     halfWidth={showS1 && showS2}
                                     side="right"
                                     onTagClick={handleTagClick}
+                                    dayStartMinutes={dayStartMinutes}
+                                    dayEndMinutes={dayEndMinutes}
                                 />
                             ))}
                         </div>
@@ -554,6 +601,8 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day, customEvents = [],
                     onEdit={onEditCustomEvent}
                     columnCount={visibleCouples.length}
                     windowWidth={windowWidth}
+                    dayStartMinutes={dayStartMinutes}
+                    dayEndMinutes={dayEndMinutes}
                 />
             ))}
         </div>

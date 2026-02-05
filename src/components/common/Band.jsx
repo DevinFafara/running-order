@@ -3,7 +3,7 @@ import chroma from 'chroma-js';
 import { useCheckedState } from '../../context/CheckedStateContext';
 import { INTEREST_LEVELS, CONTEXT_TAGS } from '../../constants';
 
-const Band = ({ group, selectGroup, selectedGroupId, onTagClick }) => {
+const Band = ({ group, selectGroup, selectedGroupId, onTagClick, dayStartMinutes, dayEndMinutes }) => {
     const { GROUPE, SCENE, DEBUT, FIN, id } = group;
     const { state, getBandTag, getInterestColor, cycleInterest } = useCheckedState();
 
@@ -48,9 +48,23 @@ const Band = ({ group, selectGroup, selectedGroupId, onTagClick }) => {
     // - Vendredi/Samedi: fin à 02h (26h = 1560 min)
     // - Dimanche: fin à 01h (25h = 1500 min)
     const getTop = () => {
-        const day = group.DAY;
+        // Ajuster les heures APRÈS MINUIT (+24h) - seulement pour 00h-06h
+        let adjustedFin = finMinutes;
+        let adjustedDebut = debutMinutes;
+        if (finMinutes < 6 * 60) adjustedFin += 24 * 60;  // 00:00-05:59 → +24h
+        if (debutMinutes < 6 * 60) adjustedDebut += 24 * 60;  // 00:00-05:59 → +24h
 
-        // Heure de fin de journée en minutes (depuis minuit la veille, donc +24h pour après minuit)
+        // Utilisation des bornes dynamiques si fournies (nouvelle logique)
+        if (dayStartMinutes !== undefined && dayEndMinutes !== undefined) {
+            if (state.reverse) {
+                return `${adjustedDebut - dayStartMinutes}px`;
+            } else {
+                return `${dayEndMinutes - adjustedFin}px`;
+            }
+        }
+
+        // --- ANCIENNE LOGIQUE (Fallback) ---
+        const day = group.DAY;
         let endOfDayMinutes;
         let startOfDayMinutes;
 
@@ -65,7 +79,6 @@ const Band = ({ group, selectGroup, selectedGroupId, onTagClick }) => {
         } else if (day === 'Jeudi') {
             endOfDayMinutes = extendedEnd; // 02h00 ou 04h00
             // Si sideScenes est activé, la grille commence à 11h pour TOUT LE MONDE
-            // Sinon, elle commence à 16h (comportement original)
             if (state.sideScenes) {
                 startOfDayMinutes = 11 * 60;
             } else {
@@ -79,13 +92,6 @@ const Band = ({ group, selectGroup, selectedGroupId, onTagClick }) => {
             endOfDayMinutes = extendedEnd; // 02h00 ou 04h00
             startOfDayMinutes = 10 * 60; // 10h00 (même pour side stages)
         }
-
-        // Ajuster les heures APRÈS MINUIT (+24h) - seulement pour 00h-06h
-        // Les heures de 10h-12h ne doivent PAS être ajustées
-        let adjustedFin = finMinutes;
-        let adjustedDebut = debutMinutes;
-        if (finMinutes < 6 * 60) adjustedFin += 24 * 60;  // 00:00-05:59 → +24h
-        if (debutMinutes < 6 * 60) adjustedDebut += 24 * 60;  // 00:00-05:59 → +24h
 
         if (state.reverse) {
             // Mode inversé: 10h en haut, 02h en bas
