@@ -394,42 +394,55 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day, customEvents = [],
 
     // MODE COMPACT : 3 colonnes avec paires de scènes
 
+    // Filtrer les couples : on n'affiche la colonne que si au moins une des deux scènes est visible
+    const visibleCouples = sceneCouples.filter(couple => {
+        const s1 = couple[0];
+        const s2 = couple[1];
+        return isSceneVisible(s1) || (s2 && isSceneVisible(s2));
+    });
+
     return (
-        <div className="compact-day" style={{ position: 'relative' }}>
-            {sceneCouples.map((sceneCouple, index) => {
+        <div className="compact-day" style={{ position: 'relative', overflowX: 'auto' }}>
+            {visibleCouples.map((sceneCouple, index) => {
                 const scene1 = sceneCouple[0];
                 const scene2 = sceneCouple[1];
 
-                // Couleurs pour le gradient
+                const showS1 = isSceneVisible(scene1);
+                const showS2 = scene2 && isSceneVisible(scene2);
+
+                // Couleurs pour le gradient ou couleur unie
                 const config1 = STAGE_CONFIG[scene1];
                 const config2 = scene2 ? STAGE_CONFIG[scene2] : null;
 
+                let background;
+                if (showS1 && showS2) {
+                    background = `linear-gradient(to right, ${config1?.themeColor} 0%, ${config1?.themeColor} 50%, ${config2?.themeColor} 50%, ${config2?.themeColor} 100%)`;
+                } else if (showS1) {
+                    background = config1?.themeColor;
+                } else if (showS2) {
+                    background = config2?.themeColor;
+                }
+
                 const bgStyle = {
-                    background: config2
-                        ? `linear-gradient(to right, ${config1?.themeColor} 0%, ${config1?.themeColor} 50%, ${config2?.themeColor} 50%, ${config2?.themeColor} 100%)`
-                        : config1?.themeColor
+                    background: background,
+                    // minWidth: '300px' // Not needed if CSS handles it
                 };
 
                 const groups1 = groups.filter(g => g.SCENE === scene1);
                 const groups2 = scene2 ? groups.filter(g => g.SCENE === scene2) : [];
 
-                // Check visibility logic (optional optimisation, but CSS handles it via display:flex usually? 
-                // Actually previous logic used isSceneVisible to hide/swap colors. 
-                // Let's stick to the simpler visual rendering for now as the 'compact-day' layout implies strict columns.
-                // If scenes are toggled off via settings, usually we want to keep the column structure or hide it?
-                // In the original compact view, if a scene is hidden, we might want to gray it out or hide it.
-                // But let's assume the sceneCouples logic handles the structure.
-
                 return (
                     <div key={index} className="scene-column compact-scene-column" style={bgStyle}>
                         {/* HEADER */}
                         <div className="compact-scene-couple-header">
-                            <div className="header-half" style={{ width: scene2 ? '50%' : '100%', opacity: isSceneVisible(scene1) ? 1 : 0.3 }}>
-                                <img className="scene-image" src={config1?.icon} alt={scene1} />
-                                <h3>{config1?.name}</h3>
-                            </div>
-                            {scene2 && (
-                                <div className="header-half" style={{ width: '50%', opacity: isSceneVisible(scene2) ? 1 : 0.3 }}>
+                            {showS1 && (
+                                <div className="header-half" style={{ width: showS2 ? '50%' : '100%' }}>
+                                    <img className="scene-image" src={config1?.icon} alt={scene1} />
+                                    <h3>{config1?.name}</h3>
+                                </div>
+                            )}
+                            {showS2 && (
+                                <div className="header-half" style={{ width: showS1 ? '50%' : '100%' }}>
                                     <img className="scene-image" src={config2?.icon} alt={scene2} />
                                     <h3>{config2?.name}</h3>
                                 </div>
@@ -441,26 +454,26 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day, customEvents = [],
                             {/* Pas d'heures en mode compact car deux scènes se partagent la colonne */}
 
                             {/* Groupes Scène 1 */}
-                            {isSceneVisible(scene1) && groups1.map(group => (
+                            {showS1 && groups1.map(group => (
                                 <Band
                                     key={group.id}
                                     group={group}
                                     selectGroup={selectGroup}
                                     selectedGroupId={selectedGroupId}
-                                    halfWidth={!!scene2}
+                                    halfWidth={showS1 && showS2}
                                     side="left"
                                     onTagClick={handleTagClick}
                                 />
                             ))}
 
                             {/* Groupes Scène 2 */}
-                            {scene2 && isSceneVisible(scene2) && groups2.map(group => (
+                            {showS2 && groups2.map(group => (
                                 <Band
                                     key={group.id}
                                     group={group}
                                     selectGroup={selectGroup}
                                     selectedGroupId={selectedGroupId}
-                                    halfWidth={true}
+                                    halfWidth={showS1 && showS2}
                                     side="right"
                                     onTagClick={handleTagClick}
                                 />
@@ -485,7 +498,7 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day, customEvents = [],
                     event={event}
                     hours={hours}
                     onDelete={onDeleteCustomEvent}
-                    columnCount={sceneCouples.length}
+                    columnCount={visibleCouples.length}
                     windowWidth={windowWidth}
                 />
             ))}
