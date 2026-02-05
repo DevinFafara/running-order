@@ -39,9 +39,9 @@ const CustomEventOverlay = ({ event, onEdit, columnCount, windowWidth, dayStartM
         }
     };
 
-    // Offset due to Scene Header (~85px) + Margin (10px)
+    // Offset due to Scene Header (~85px) + Margin (10px) + 5px calibration
     // Must match CSS .compact-scene-couple-header min-height + .scene-bands margin-top
-    const HEADER_OFFSET = 95;
+    const HEADER_OFFSET = 100;
     const top = getTop() + HEADER_OFFSET;
 
     const colWidth = 300 + (windowWidth * 0.02);
@@ -108,6 +108,10 @@ const CustomEventOverlay = ({ event, onEdit, columnCount, windowWidth, dayStartM
                     {event.type === 'apero' && '🍺'}
                     {event.type === 'repas' && '🍔'}
                     {event.type === 'dodo' && '💤'}
+                    {event.type === 'transport' && '🚗'}
+                    {event.type === 'course' && '🛒'}
+                    {event.type === 'camping' && '⛺'}
+                    {event.type === 'ami' && '👥'}
                     {event.type === 'autre' && '📍'}
                 </span>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
