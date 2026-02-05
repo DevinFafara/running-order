@@ -604,14 +604,12 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
                         <button
                             className={`weekly-filter-btn ${colorMode === 'transparent' ? 'active' : ''}`}
                             onClick={() => setColorMode('transparent')}
-                            style={{ fontSize: '0.75rem', padding: '3px 10px' }}
                         >
                             Transparent
                         </button>
                         <button
                             className={`weekly-filter-btn ${colorMode === 'scene' ? 'active' : ''}`}
                             onClick={() => setColorMode('scene')}
-                            style={{ fontSize: '0.75rem', padding: '3px 10px' }}
                         >
                             Couleurs Scènes
                         </button>
@@ -678,9 +676,8 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
                                             left: `${item.leftPct}%`,
                                             width: `${item.widthPct}%`,
                                             backgroundColor: colorMode === 'scene' ? stageColor : '#2a2a2a',
+                                            border: isTagged ? '1.5px solid white' : (colorMode === 'scene' ? `1px solid ${chroma(stageColor).darken(1.5).hex()}` : '1px solid rgba(255,255,255,0.1)'),
                                             borderLeft: `4px solid ${colorMode === 'scene' ? chroma(stageColor).darken(1.5).hex() : stageColor}`,
-                                            border: isTagged ? '1px solid white' : (colorMode === 'scene' ? `1px solid ${chroma(stageColor).darken(1.5).hex()}` : 'none'),
-                                            borderLeftWidth: '4px',
                                             color: '#fff',
                                             boxShadow: colorMode === 'scene' ? '0 2px 8px rgba(0,0,0,0.4)' : '0 2px 4px rgba(0,0,0,0.4)'
                                         }}
