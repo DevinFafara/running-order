@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import chroma from 'chroma-js';
 import { useCheckedState } from '../../context/CheckedStateContext';
 import { useLineup } from '../../hooks/useLineup'; // Assuming this hook exists or we pass groups as prop
 import { STAGE_CONFIG, INTEREST_LEVELS } from '../../constants';
@@ -677,11 +678,10 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
                                             left: `${item.leftPct}%`,
                                             width: `${item.widthPct}%`,
                                             backgroundColor: colorMode === 'scene' ? stageColor : '#2a2a2a',
-                                            borderLeft: `4px solid ${stageColor}`,
-                                            border: isTagged ? '1px solid white' : 'none',
+                                            borderLeft: `4px solid ${colorMode === 'scene' ? chroma(stageColor).darken(1.5).hex() : stageColor}`,
+                                            border: isTagged ? '1px solid white' : (colorMode === 'scene' ? `1px solid ${chroma(stageColor).darken(1.5).hex()}` : 'none'),
                                             borderLeftWidth: '4px',
-                                            borderLeftColor: stageColor,
-                                            color: colorMode === 'scene' ? '#fff' : '#fff', // Could adjust text color if needed
+                                            color: '#fff',
                                             boxShadow: colorMode === 'scene' ? '0 2px 8px rgba(0,0,0,0.4)' : '0 2px 4px rgba(0,0,0,0.4)'
                                         }}
                                         onClick={() => onGroupClick(item.band)}
