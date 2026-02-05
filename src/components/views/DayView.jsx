@@ -11,7 +11,7 @@ const HourTag = ({ hour, i }) => (
     </div>
 );
 
-const CustomEventOverlay = ({ event, hours, onDelete, columnCount, windowWidth }) => {
+const CustomEventOverlay = ({ event, hours, onDelete, onEdit, columnCount, windowWidth }) => {
     // 1. Calculate Top Position
     const [startH, startM] = event.startTime.split(':').map(Number);
     const [endH, endM] = event.endTime.split(':').map(Number);
@@ -52,6 +52,8 @@ const CustomEventOverlay = ({ event, hours, onDelete, columnCount, windowWidth }
     // Note: The CSS might be treating margins differently, but we follow the requested formula.
     const calculatedWidth = columnCount * colWidth;
 
+    const [isMasked, setIsMasked] = useState(false);
+
     return (
         <div
             className="custom-event-overlay"
@@ -63,58 +65,110 @@ const CustomEventOverlay = ({ event, hours, onDelete, columnCount, windowWidth }
                 transform: 'translateX(-50%)',
                 width: `${calculatedWidth}px`,
                 maxWidth: '96%',
-                backgroundColor: 'rgba(255, 215, 0, 0.15)', // Gold transparent
-                border: '2px dashed #FFD700',
+                backgroundColor: isMasked ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.25)',
+                border: isMasked ? '1px solid rgba(255, 255, 255, 0.5)' : '1px solid rgba(255, 255, 255, 0.4)',
                 borderRadius: '8px',
                 zIndex: 50, // Above everything
                 pointerEvents: 'auto', // Allow clicking delete
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'space-between',
+                justifyContent: 'center', // Center content
                 padding: '0 15px',
-                color: '#FFD700',
-                textShadow: '0 1px 2px rgba(0,0,0,0.8)',
-                backdropFilter: 'blur(2px)'
+                color: '#FFFFFF',
+                textShadow: isMasked ? 'none' : '0 1px 2px rgba(0,0,0,0.8)',
+                backdropFilter: isMasked ? 'none' : 'blur(2px)',
+                transition: 'all 0.2s ease'
             }}
         >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span style={{ fontSize: '1.5rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '15px', opacity: isMasked ? 0.1 : 1, transition: 'opacity 0.2s' }}>
+                <span style={{ fontSize: '1.8rem' }}>
                     {event.type === 'apero' && '🍺'}
                     {event.type === 'repas' && '🍔'}
                     {event.type === 'dodo' && '💤'}
                     {event.type === 'autre' && '📍'}
                 </span>
-                <div>
-                    <div style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>{event.title}</div>
-                    <div style={{ fontSize: '0.8rem', opacity: 0.8 }}>{event.startTime} - {event.endTime}</div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <div style={{ fontWeight: 'bold', fontSize: '1.2rem', textTransform: 'uppercase', letterSpacing: '1px' }}>{event.title}</div>
+                    <div style={{ fontSize: '0.9rem', opacity: 0.9, fontWeight: '500' }}>{event.startTime} - {event.endTime}</div>
                 </div>
             </div>
 
-            <button
-                onClick={(e) => {
-                    e.stopPropagation();
-                    onDelete(event.id);
-                }}
-                style={{
-                    background: 'rgba(0,0,0,0.5)',
-                    border: 'none',
-                    color: '#fff',
-                    borderRadius: '50%',
-                    width: '30px',
-                    height: '30px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                }}
-            >
-                <i className="fa-solid fa-trash"></i>
-            </button>
+            <div style={{ position: 'absolute', right: '15px', display: 'flex', gap: '8px' }}>
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setIsMasked(!isMasked);
+                    }}
+                    style={{
+                        background: 'rgba(0,0,0,0.3)',
+                        border: 'none',
+                        color: '#fff',
+                        borderRadius: '50%',
+                        width: '32px',
+                        height: '32px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        transition: 'background 0.2s'
+                    }}
+                    title={isMasked ? "Afficher" : "Masquer"}
+                >
+                    <i className={isMasked ? "fa-solid fa-eye" : "fa-solid fa-eye-slash"}></i>
+                </button>
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        if (onEdit) onEdit(event);
+                        else alert('Modification bientôt disponible');
+                    }}
+                    style={{
+                        background: 'rgba(0,0,0,0.3)',
+                        border: 'none',
+                        color: '#fff',
+                        borderRadius: '50%',
+                        width: '32px',
+                        height: '32px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        transition: 'background 0.2s'
+                    }}
+                    title="Modifier"
+                >
+                    <i className="fa-solid fa-pen"></i>
+                </button>
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        if (window.confirm('Voulez-vous vraiment supprimer cet événement ?')) {
+                            onDelete(event.id);
+                        }
+                    }}
+                    style={{
+                        background: 'rgba(0,0,0,0.3)',
+                        border: 'none',
+                        color: '#fff',
+                        borderRadius: '50%',
+                        width: '32px',
+                        height: '32px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        transition: 'background 0.2s'
+                    }}
+                    title="Supprimer"
+                >
+                    <i className="fa-solid fa-trash"></i>
+                </button>
+            </div>
         </div>
     );
 };
 
-const DayView = ({ groups, selectGroup, selectedGroupId, day, customEvents = [], onDeleteCustomEvent }) => {
+const DayView = ({ groups, selectGroup, selectedGroupId, day, customEvents = [], onDeleteCustomEvent, onEditCustomEvent }) => {
     const { state, setState } = useCheckedState();
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
     const [tagMenuState, setTagMenuState] = useState({ open: false, groupId: null, position: { x: 0, y: 0 } });
@@ -384,6 +438,7 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day, customEvents = [],
                         event={event}
                         hours={hours}
                         onDelete={onDeleteCustomEvent}
+                        onEdit={onEditCustomEvent}
                         columnCount={visibleScenes.length}
                         windowWidth={windowWidth}
                     />
@@ -498,6 +553,7 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day, customEvents = [],
                     event={event}
                     hours={hours}
                     onDelete={onDeleteCustomEvent}
+                    onEdit={onEditCustomEvent}
                     columnCount={visibleCouples.length}
                     windowWidth={windowWidth}
                 />

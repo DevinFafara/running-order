@@ -4,8 +4,7 @@ import '../panels/StatsPanel.css'; // Re-use panel styles or create new ones? Le
 const CustomEventModal = ({ isOpen, onClose, onSave, defaultDay }) => {
     const [title, setTitle] = useState('');
     const [day, setDay] = useState(defaultDay || 'Jeudi');
-    const [startTime, setStartTime] = useState('12:00');
-    const [endTime, setEndTime] = useState('13:00');
+    // Removed unused startTime/endTime as we use split H/M logic now
     const [type, setType] = useState('apero'); // apero, repas, dodo, autre
 
     useEffect(() => {
@@ -35,23 +34,57 @@ const CustomEventModal = ({ isOpen, onClose, onSave, defaultDay }) => {
         apero: '🍺',
         repas: '🍔',
         dodo: '💤',
+        transport: '🚗',
+        course: '🛒',
+        camping: '⛺',
+        ami: '🤠',
         autre: '📍'
+    };
+
+    // Helper for Time Selects
+    const hoursOptions = [
+        ...Array.from({ length: 14 }, (_, i) => i + 10), // 10 to 23
+        ...Array.from({ length: 5 }, (_, i) => i),       // 00 to 04
+    ].map(h => h.toString().padStart(2, '0'));
+
+    const minutesOptions = Array.from({ length: 12 }, (_, i) => (i * 5).toString().padStart(2, '0'));
+
+    // State for split time fields
+    const [startH, setStartH] = useState('12');
+    const [startM, setStartM] = useState('00');
+    const [endH, setEndH] = useState('13');
+    const [endM, setEndM] = useState('00');
+
+    // Sync split state to consolidated state if needed or just use split state in submit
+    // We'll use split state in submit.
+
+    const handleCustomSubmit = (e) => {
+        e.preventDefault();
+        onSave({
+            id: Date.now(),
+            title,
+            day,
+            startTime: `${startH}:${startM}`,
+            endTime: `${endH}:${endM}`,
+            type
+        });
+        onClose();
     };
 
     return (
         <div className="stats-panel-overlay" onClick={onClose}>
             <div className="stats-panel-container" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px', maxHeight: 'auto' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                    <h2 style={{ margin: 0, color: '#FFD700' }}>Ajouter un Perso</h2>
-                    <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#fff', fontSize: '1.2rem', cursor: 'pointer' }}>
+                <div style={{ position: 'relative', marginBottom: '20px', textAlign: 'center' }}>
+                    <h2 style={{ margin: 0, color: '#FFD700', fontSize: '1.2rem', textTransform: 'uppercase' }}>Ajouter un créneau perso</h2>
+                    <button onClick={onClose} style={{ position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#fff', fontSize: '1.2rem', cursor: 'pointer' }}>
                         <i className="fa-solid fa-times"></i>
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                <form onSubmit={handleCustomSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
 
                     {/* TYPE SELECTION */}
-                    <div style={{ display: 'flex', justifyContent: 'space-around', marginBottom: '10px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '15px', marginBottom: '10px' }}>
                         {Object.entries(icons).map(([key, icon]) => (
                             <div
                                 key={key}
@@ -59,12 +92,17 @@ const CustomEventModal = ({ isOpen, onClose, onSave, defaultDay }) => {
                                 style={{
                                     cursor: 'pointer',
                                     padding: '10px',
-                                    borderRadius: '50%',
-                                    background: type === key ? '#FFD700' : 'rgba(255,255,255,0.1)',
+                                    borderRadius: '12px',
+                                    background: type === key ? '#FFD700' : 'rgba(255,255,255,0.05)',
                                     color: type === key ? '#000' : '#fff',
-                                    fontSize: '1.5rem',
+                                    fontSize: '1.8rem',
                                     transition: 'all 0.2s',
-                                    border: type === key ? '2px solid #fff' : '2px solid transparent'
+                                    border: type === key ? '2px solid #FFD700' : '2px solid transparent',
+                                    width: '100%',
+                                    aspectRatio: '1', // Square cells
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
                                 }}
                                 title={key}
                             >
@@ -117,42 +155,55 @@ const CustomEventModal = ({ isOpen, onClose, onSave, defaultDay }) => {
                     </div>
 
                     {/* HORAIRES */}
-                    <div style={{ display: 'flex', gap: '10px' }}>
+                    <div style={{ display: 'flex', gap: '20px' }}>
+                        {/* DEBUT */}
                         <div style={{ flex: 1 }}>
                             <label style={{ display: 'block', fontSize: '0.8rem', color: '#aaa', marginBottom: '5px' }}>Début</label>
-                            <input
-                                type="time"
-                                value={startTime}
-                                onChange={e => setStartTime(e.target.value)}
-                                required
-                                style={{
-                                    width: '100%',
-                                    padding: '10px',
-                                    background: 'rgba(0,0,0,0.3)',
-                                    border: '1px solid #555',
-                                    borderRadius: '6px',
-                                    color: 'white',
-                                    fontFamily: 'monospace'
-                                }}
-                            />
+                            <div style={{ display: 'flex', gap: '5px' }}>
+                                <select
+                                    value={startH}
+                                    onChange={e => setStartH(e.target.value)}
+                                    style={{
+                                        flex: 1, padding: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid #555', borderRadius: '4px', color: 'white'
+                                    }}
+                                >
+                                    {hoursOptions.map(h => <option key={h} value={h}>{h}h</option>)}
+                                </select>
+                                <select
+                                    value={startM}
+                                    onChange={e => setStartM(e.target.value)}
+                                    style={{
+                                        flex: 1, padding: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid #555', borderRadius: '4px', color: 'white'
+                                    }}
+                                >
+                                    {minutesOptions.map(m => <option key={m} value={m}>{m}</option>)}
+                                </select>
+                            </div>
                         </div>
+
+                        {/* FIN */}
                         <div style={{ flex: 1 }}>
                             <label style={{ display: 'block', fontSize: '0.8rem', color: '#aaa', marginBottom: '5px' }}>Fin</label>
-                            <input
-                                type="time"
-                                value={endTime}
-                                onChange={e => setEndTime(e.target.value)}
-                                required
-                                style={{
-                                    width: '100%',
-                                    padding: '10px',
-                                    background: 'rgba(0,0,0,0.3)',
-                                    border: '1px solid #555',
-                                    borderRadius: '6px',
-                                    color: 'white',
-                                    fontFamily: 'monospace'
-                                }}
-                            />
+                            <div style={{ display: 'flex', gap: '5px' }}>
+                                <select
+                                    value={endH}
+                                    onChange={e => setEndH(e.target.value)}
+                                    style={{
+                                        flex: 1, padding: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid #555', borderRadius: '4px', color: 'white'
+                                    }}
+                                >
+                                    {hoursOptions.map(h => <option key={h} value={h}>{h}h</option>)}
+                                </select>
+                                <select
+                                    value={endM}
+                                    onChange={e => setEndM(e.target.value)}
+                                    style={{
+                                        flex: 1, padding: '8px', background: 'rgba(0,0,0,0.3)', border: '1px solid #555', borderRadius: '4px', color: 'white'
+                                    }}
+                                >
+                                    {minutesOptions.map(m => <option key={m} value={m}>{m}</option>)}
+                                </select>
+                            </div>
                         </div>
                     </div>
 

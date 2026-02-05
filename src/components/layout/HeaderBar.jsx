@@ -28,9 +28,8 @@ const HeaderBar = ({ viewMode, onViewChange, onInteraction, onAddCustomEvent }) 
                             if (onInteraction) onInteraction();
                             onAddCustomEvent();
                         }}
-                        style={{ border: '1px solid #FFD700', color: '#FFD700' }}
                     >
-                        <i className="fa-solid fa-plus"></i>
+                        <i className="fa-solid fa-calendar-plus"></i>
                     </button>
 
                     <button
