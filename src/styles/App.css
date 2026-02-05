@@ -352,7 +352,8 @@ nav button:hover {
   max-width: 95vw;
   height: 420px;
   /* Hauteur fixe pour éviter les sauts */
-  overflow: hidden;
+  /* overflow: hidden; -> Removed to allow tag dropdown to show when opening upwards */
+  overflow: visible;
   display: flex;
   flex-direction: column;
   animation: pop-in 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -377,6 +378,8 @@ nav button:hover {
   position: relative;
   flex-shrink: 0;
   /* Ne pas réduire le header */
+  border-radius: 12px 12px 0 0;
+  /* Match group-card corners since overflow is now visible */
 }
 
 .header-top {
@@ -472,6 +475,8 @@ nav button:hover {
   overflow-y: auto;
   color: #eee;
   flex: 1;
+  border-radius: 0 0 12px 12px;
+  /* Match group-card corners */
 }
 
 /* Animations */
