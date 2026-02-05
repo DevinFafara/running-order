@@ -6,7 +6,7 @@ import CreditsPanel from '../panels/CreditsPanel';
 
 import StatsPanel from '../panels/StatsPanel';
 
-const HeaderBar = ({ viewMode, onViewChange, onInteraction, onAddCustomEvent }) => {
+const HeaderBar = ({ viewMode, onViewChange, onInteraction, onAddCustomEvent, customEvents }) => {
     const [playlistOpen, setPlaylistOpen] = useState(false);
     const [filterOpen, setFilterOpen] = useState(false);
     const [settingsOpen, setSettingsOpen] = useState(false);
@@ -119,6 +119,7 @@ const HeaderBar = ({ viewMode, onViewChange, onInteraction, onAddCustomEvent }) 
             {statsOpen && (
                 <StatsPanel
                     onClose={() => setStatsOpen(false)}
+                    customEvents={customEvents}
                 />
             )}
         </>

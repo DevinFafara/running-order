@@ -12,10 +12,12 @@ import GroupCard from './components/common/GroupCard';
 import './styles/App.css';
 
 import CustomEventModal from './components/modals/CustomEventModal';
+import ImportModal from './components/modals/ImportModal';
+import { parseShareData } from './utils/sharingUtils';
 
 function AppContent() {
   const { data: groups, sideStagesData, loading, error } = useLineup();
-  const { state, setDay } = useCheckedState();
+  const { state, setDay, setState } = useCheckedState();
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [popoverPosition, setPopoverPosition] = useState(null); // This state is no longer used for GroupCard, but kept for now if other uses exist.
   const [viewMode, setViewMode] = useState('day'); // 'day' or 'week'
@@ -26,12 +28,54 @@ function AppContent() {
     return saved ? JSON.parse(saved) : [];
   });
   const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
+
   const [editingEvent, setEditingEvent] = useState(null);
+
+  // Share/Import State
+  const [importData, setImportData] = useState(null);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   // Save to LocalStorage
   useEffect(() => {
     localStorage.setItem('customEvents', JSON.stringify(customEvents));
   }, [customEvents]);
+
+  // Check URL for Share Token
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const shareToken = params.get('share');
+    if (shareToken) {
+      const data = parseShareData(shareToken);
+      if (data) {
+        setImportData(data);
+        setIsImportModalOpen(true);
+      }
+      // Clean URL
+      window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
+    }
+  }, []);
+
+  // Import Handlers
+  const handleImportMerge = (data) => {
+    // 1. Merge Bands - Handled in onMerge prop via setState
+    // 2. Merge Custom Events
+
+
+    // 2. Merge Custom Events
+    setCustomEvents(prev => [...prev, ...data.customEvents]);
+
+    alert(`Import réussi ! ${Object.keys(data.bands).length} groupes et ${data.customEvents.length} créneaux fusionnés.`);
+    setIsImportModalOpen(false);
+  };
+
+  const handleImportReplace = (data) => {
+    // 1. Replace Bands - Handled in onReplace prop via setState
+    // 2. Replace Custom Events
+    setCustomEvents(data.customEvents);
+
+    alert("Import réussi ! Votre sélection a été remplacée.");
+    setIsImportModalOpen(false);
+  };
 
   const handleAddCustomEvent = (event) => {
     setCustomEvents(prev => {
@@ -150,6 +194,7 @@ function AppContent() {
         onViewChange={setViewMode}
         onInteraction={() => setSelectedGroup(null)}
         onAddCustomEvent={() => setIsCustomModalOpen(true)}
+        customEvents={customEvents}
       />
 
       {viewMode === 'day' && <Navigation />}
@@ -190,6 +235,33 @@ function AppContent() {
         onDelete={handleDeleteCustomEvent}
         defaultDay={state.day}
         eventToEdit={editingEvent}
+      />
+
+      {/* Import Modal */}
+      <ImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        data={importData}
+        onMerge={(data) => {
+          setState(prev => {
+            const newTagged = { ...prev.taggedBands };
+            Object.entries(data.bands).forEach(([id, bandData]) => {
+              newTagged[id] = {
+                ...(newTagged[id] || {}),
+                interest: bandData.interest
+              };
+            });
+            return { ...prev, taggedBands: newTagged };
+          });
+          handleImportMerge(data);
+        }}
+        onReplace={(data) => {
+          setState(prev => ({
+            ...prev,
+            taggedBands: data.bands
+          }));
+          handleImportReplace(data);
+        }}
       />
 
       {selectedGroup && (

@@ -3,14 +3,18 @@ import { useCheckedState } from '../../context/CheckedStateContext';
 import { useLineup } from '../../hooks/useLineup';
 import { calculateStats, getLevelTitle } from '../../utils/statsUtils';
 import { STAGE_CONFIG, MAIN_STAGES } from '../../constants';
+import { generateShareLink } from '../../utils/sharingUtils';
+import ShareModal from '../modals/ShareModal';
 import './StatsPanel.css';
 
-const StatsPanel = ({ onClose }) => {
+const StatsPanel = ({ onClose, customEvents = [] }) => {
     const { state } = useCheckedState();
     const { data: groups, sideStagesData } = useLineup();
     const [expandedDays, setExpandedDays] = useState({});
     const [gaugeHeight, setGaugeHeight] = useState(0);
     const [animatedTotal, setAnimatedTotal] = useState(0);
+    const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+    const [shareUrl, setShareUrl] = useState('');
 
     // Merge data if needed
     const allGroups = useMemo(() => {
@@ -59,6 +63,12 @@ const StatsPanel = ({ onClose }) => {
         setExpandedDays(prev => ({ ...prev, [day]: !prev[day] }));
     };
 
+    const handleShare = () => {
+        const url = generateShareLink(state.taggedBands, customEvents);
+        setShareUrl(url);
+        setIsShareModalOpen(true);
+    };
+
     const RANKS = [
         { label: "Trve", bottom: "90%" },
         { label: "Hellbanger", bottom: "60%" },
@@ -71,7 +81,29 @@ const StatsPanel = ({ onClose }) => {
             <div className="stats-panel-container" onClick={e => e.stopPropagation()}>
                 <button className="stats-panel-close-btn" onClick={onClose}>×</button>
 
-                <h2 className="stats-panel-title">Mon Profil</h2>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+                    <h2 className="stats-panel-title" style={{ margin: 0 }}>Mon Profil</h2>
+                    <button
+                        onClick={handleShare}
+                        className="stats-panel-share-btn"
+                        title="Partager mon Running Order"
+                        style={{
+                            background: 'transparent',
+                            border: '1px solid #FFD700',
+                            color: '#FFD700',
+                            borderRadius: '50%',
+                            width: '32px',
+                            height: '32px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '0.9rem'
+                        }}
+                    >
+                        <i className="fa-solid fa-share-nodes"></i>
+                    </button>
+                </div>
 
                 <div className="stats-panel-rank-widget">
 
@@ -260,6 +292,12 @@ const StatsPanel = ({ onClose }) => {
 
 
 
+                {/* Share Modal */}
+                <ShareModal
+                    isOpen={isShareModalOpen}
+                    onClose={() => setIsShareModalOpen(false)}
+                    shareUrl={shareUrl}
+                />
             </div>
         </div>
     );
