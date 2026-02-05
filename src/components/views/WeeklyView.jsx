@@ -182,7 +182,7 @@ const calculateFavoritesLayout = (groupsToLayout) => {
 const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent }) => {
     const { state, getInterestColor, getBandTag, cycleInterest } = useCheckedState();
     const [filterMode, setFilterMode] = useState('favorites'); // 'favorites' or 'all'
-    const [selectedScenes, setSelectedScenes] = useState(() => Object.keys(STAGE_CONFIG));
+    const [selectedScenes, setSelectedScenes] = useState(() => [...Object.keys(STAGE_CONFIG), 'CUSTOM']);
     const [tagMenuState, setTagMenuState] = useState({ open: false, groupId: null, position: { x: 0, y: 0 } });
 
     // Handle Right Click (Context Menu)
@@ -222,10 +222,12 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
 
     // Toggle All Scenes
     const toggleAllScenes = () => {
-        if (selectedScenes.length === Object.keys(STAGE_CONFIG).length) {
-            setSelectedScenes([]);
+        const allKeys = [...Object.keys(STAGE_CONFIG), 'CUSTOM'];
+        if (selectedScenes.length >= Object.keys(STAGE_CONFIG).length) { // Loose check: if mostly full, clear all
+            if (selectedScenes.length === allKeys.length) setSelectedScenes([]);
+            else setSelectedScenes(allKeys);
         } else {
-            setSelectedScenes(Object.keys(STAGE_CONFIG));
+            setSelectedScenes(allKeys);
         }
     };
 
@@ -547,9 +549,9 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
                     <button
                         className="scene-filter-tiny-btn all"
                         onClick={toggleAllScenes}
-                        title={selectedScenes.length === Object.keys(STAGE_CONFIG).length ? "Tout masquer" : "Tout afficher"}
+                        title={selectedScenes.length >= Object.keys(STAGE_CONFIG).length ? "Tout masquer" : "Tout afficher"}
                     >
-                        {selectedScenes.length === Object.keys(STAGE_CONFIG).length ? <i className="fa-solid fa-eye-slash"></i> : <i className="fa-solid fa-eye"></i>}
+                        {selectedScenes.length >= Object.keys(STAGE_CONFIG).length ? <i className="fa-solid fa-eye-slash"></i> : <i className="fa-solid fa-eye"></i>}
                     </button>
                     {Object.entries(STAGE_CONFIG).map(([key, config]) => (
                         <button
@@ -565,6 +567,19 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
                             <img src={config.icon} alt={config.name} className="mini-icon" />
                         </button>
                     ))}
+                    {/* CUSTOM EVENTS TOGGLE */}
+                    <button
+                        className={`scene-filter-tiny-btn ${selectedScenes.includes('CUSTOM') ? 'active' : ''}`}
+                        onClick={() => toggleScene('CUSTOM')}
+                        style={{
+                            '--scene-color': '#adb5bd', // Grey for generic custom
+                            opacity: selectedScenes.includes('CUSTOM') ? 1 : 0.4,
+                            marginLeft: '8px'
+                        }}
+                        title="Créneaux perso"
+                    >
+                        <span style={{ fontSize: '1.2em' }}>👤</span>
+                    </button>
                 </div>
 
                 {/* Right: View Mode Filters */}
@@ -671,8 +686,8 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
                                 );
                             })}
 
-                            {/* CUSTOM EVENTS LAYER */}
-                            {(customEvents || []).filter(e => e.day === day).map(event => {
+                            {/* CUSTOM EVENTS LAYER (Filtered) */}
+                            {selectedScenes.includes('CUSTOM') && (customEvents || []).filter(e => e.day === day).map(event => {
                                 // Time Parsing & Position Logic matching WeeklyView layout
                                 const [startH, startM] = event.startTime.split(':').map(Number);
                                 const [endH, endM] = event.endTime.split(':').map(Number);
