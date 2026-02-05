@@ -20,6 +20,20 @@ const HeaderBar = ({ viewMode, onViewChange, onInteraction, onAddCustomEvent, cu
     const [contactsOpen, setContactsOpen] = useState(false);
     const [profileOpen, setProfileOpen] = useState(false);
     const [shareOpen, setShareOpen] = useState(false);
+    const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+    React.useEffect(() => {
+        const handleOnline = () => setIsOnline(true);
+        const handleOffline = () => setIsOnline(false);
+
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+
+        return () => {
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+        };
+    }, []);
 
     const handleOpenPanel = (id) => {
         if (id === 'stats') setStatsOpen(true);
@@ -33,8 +47,22 @@ const HeaderBar = ({ viewMode, onViewChange, onInteraction, onAddCustomEvent, cu
     return (
         <>
             <header>
-                <div className="header-left">
-                    <span className="header-title">Hellfest-RO</span>
+                <div className="header-left" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span className="header-title">Hellfest-RO</span>
+                        {!isOnline && (
+                            <span
+                                title="Mode Hors-ligne (Données en cache)"
+                                style={{
+                                    color: '#e74c3c',
+                                    fontSize: '0.8rem',
+                                    animation: 'pulse 2s infinite'
+                                }}
+                            >
+                                <i className="fa-solid fa-cloud-slash"></i>
+                            </span>
+                        )}
+                    </div>
                     {isGuestMode && (
                         <div style={{
                             fontSize: '0.8rem',
