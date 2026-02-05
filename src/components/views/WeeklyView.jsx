@@ -585,8 +585,8 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
                 </div>
 
                 {/* Right: View Mode Filters */}
-                <div className="weekly-header-right" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <div className="weekly-filters" style={{ justifyContent: 'flex-end' }}>
+                <div className="weekly-header-right">
+                    <div className="weekly-filters">
                         <button
                             className={`weekly-filter-btn ${filterMode === 'favorites' ? 'active' : ''}`}
                             onClick={() => setFilterMode('favorites')}
@@ -600,7 +600,7 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
                             Tout le monde
                         </button>
                     </div>
-                    <div className="weekly-filters" style={{ justifyContent: 'flex-end' }}>
+                    <div className="weekly-filters">
                         <button
                             className={`weekly-filter-btn ${colorMode === 'transparent' ? 'active' : ''}`}
                             onClick={() => setColorMode('transparent')}

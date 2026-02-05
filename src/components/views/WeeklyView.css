@@ -45,11 +45,10 @@
 
 .weekly-header-right {
     flex: 1;
-    /* Occupy space */
     display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    align-items: center;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-end;
 }
 
 .weekly-filters-separator {
@@ -200,6 +199,34 @@
 }
 
 @media (max-width: 1200px) {
+    .weekly-header {
+        flex-direction: column;
+        gap: 15px;
+        padding: 15px;
+    }
+
+    .weekly-header-left,
+    .weekly-header-center,
+    .weekly-header-right {
+        flex: none;
+        width: 100%;
+        justify-content: center !important;
+        text-align: center;
+    }
+
+    .weekly-header-right {
+        display: flex;
+        flex-direction: column !important;
+        align-items: center !important;
+        gap: 10px;
+    }
+
+    .weekly-header-right .weekly-filters {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+    }
+
     .weekly-grid {
         grid-template-columns: repeat(2, 1fr);
         gap: 15px;
