@@ -127,7 +127,7 @@ function AppContent() {
 
   // So `App.jsx` needs to provide `handleCheckContactFromPanel`.
   // So `App.jsx` needs to provide `handleCheckContactFromPanel`.
-  const handleCheckContactFromPanel = ({ data, mode }) => {
+  const handleCheckContactFromPanel = (data, mode) => {
     if (mode === 'merge') handleImportMerge(data);
     if (mode === 'replace') handleImportReplace(data);
     if (mode === 'view') {
