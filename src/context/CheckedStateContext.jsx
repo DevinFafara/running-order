@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { DEFAULT_COLORS, INTEREST_LEVELS, CONTEXT_TAGS } from '../constants';
+import { migrateOldData } from '../utils/migrationUtils';
 
 export const CheckedStateContext = createContext();
 
@@ -54,19 +55,22 @@ export const CheckedStateProvider = ({ children }) => {
             if (saved) {
                 const parsed = JSON.parse(saved);
 
+                // Appliquer la migration pour transformer l'ancien format en nouveau
+                const migrated = migrateOldData(parsed);
+
                 // Merge profond et intelligent
                 const mergedState = {
                     ...INITIAL_STATE,
-                    ...parsed,
+                    ...migrated,
                     // S'assurer que les nouvelles clés de scènes sont présentes
                     scenes: {
                         ...INITIAL_STATE.scenes,
-                        ...(parsed.scenes || {})
+                        ...(migrated.scenes || {})
                     },
                     // S'assurer que les nouvelles clés de couleurs sont présentes
                     interestColors: {
                         ...getDefaultInterestColors(),
-                        ...(parsed.interestColors || {})
+                        ...(migrated.interestColors || {})
                     }
                 };
                 return mergedState;
