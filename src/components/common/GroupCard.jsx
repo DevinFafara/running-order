@@ -21,7 +21,6 @@ const GroupCard = ({ group, position, onClose, onPositionChange }) => {
     const [isDragging, setIsDragging] = useState(false);
     const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
     const [measuredHeight, setMeasuredHeight] = useState(null);
-    const [showTagDropdown, setShowTagDropdown] = useState(false);
     const [expanded, setExpanded] = useState(false);
     const [manualHeight, setManualHeight] = useState(null);
 
@@ -80,11 +79,29 @@ const GroupCard = ({ group, position, onClose, onPositionChange }) => {
         }
     }, [manualHeight]);
 
+    const [showTagDropdown, setShowTagDropdown] = useState(false);
+    const [openUpwards, setOpenUpwards] = useState(false);
+    const tagBtnRef = useRef(null);
+
     // Close dropdown when clicking outside
     useEffect(() => {
         const handleClickOutside = () => setShowTagDropdown(false);
         if (showTagDropdown) {
             document.addEventListener('click', handleClickOutside);
+
+            // Determine if we should open upwards
+            if (tagBtnRef.current) {
+                const rect = tagBtnRef.current.getBoundingClientRect();
+                const viewportHeight = window.innerHeight;
+                const dropdownHeight = 350; // Estimated height of the dropdown
+                const spaceBelow = viewportHeight - rect.bottom;
+
+                if (spaceBelow < dropdownHeight && rect.top > dropdownHeight) {
+                    setOpenUpwards(true);
+                } else {
+                    setOpenUpwards(false);
+                }
+            }
         }
         return () => document.removeEventListener('click', handleClickOutside);
     }, [showTagDropdown]);
@@ -431,6 +448,7 @@ const GroupCard = ({ group, position, onClose, onPositionChange }) => {
                         {/* Tag dropdown button */}
                         <div className="tag-dropdown-container" style={{ position: 'relative' }}>
                             <button
+                                ref={tagBtnRef}
                                 className={`favorite-btn ${(currentInterest || currentContext) ? 'active' : ''}`}
                                 onClick={(e) => {
                                     e.stopPropagation();
@@ -444,20 +462,22 @@ const GroupCard = ({ group, position, onClose, onPositionChange }) => {
                             {/* Dropdown menu */}
                             {showTagDropdown && (
                                 <div
-                                    className="tag-dropdown"
+                                    className={`tag-dropdown ${openUpwards ? 'upwards' : ''}`}
                                     onClick={(e) => e.stopPropagation()}
                                     style={{
                                         position: 'absolute',
-                                        top: '100%',
+                                        top: openUpwards ? 'auto' : '100%',
+                                        bottom: openUpwards ? '100%' : 'auto',
                                         right: 0,
                                         width: '200px',
                                         backgroundColor: '#222',
                                         border: '1px solid #444',
                                         borderRadius: '8px',
                                         padding: '10px',
-                                        boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+                                        boxShadow: openUpwards ? '0 -4px 12px rgba(0,0,0,0.5)' : '0 4px 12px rgba(0,0,0,0.5)',
                                         zIndex: 2000,
-                                        marginTop: '5px',
+                                        marginTop: openUpwards ? '0' : '5px',
+                                        marginBottom: openUpwards ? '5px' : '0',
                                         textAlign: 'left'
                                     }}
                                 >
