@@ -4,22 +4,67 @@ import FilterPanel from '../panels/FilterPanel';
 import SettingsPanel from '../panels/SettingsPanel';
 import CreditsPanel from '../panels/CreditsPanel';
 import ContactsPanel from '../panels/ContactsPanel';
+import ProfileModal from '../modals/ProfileModal';
+import ShareModal from '../modals/ShareModal';
+import { useCheckedState } from '../../context/CheckedStateContext';
 
 import StatsPanel from '../panels/StatsPanel';
 
-const HeaderBar = ({ viewMode, onViewChange, onInteraction, onAddCustomEvent, customEvents, contacts, onDeleteContact, onCheckContact }) => {
+const HeaderBar = ({ viewMode, onViewChange, onInteraction, onAddCustomEvent, customEvents, contacts, onDeleteContact, onCheckContact, isGuestMode, guestName, onExitGuestMode }) => {
+    const { userState } = useCheckedState();
     const [playlistOpen, setPlaylistOpen] = useState(false);
     const [filterOpen, setFilterOpen] = useState(false);
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [creditsOpen, setCreditsOpen] = useState(false);
     const [statsOpen, setStatsOpen] = useState(false);
     const [contactsOpen, setContactsOpen] = useState(false);
+    const [profileOpen, setProfileOpen] = useState(false);
+    const [shareOpen, setShareOpen] = useState(false);
+
+    const handleOpenPanel = (id) => {
+        if (id === 'stats') setStatsOpen(true);
+        if (id === 'playlists') setPlaylistOpen(true);
+        if (id === 'contacts') setContactsOpen(true);
+        if (id === 'settings') setSettingsOpen(true);
+        if (id === 'credits') setCreditsOpen(true);
+        // Share handled separately via callback
+    };
 
     return (
         <>
             <header>
                 <div className="header-left">
                     <span className="header-title">Hellfest-RO</span>
+                    {isGuestMode && (
+                        <div style={{
+                            fontSize: '0.8rem',
+                            color: '#FFD700',
+                            marginLeft: '10px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '5px'
+                        }}>
+                            <i className="fa-solid fa-eye"></i>
+                            <span>{guestName}</span>
+                            <button
+                                onClick={onExitGuestMode}
+                                style={{
+                                    background: 'rgba(255,255,255,0.1)',
+                                    border: 'none',
+                                    borderRadius: '50%',
+                                    width: '20px',
+                                    height: '20px',
+                                    color: '#fff',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}
+                            >
+                                ×
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 <div className="toolbar">
@@ -46,16 +91,6 @@ const HeaderBar = ({ viewMode, onViewChange, onInteraction, onAddCustomEvent, cu
                     </button>
 
                     <button
-                        className={`toolbar-btn ${statsOpen ? 'active' : ''}`}
-                        title="Mes Stats"
-                        onClick={() => {
-                            if (onInteraction) onInteraction();
-                            setStatsOpen(true);
-                        }}
-                    >
-                        <i className="fa-solid fa-chart-pie"></i>
-                    </button>
-                    <button
                         className={`toolbar-btn ${filterOpen ? 'active' : ''}`}
                         title="Filtres"
                         onClick={() => {
@@ -65,45 +100,17 @@ const HeaderBar = ({ viewMode, onViewChange, onInteraction, onAddCustomEvent, cu
                     >
                         <i className="fa-solid fa-filter"></i>
                     </button>
+
                     <button
-                        className={`toolbar-btn ${playlistOpen ? 'active' : ''}`}
-                        title="Playlists"
+                        className={`toolbar-btn ${profileOpen ? 'active' : ''}`}
+                        title="Menu Profil"
                         onClick={() => {
                             if (onInteraction) onInteraction();
-                            setPlaylistOpen(true);
+                            setProfileOpen(true);
                         }}
+                        style={{ marginLeft: '5px' }}
                     >
-                        <i className="fa-solid fa-music"></i>
-                    </button>
-                    <button
-                        className={`toolbar-btn ${settingsOpen ? 'active' : ''}`}
-                        title="Paramètres"
-                        onClick={() => {
-                            if (onInteraction) onInteraction();
-                            setSettingsOpen(true);
-                        }}
-                    >
-                        <i className="fa-solid fa-gear"></i>
-                    </button>
-                    <button
-                        className={`toolbar-btn ${contactsOpen ? 'active' : ''}`}
-                        title="Contacts"
-                        onClick={() => {
-                            if (onInteraction) onInteraction();
-                            setContactsOpen(true);
-                        }}
-                    >
-                        <i className="fa-solid fa-address-book"></i>
-                    </button>
-                    <button
-                        className={`toolbar-btn ${creditsOpen ? 'active' : ''}`}
-                        title="Crédits"
-                        onClick={() => {
-                            if (onInteraction) onInteraction();
-                            setCreditsOpen(true);
-                        }}
-                    >
-                        <i className="fa-solid fa-heart"></i>
+                        <i className="fa-solid fa-bars"></i>
                     </button>
                 </div>
             </header>
@@ -142,6 +149,20 @@ const HeaderBar = ({ viewMode, onViewChange, onInteraction, onAddCustomEvent, cu
                     customEvents={customEvents}
                 />
             )}
+
+            <ProfileModal
+                isOpen={profileOpen}
+                onClose={() => setProfileOpen(false)}
+                onOpenPanel={handleOpenPanel}
+                onShare={() => setShareOpen(true)}
+            />
+
+            <ShareModal
+                isOpen={shareOpen}
+                onClose={() => setShareOpen(false)}
+                taggedBands={userState ? userState.taggedBands : {}} // Using userState from context
+                customEvents={customEvents}
+            />
         </>
     );
 };
