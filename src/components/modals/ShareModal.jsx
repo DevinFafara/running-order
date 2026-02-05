@@ -78,7 +78,7 @@ const ShareModal = ({ isOpen, onClose, taggedBands, customEvents }) => {
                 gap: '20px'
             }} onClick={e => e.stopPropagation()}>
 
-                <h2 style={{ margin: 0, color: '#FFD700', textAlign: 'center', fontSize: '1.5rem' }}>
+                <h2 style={{ margin: 0, color: '#FFD700', textAlign: 'center', fontSize: '1.5rem', letterSpacing: '2px', fontFamily: 'Metal Mania' }}>
                     Partager mon Running Order 🤘
                 </h2>
 

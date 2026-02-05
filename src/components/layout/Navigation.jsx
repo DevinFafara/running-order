@@ -46,7 +46,7 @@ const Navigation = () => {
                     <i className="fa-solid fa-chevron-left"></i>
                 </button>
             )}
-            <h1>{state.day}</h1>
+            <h1 style={{ fontFamily: 'Metal Mania' }}>{state.day}</h1>
             {currentDayIndex < visibleDays.length - 1 && (
                 <button onClick={() => handleDayChange(currentDayIndex + 1)}>
                     <i className="fa-solid fa-chevron-right"></i>

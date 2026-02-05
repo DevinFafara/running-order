@@ -101,7 +101,7 @@ const CustomEventModal = ({ isOpen, onClose, onSave, onDelete, defaultDay, event
         <div className="stats-panel-overlay" onClick={onClose}>
             <div className="stats-panel-container" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px', maxHeight: 'auto' }}>
                 <div style={{ position: 'relative', marginBottom: '20px', textAlign: 'center' }}>
-                    <h2 style={{ margin: 0, color: '#FFD700', fontSize: '1.2rem', textTransform: 'uppercase' }}>{eventToEdit ? 'Modifier' : 'Ajouter'} un créneau</h2>
+                    <h2 style={{ margin: 0, color: '#FFD700', fontSize: '1.2rem', textTransform: 'uppercase', fontFamily: 'Metal Mania', letterSpacing: '2px' }}>{eventToEdit ? 'Modifier' : 'Ajouter'} un créneau</h2>
                 </div>
 
                 <button
