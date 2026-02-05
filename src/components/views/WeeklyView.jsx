@@ -543,7 +543,17 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
             <div className="weekly-header">
                 {/* Left: Title */}
                 <div className="weekly-header-left">
-                    <h2>Résumé Semaine</h2>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                        <h2>Résumé Semaine</h2>
+                        <button
+                            className="export-pdf-btn"
+                            onClick={() => window.print()}
+                            title="Exporter en PDF"
+                        >
+                            <i className="fa-solid fa-file-pdf"></i>
+                            <span>PDF</span>
+                        </button>
+                    </div>
                 </div>
 
                 {/* Center: Scene Filters */}

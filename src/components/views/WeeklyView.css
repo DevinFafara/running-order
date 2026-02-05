@@ -344,36 +344,113 @@
     font-size: 0.7rem;
 }
 
+.export-pdf-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #e74c3c;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: bold;
+    transition: background 0.2s;
+    margin-left: 10px;
+}
+
+.export-pdf-btn:hover {
+    background: #c0392b;
+}
+
+.export-pdf-btn i {
+    font-size: 1rem;
+}
+
 /* Print Styles */
 @media print {
-    .weekly-view {
-        height: auto;
-        overflow: visible;
-        background: white;
-        color: black;
-    }
-
-    .weekly-header,
-    .weekly-filters {
-        display: none;
-    }
-
-    .weekly-grid {
-        display: grid;
-    }
-
-    .weekly-day-column {
-        border-color: #ccc;
-        background: none;
-    }
-
-    .weekly-band-card {
-        border: 1px solid #999;
-        color: black;
-        box-shadow: none;
+    @page {
+        size: A4 landscape;
+        margin: 5mm;
     }
 
     body {
-        background: white;
+        margin: 0;
+        padding: 0;
+        background: #121212 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color: white !important;
+    }
+
+    .weekly-view {
+        height: auto !important;
+        min-height: unset !important;
+        overflow: visible !important;
+        padding: 0 !important;
+        background: #121212 !important;
+        width: 100% !important;
+    }
+
+    .weekly-header,
+    .weekly-header-left,
+    .weekly-header-center,
+    .weekly-header-right,
+    .export-pdf-btn,
+    .scene-filter-tiny-btn,
+    .weekly-filter-btn {
+        display: none !important;
+    }
+
+    .weekly-grid {
+        display: grid !important;
+        grid-template-columns: repeat(4, 1fr) !important;
+        grid-auto-rows: min-content !important;
+        gap: 5px !important;
+        width: 100% !important;
+        min-height: unset !important;
+    }
+
+    .weekly-day-column {
+        min-height: 850px !important;
+        background: rgba(255, 255, 255, 0.02) !important;
+        border: 1px solid #444 !important;
+        page-break-inside: avoid;
+        padding-left: 35px !important;
+    }
+
+    .weekly-day-column .weekly-time-ruler {
+        display: block !important;
+        opacity: 0.5 !important;
+    }
+
+    .weekly-day-header {
+        background: rgba(255, 255, 255, 0.1) !important;
+        color: white !important;
+        font-family: 'Metal Mania' !important;
+        font-size: 1rem !important;
+        height: 35px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    .weekly-band-card {
+        box-shadow: none !important;
+        page-break-inside: avoid !important;
+        border-width: 1px !important;
+        background-color: inherit !important;
+        /* Keep the color applied by style attribute */
+    }
+
+    .weekly-day-content {
+        min-height: 800px !important;
+    }
+
+    /* Force background colors to show in print */
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
     }
 }
