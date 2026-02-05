@@ -1,33 +1,43 @@
 import React, { useState, useEffect } from 'react';
 import '../panels/StatsPanel.css'; // Re-use panel styles or create new ones? Let's use simple inline or basic styles for now to be quick.
 
-const CustomEventModal = ({ isOpen, onClose, onSave, defaultDay }) => {
+const CustomEventModal = ({ isOpen, onClose, onSave, defaultDay, eventToEdit }) => {
     const [title, setTitle] = useState('');
     const [day, setDay] = useState(defaultDay || 'Jeudi');
     // Removed unused startTime/endTime as we use split H/M logic now
     const [type, setType] = useState('apero'); // apero, repas, dodo, autre
 
+    // State for split time fields
+    const [startH, setStartH] = useState('12');
+    const [startM, setStartM] = useState('00');
+    const [endH, setEndH] = useState('13');
+    const [endM, setEndM] = useState('00');
+
     useEffect(() => {
         if (isOpen) {
-            setDay(defaultDay || 'Jeudi');
-            // Reset or keep previous? Reset is safer.
+            if (eventToEdit) {
+                setTitle(eventToEdit.title || '');
+                setDay(eventToEdit.day || defaultDay || 'Jeudi');
+                setType(eventToEdit.type || 'apero');
+                const [sH, sM] = (eventToEdit.startTime || '12:00').split(':');
+                setStartH(sH);
+                setStartM(sM);
+                const [eH, eM] = (eventToEdit.endTime || '13:00').split(':');
+                setEndH(eH);
+                setEndM(eM);
+            } else {
+                setDay(defaultDay || 'Jeudi');
+                setTitle('');
+                setType('apero');
+                setStartH('12');
+                setStartM('00');
+                setEndH('13');
+                setEndM('00');
+            }
         }
-    }, [isOpen, defaultDay]);
+    }, [isOpen, defaultDay, eventToEdit]);
 
 
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        onSave({
-            id: Date.now(),
-            title,
-            day,
-            startTime,
-            endTime,
-            type
-        });
-        onClose();
-    };
 
     // Icons mapping
     const icons = {
@@ -49,19 +59,10 @@ const CustomEventModal = ({ isOpen, onClose, onSave, defaultDay }) => {
 
     const minutesOptions = Array.from({ length: 12 }, (_, i) => (i * 5).toString().padStart(2, '0'));
 
-    // State for split time fields
-    const [startH, setStartH] = useState('12');
-    const [startM, setStartM] = useState('00');
-    const [endH, setEndH] = useState('13');
-    const [endM, setEndM] = useState('00');
-
-    // Sync split state to consolidated state if needed or just use split state in submit
-    // We'll use split state in submit.
-
     const handleCustomSubmit = (e) => {
         e.preventDefault();
         onSave({
-            id: Date.now(),
+            id: eventToEdit ? eventToEdit.id : Date.now(),
             title,
             day,
             startTime: `${startH}:${startM}`,
@@ -77,7 +78,7 @@ const CustomEventModal = ({ isOpen, onClose, onSave, defaultDay }) => {
         <div className="stats-panel-overlay" onClick={onClose}>
             <div className="stats-panel-container" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px', maxHeight: 'auto' }}>
                 <div style={{ position: 'relative', marginBottom: '20px', textAlign: 'center' }}>
-                    <h2 style={{ margin: 0, color: '#FFD700', fontSize: '1.2rem', textTransform: 'uppercase' }}>Ajouter un créneau perso</h2>
+                    <h2 style={{ margin: 0, color: '#FFD700', fontSize: '1.2rem', textTransform: 'uppercase' }}>{eventToEdit ? 'Modifier' : 'Ajouter'} un créneau</h2>
                     <button onClick={onClose} style={{ position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#fff', fontSize: '1.2rem', cursor: 'pointer' }}>
                         <i className="fa-solid fa-times"></i>
                     </button>
@@ -224,7 +225,7 @@ const CustomEventModal = ({ isOpen, onClose, onSave, defaultDay }) => {
                             textTransform: 'uppercase'
                         }}
                     >
-                        Créer le créneau
+                        {eventToEdit ? 'Enregistrer' : 'Créer le créneau'}
                     </button>
 
                 </form>

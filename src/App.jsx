@@ -26,6 +26,7 @@ function AppContent() {
     return saved ? JSON.parse(saved) : [];
   });
   const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
+  const [editingEvent, setEditingEvent] = useState(null);
 
   // Save to LocalStorage
   useEffect(() => {
@@ -33,7 +34,23 @@ function AppContent() {
   }, [customEvents]);
 
   const handleAddCustomEvent = (event) => {
-    setCustomEvents([...customEvents, event]);
+    setCustomEvents(prev => {
+      const index = prev.findIndex(e => e.id === event.id);
+      if (index !== -1) {
+        // Update
+        const newEvents = [...prev];
+        newEvents[index] = event;
+        return newEvents;
+      }
+      // Create
+      return [...prev, event];
+    });
+    setEditingEvent(null);
+  };
+
+  const handleEditCustomEvent = (event) => {
+    setEditingEvent(event);
+    setIsCustomModalOpen(true);
   };
 
   const handleDeleteCustomEvent = (id) => {
@@ -148,6 +165,7 @@ function AppContent() {
                 day={state.day}
                 customEvents={customEvents}
                 onDeleteCustomEvent={handleDeleteCustomEvent}
+                onEditCustomEvent={handleEditCustomEvent}
               />
             ) : (
               <WeeklyView
@@ -162,9 +180,13 @@ function AppContent() {
       {/* Custom Event Modal */}
       <CustomEventModal
         isOpen={isCustomModalOpen}
-        onClose={() => setIsCustomModalOpen(false)}
+        onClose={() => {
+          setIsCustomModalOpen(false);
+          setEditingEvent(null);
+        }}
         onSave={handleAddCustomEvent}
         defaultDay={state.day}
+        eventToEdit={editingEvent}
       />
 
       {selectedGroup && (

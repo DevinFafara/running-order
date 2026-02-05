@@ -65,11 +65,11 @@ const CustomEventOverlay = ({ event, hours, onDelete, onEdit, columnCount, windo
                 transform: 'translateX(-50%)',
                 width: `${calculatedWidth}px`,
                 maxWidth: '96%',
-                backgroundColor: isMasked ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.25)',
+                backgroundColor: isMasked ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.45)',
                 border: isMasked ? '1px solid rgba(255, 255, 255, 0.5)' : '1px solid rgba(255, 255, 255, 0.4)',
                 borderRadius: '8px',
                 zIndex: 50, // Above everything
-                pointerEvents: 'auto', // Allow clicking delete
+                pointerEvents: isMasked ? 'none' : 'auto', // Allow clicks through when masked
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center', // Center content
@@ -93,7 +93,7 @@ const CustomEventOverlay = ({ event, hours, onDelete, onEdit, columnCount, windo
                 </div>
             </div>
 
-            <div style={{ position: 'absolute', right: '15px', display: 'flex', gap: '8px' }}>
+            <div style={{ position: 'absolute', right: '15px', display: 'flex', gap: '8px', pointerEvents: 'auto' }}>
                 <button
                     onClick={(e) => {
                         e.stopPropagation();
