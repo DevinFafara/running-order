@@ -11,7 +11,7 @@ const HourTag = ({ hour, i }) => (
     </div>
 );
 
-const CustomEventOverlay = ({ event, hours, onDelete }) => {
+const CustomEventOverlay = ({ event, hours, onDelete, columnCount, windowWidth }) => {
     // 1. Calculate Top Position
     const [startH, startM] = event.startTime.split(':').map(Number);
     const [endH, endM] = event.endTime.split(':').map(Number);
@@ -47,6 +47,11 @@ const CustomEventOverlay = ({ event, hours, onDelete }) => {
     const duration = endTotal - startTotal;
     const height = duration; // 1 min = 1 px
 
+    const colWidth = 300 + (windowWidth * 0.02); // Reduced from 2% to match CSS (actually 1% margin on each side? No, margin is usually GAP. Let's trust user formula)
+    // Formula: (nb de scene-column) * (300px + 2%)
+    // Note: The CSS might be treating margins differently, but we follow the requested formula.
+    const calculatedWidth = columnCount * colWidth;
+
     return (
         <div
             className="custom-event-overlay"
@@ -54,8 +59,10 @@ const CustomEventOverlay = ({ event, hours, onDelete }) => {
                 position: 'absolute',
                 top: `${top}px`,
                 height: `${height}px`,
-                left: '60px', // Right of Hours column
-                right: '10px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                width: `${calculatedWidth}px`,
+                maxWidth: '96%',
                 backgroundColor: 'rgba(255, 215, 0, 0.15)', // Gold transparent
                 border: '2px dashed #FFD700',
                 borderRadius: '8px',
@@ -377,6 +384,8 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day, customEvents = [],
                         event={event}
                         hours={hours}
                         onDelete={onDeleteCustomEvent}
+                        columnCount={visibleScenes.length}
+                        windowWidth={windowWidth}
                     />
                 ))}
             </div>
@@ -476,6 +485,8 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day, customEvents = [],
                     event={event}
                     hours={hours}
                     onDelete={onDeleteCustomEvent}
+                    columnCount={sceneCouples.length}
+                    windowWidth={windowWidth}
                 />
             ))}
         </div>
