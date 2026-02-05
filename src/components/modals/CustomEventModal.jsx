@@ -66,14 +66,19 @@ const CustomEventModal = ({ isOpen, onClose, onSave, onDelete, defaultDay, event
         e.preventDefault();
         setErrorMessage(''); // Clear previous errors
 
-        // Duration validation (min 30 mins)
-        const sTotal = parseInt(startH) * 60 + parseInt(startM);
-        let eTotal = parseInt(endH) * 60 + parseInt(endM);
+        // Order-based validation (using index in hoursOptions to account for festival days 10:00 -> 04:00)
+        const sIdx = hoursOptions.indexOf(startH);
+        const eIdx = hoursOptions.indexOf(endH);
 
-        if (eTotal < sTotal) {
-            eTotal += 24 * 60;
+        const sTotal = sIdx * 60 + parseInt(startM);
+        const eTotal = eIdx * 60 + parseInt(endM);
+
+        if (eTotal <= sTotal) {
+            setErrorMessage("L'heure de fin doit être postérieure à l'heure de début.");
+            return;
         }
 
+        // Duration validation (min 30 mins)
         if (eTotal - sTotal < 30) {
             setErrorMessage("La durée de l'événement doit être d'au moins 30 minutes.");
             return;
