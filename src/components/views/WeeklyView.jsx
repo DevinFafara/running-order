@@ -21,6 +21,17 @@ const SCENE_COUPLES = {
 const SCENE_ORDER = ['MS', 'WV', 'AT', 'HM', 'PH'];
 
 // --- ALGORITHM: SANDWICH LAYOUT (V6.1.5) ---
+const ICONS = {
+    apero: '🍺',
+    repas: '🍔',
+    dodo: '💤',
+    transport: '🚗',
+    course: '🛒',
+    camping: '⛺',
+    ami: '👥',
+    autre: '📍'
+};
+
 const calculateFavoritesLayout = (groupsToLayout) => {
     if (!groupsToLayout || groupsToLayout.length === 0) return [];
 
@@ -168,7 +179,7 @@ const calculateFavoritesLayout = (groupsToLayout) => {
     });
 };
 
-const WeeklyView = ({ groups, onGroupClick }) => {
+const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent }) => {
     const { state, getInterestColor, getBandTag, cycleInterest } = useCheckedState();
     const [filterMode, setFilterMode] = useState('favorites'); // 'favorites' or 'all'
     const [selectedScenes, setSelectedScenes] = useState(() => Object.keys(STAGE_CONFIG));
@@ -654,6 +665,76 @@ const WeeklyView = ({ groups, onGroupClick }) => {
                                                 >
                                                     ★
                                                 </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+
+                            {/* CUSTOM EVENTS LAYER */}
+                            {(customEvents || []).filter(e => e.day === day).map(event => {
+                                // Time Parsing & Position Logic matching WeeklyView layout
+                                const [startH, startM] = event.startTime.split(':').map(Number);
+                                const [endH, endM] = event.endTime.split(':').map(Number);
+
+                                let sH = startH;
+                                let eH = endH;
+
+                                // Adjust for night hours (< 6h) to match DayView/Band logic
+                                if (sH < 6) sH += 24;
+                                if (eH < 6) eH += 24;
+                                if (eH < sH) eH += 24; // Handle wrap around
+
+                                const start = sH * 60 + startM;
+                                const end = eH * 60 + endM;
+                                const duration = end - start;
+
+                                const height = Math.max(20, duration * PIXELS_PER_MINUTE);
+                                const originalTop = (start - (START_HOUR * 60)) * PIXELS_PER_MINUTE;
+                                const TOTAL_MINUTES = 18 * 60;
+                                const MAX_HEIGHT = TOTAL_MINUTES * PIXELS_PER_MINUTE;
+
+                                const top = state.reverse
+                                    ? originalTop
+                                    : MAX_HEIGHT - (originalTop + height);
+
+                                return (
+                                    <div
+                                        key={event.id}
+                                        className="weekly-custom-event"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (onEditCustomEvent) onEditCustomEvent(event);
+                                        }}
+                                        style={{
+                                            position: 'absolute',
+                                            top: `${top}px`,
+                                            height: `${height}px`,
+                                            left: '2%',
+                                            width: '96%',
+                                            zIndex: 50,
+                                            backgroundColor: 'rgba(255, 255, 255, 0.45)', // Matching DayView opacity
+                                            border: '1px solid rgba(255, 255, 255, 0.5)',
+                                            borderRadius: '6px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            color: '#fff',
+                                            backdropFilter: 'blur(2px)',
+                                            cursor: 'pointer',
+                                            boxShadow: '0 2px 5px rgba(0,0,0,0.3)',
+                                            textShadow: '0 1px 2px rgba(0,0,0,0.8)',
+                                            overflow: 'hidden'
+                                        }}
+                                        title={`${event.title} (${event.startTime} - ${event.endTime})`}
+                                    >
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', overflow: 'hidden', padding: '0 5px' }}>
+                                            <span style={{ fontSize: '1.2rem' }}>{ICONS[event.type] || '📍'}</span>
+                                            {/* Only show title if height allows (event > 20min approx so >20px height) */}
+                                            {height > 25 && (
+                                                <span style={{ fontSize: '0.85rem', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                                    {event.title}
+                                                </span>
                                             )}
                                         </div>
                                     </div>

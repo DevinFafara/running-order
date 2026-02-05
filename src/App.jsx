@@ -171,6 +171,8 @@ function AppContent() {
               <WeeklyView
                 groups={[...groups, ...sideStagesData]} // Always pass all groups including side stages
                 onGroupClick={(g) => handleGroupSelect(g, { clientX: window.innerWidth / 2 - 200, clientY: window.innerHeight / 2 - 200 })} // Mock position for now
+                customEvents={customEvents}
+                onEditCustomEvent={handleEditCustomEvent}
               />
             )
           } />
