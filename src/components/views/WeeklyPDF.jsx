@@ -1,20 +1,26 @@
 import React from 'react';
 import { Document, Page, View, Text, StyleSheet, Font } from '@react-pdf/renderer';
-import { STAGE_CONFIG } from '../../constants';
+import { STAGE_CONFIG, INTEREST_LEVELS } from '../../constants';
 import { calculateWeeklyLayout } from '../../utils/pdfLayout';
 import { timeToMinutes } from '../../utils/statsUtils';
 import chroma from 'chroma-js';
 
-// Register a standard font or try to load Metal Mania if you have a URL
-Font.register({
-    family: 'Metal Mania',
-    src: 'https://fonts.gstatic.com/s/metalmania/v19/twKjebvS6UcmVvNnEisA9V6O5iY.ttf'
-});
-
-const PIXELS_PER_MINUTE_PDF = 0.55; // Fits 18h into A4 Landscape height (~595pt)
+// Standard fonts like Helvetica are built-in to PDF
+const PIXELS_PER_MINUTE_PDF = 0.5244; // Increased by another 15%
 const START_HOUR = 10;
 const TOTAL_MINUTES = 18 * 60;
 const GRID_HEIGHT = TOTAL_MINUTES * PIXELS_PER_MINUTE_PDF;
+
+const ICONS = {
+    apero: '🍺',
+    repas: '🍔',
+    dodo: '💤',
+    transport: '🚗',
+    course: '🛒',
+    camping: '⛺',
+    ami: '👥',
+    autre: '📍'
+};
 
 const styles = StyleSheet.create({
     page: {
@@ -31,7 +37,7 @@ const styles = StyleSheet.create({
     },
     dayHeader: {
         fontSize: 12,
-        fontFamily: 'Metal Mania',
+        fontFamily: 'Helvetica-Bold',
         textAlign: 'center',
         paddingVertical: 4,
         backgroundColor: '#f0f0f0',
@@ -54,7 +60,7 @@ const styles = StyleSheet.create({
     },
     bandName: {
         fontSize: 6,
-        fontWeight: 'bold',
+        fontFamily: 'Helvetica-Bold',
         textAlign: 'center',
         color: '#000000',
         marginBottom: 1,
@@ -102,7 +108,7 @@ const WeeklyPDF = ({ groups, customEvents, selectedScenes, filterMode, colorMode
             <Page size="A4" orientation="landscape" style={styles.page}>
                 {days.map((day, idx) => {
                     // Filter groups for this day
-                    let dayGroups = groups.filter(g => g.JOUR === day && selectedScenes.includes(g.SCENE));
+                    let dayGroups = groups.filter(g => (g.JOUR === day || g.DAY === day) && selectedScenes.includes(g.SCENE));
                     if (filterMode === 'favorites') {
                         dayGroups = dayGroups.filter(g => taggedBands[g.id]);
                     }
@@ -152,8 +158,13 @@ const WeeklyPDF = ({ groups, customEvents, selectedScenes, filterMode, colorMode
                                 {layoutItems.map(item => {
                                     const stageColor = STAGE_CONFIG[item.band.SCENE]?.themeColor || '#555555';
                                     const cardBg = colorMode === 'scene' ? stageColor : '#f9f9f9';
-                                    const isTagged = !!taggedBands[item.band.id];
+                                    const tagInfo = taggedBands[item.band.id];
+                                    const isTagged = !!tagInfo;
+                                    const interestColor = (tagInfo && tagInfo.interest && INTEREST_LEVELS[tagInfo.interest])
+                                        ? INTEREST_LEVELS[tagInfo.interest].defaultColor
+                                        : '#d4af37';
 
+                                    // Helvetica doesn't always support the ★ symbol, using '*' for safety
                                     return (
                                         <View
                                             key={item.band.id}
@@ -177,7 +188,11 @@ const WeeklyPDF = ({ groups, customEvents, selectedScenes, filterMode, colorMode
                                             <Text style={[styles.bandTime, { color: colorMode === 'scene' ? '#eeeeee' : '#444444' }]}>
                                                 {item.band.DEBUT}-{item.band.FIN}
                                             </Text>
-                                            {isTagged && <Text style={styles.star}>★</Text>}
+                                            {isTagged && (
+                                                <Text style={[styles.star, { color: interestColor, fontSize: 10, top: 0, right: 2 }]}>
+                                                    *
+                                                </Text>
+                                            )}
                                         </View>
                                     );
                                 })}
@@ -193,7 +208,7 @@ const WeeklyPDF = ({ groups, customEvents, selectedScenes, filterMode, colorMode
                                                 height: item.height,
                                                 left: 0,
                                                 width: '100%',
-                                                backgroundColor: 'rgba(200, 200, 200, 0.2)',
+                                                backgroundColor: '#ffffff', // Solid white to mask content
                                                 borderStyle: 'dashed',
                                                 borderWidth: 1,
                                                 borderColor: '#999999',
@@ -202,7 +217,9 @@ const WeeklyPDF = ({ groups, customEvents, selectedScenes, filterMode, colorMode
                                             }
                                         ]}
                                     >
-                                        <Text style={styles.bandName}>{item.event.title}</Text>
+                                        <Text style={[styles.bandName, { fontSize: 8, color: '#333333' }]}>
+                                            {item.event.title}
+                                        </Text>
                                         <Text style={styles.bandTime}>{item.event.startTime}-{item.event.endTime}</Text>
                                     </View>
                                 ))}

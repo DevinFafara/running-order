@@ -13,6 +13,17 @@ import './WeeklyView.css';
 const START_HOUR = 10; // Start at 10:00
 const PIXELS_PER_MINUTE = 0.9; // Adjusted scale as per request
 
+const ICONS = {
+    apero: '🍺',
+    repas: '🍔',
+    dodo: '💤',
+    transport: '🚗',
+    course: '🛒',
+    camping: '⛺',
+    ami: '👥',
+    autre: '📍'
+};
+
 // --- LAYOUT LOGIC MOVED TO UTILS/PDFLAYOUT.JS ---
 
 const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent }) => {
@@ -87,7 +98,9 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
         const columns = {};
 
         days.forEach(day => {
-            const dayBands = filteredGroups.filter(g => g.JOUR === day);
+            let dayBands = filteredGroups.filter(g => g.JOUR === day);
+            if (dayBands.length === 0) dayBands = filteredGroups.filter(g => g.DAY === day);
+
             columns[day] = calculateWeeklyLayout(dayBands, PIXELS_PER_MINUTE, state.reverse, filterMode, selectedScenes);
         });
 
