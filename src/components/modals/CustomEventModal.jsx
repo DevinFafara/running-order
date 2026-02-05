@@ -50,7 +50,7 @@ const CustomEventModal = ({ isOpen, onClose, onSave, onDelete, defaultDay, event
         transport: '🚗',
         course: '🛒',
         camping: '⛺',
-        ami: '🤠',
+        ami: '👥',
         autre: '📍'
     };
 
@@ -141,6 +141,7 @@ const CustomEventModal = ({ isOpen, onClose, onSave, onDelete, defaultDay, event
                             onChange={e => setTitle(e.target.value)}
                             placeholder="Ex: Apéro avec Michel"
                             required
+                            maxLength={20}
                             style={{
                                 width: '100%',
                                 padding: '10px',
