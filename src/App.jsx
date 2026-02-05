@@ -188,6 +188,10 @@ function AppContent() {
     setCustomEvents(customEvents.filter(e => e.id !== id));
   };
 
+  const handleClearCustomEvents = () => {
+    setCustomEvents([]);
+  };
+
 
   // SWIPE LOGIC
   const swipeHandlers = useSwipeable({
@@ -289,6 +293,7 @@ function AppContent() {
         isGuestMode={isGuestMode}
         guestName={isGuestMode ? guestRo.username : null}
         onExitGuestMode={() => setGuestRo(null)}
+        onClearCustomEvents={handleClearCustomEvents}
       />
 
       {isGuestMode && (

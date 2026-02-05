@@ -10,7 +10,7 @@ import { useCheckedState } from '../../context/CheckedStateContext';
 
 import StatsPanel from '../panels/StatsPanel';
 
-const HeaderBar = ({ viewMode, onViewChange, onInteraction, onAddCustomEvent, customEvents, contacts, onDeleteContact, onCheckContact, isGuestMode, guestName, onExitGuestMode }) => {
+const HeaderBar = ({ viewMode, onViewChange, onInteraction, onAddCustomEvent, customEvents, contacts, onDeleteContact, onCheckContact, isGuestMode, guestName, onExitGuestMode, onClearCustomEvents }) => {
     const { userState } = useCheckedState();
     const [playlistOpen, setPlaylistOpen] = useState(false);
     const [filterOpen, setFilterOpen] = useState(false);
@@ -128,6 +128,7 @@ const HeaderBar = ({ viewMode, onViewChange, onInteraction, onAddCustomEvent, cu
             <SettingsPanel
                 isOpen={settingsOpen}
                 onClose={() => setSettingsOpen(false)}
+                onClearCustomEvents={onClearCustomEvents}
             />
 
             <CreditsPanel

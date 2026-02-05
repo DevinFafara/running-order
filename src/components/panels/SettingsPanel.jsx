@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useCheckedState } from '../../context/CheckedStateContext';
 import { INTEREST_LEVELS, INTEREST_ORDER } from '../../constants';
 
-const SettingsPanel = ({ isOpen, onClose }) => {
+const SettingsPanel = ({ isOpen, onClose, onClearCustomEvents }) => {
     const { state, setState, getInterestColor, setInterestColor, resetInterestColors, clearAllFavorites } = useCheckedState();
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
     const [confirmDelete, setConfirmDelete] = useState(false);
@@ -136,6 +136,7 @@ const SettingsPanel = ({ isOpen, onClose }) => {
                         onClick={() => {
                             if (confirmDelete) {
                                 clearAllFavorites();
+                                if (onClearCustomEvents) onClearCustomEvents();
                                 onClose();
                                 setConfirmDelete(false);
                             } else {
