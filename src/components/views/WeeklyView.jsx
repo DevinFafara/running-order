@@ -182,6 +182,7 @@ const calculateFavoritesLayout = (groupsToLayout) => {
 const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent }) => {
     const { state, getInterestColor, getBandTag, cycleInterest } = useCheckedState();
     const [filterMode, setFilterMode] = useState('favorites'); // 'favorites' or 'all'
+    const [colorMode, setColorMode] = useState('transparent'); // 'transparent' or 'scene'
     const [selectedScenes, setSelectedScenes] = useState(() => [...Object.keys(STAGE_CONFIG), 'CUSTOM']);
     const [tagMenuState, setTagMenuState] = useState({ open: false, groupId: null, position: { x: 0, y: 0 } });
 
@@ -583,19 +584,37 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
                 </div>
 
                 {/* Right: View Mode Filters */}
-                <div className="weekly-header-right">
-                    <button
-                        className={`weekly-filter-btn ${filterMode === 'favorites' ? 'active' : ''}`}
-                        onClick={() => setFilterMode('favorites')}
-                    >
-                        Mes Favoris
-                    </button>
-                    <button
-                        className={`weekly-filter-btn ${filterMode === 'all' ? 'active' : ''}`}
-                        onClick={() => setFilterMode('all')}
-                    >
-                        Tout le monde
-                    </button>
+                <div className="weekly-header-right" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div className="weekly-filters" style={{ justifyContent: 'flex-end' }}>
+                        <button
+                            className={`weekly-filter-btn ${filterMode === 'favorites' ? 'active' : ''}`}
+                            onClick={() => setFilterMode('favorites')}
+                        >
+                            Les Favoris
+                        </button>
+                        <button
+                            className={`weekly-filter-btn ${filterMode === 'all' ? 'active' : ''}`}
+                            onClick={() => setFilterMode('all')}
+                        >
+                            Tout le monde
+                        </button>
+                    </div>
+                    <div className="weekly-filters" style={{ justifyContent: 'flex-end' }}>
+                        <button
+                            className={`weekly-filter-btn ${colorMode === 'transparent' ? 'active' : ''}`}
+                            onClick={() => setColorMode('transparent')}
+                            style={{ fontSize: '0.75rem', padding: '3px 10px' }}
+                        >
+                            Transparent
+                        </button>
+                        <button
+                            className={`weekly-filter-btn ${colorMode === 'scene' ? 'active' : ''}`}
+                            onClick={() => setColorMode('scene')}
+                            style={{ fontSize: '0.75rem', padding: '3px 10px' }}
+                        >
+                            Couleurs Scènes
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -657,11 +676,13 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
                                             height: item.height,
                                             left: `${item.leftPct}%`,
                                             width: `${item.widthPct}%`,
-                                            backgroundColor: '#2a2a2a', // Dark background
+                                            backgroundColor: colorMode === 'scene' ? stageColor : '#2a2a2a',
                                             borderLeft: `4px solid ${stageColor}`,
-                                            border: isTagged ? '1px solid white' : 'none', // White border also for tagged
+                                            border: isTagged ? '1px solid white' : 'none',
                                             borderLeftWidth: '4px',
-                                            borderLeftColor: stageColor
+                                            borderLeftColor: stageColor,
+                                            color: colorMode === 'scene' ? '#fff' : '#fff', // Could adjust text color if needed
+                                            boxShadow: colorMode === 'scene' ? '0 2px 8px rgba(0,0,0,0.4)' : '0 2px 4px rgba(0,0,0,0.4)'
                                         }}
                                         onClick={() => onGroupClick(item.band)}
                                         onContextMenu={(e) => handleContextMenu(e, item.band)}

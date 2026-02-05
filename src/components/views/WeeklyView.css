@@ -137,7 +137,7 @@
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 10px;
-    min-height: 1200px;
+    min-height: 1020px;
     /* Ensure scrolling */
     position: relative;
     padding-left: 40px;
