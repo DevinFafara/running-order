@@ -9,11 +9,11 @@ const DAILY_LIMITS = {
 };
 
 export const timeToMinutes = (timeStr) => {
-    if (!timeStr) return 0;
+    if (typeof timeStr !== 'string' || !timeStr) return 0;
     const [h, m] = timeStr.replace('h', ':').split(':').map(Number);
     let hours = h;
     if (hours < 10) hours += 24;
-    return hours * 60 + m;
+    return hours * 60 + (m || 0);
 };
 
 export const calculateStats = (lineup, taggedBands) => {

@@ -19,7 +19,7 @@ import WelcomeModal from './components/modals/WelcomeModal';
 import { parseShareData } from './utils/sharingUtils';
 
 function AppContent() {
-  const { data: groups, sideStagesData, loading, error } = useLineup();
+  const { data: groups, loading, error } = useLineup();
   const { state, setDay, setState, isGuestMode, guestRo, setGuestRo } = useCheckedState();
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [popoverPosition, setPopoverPosition] = useState(null);
@@ -215,11 +215,7 @@ function AppContent() {
   if (loading) return <div className="loading">Chargement du Hellfest... 🤘</div>;
   if (error) return <div className="error">Erreur : {error.message}</div>;
 
-  const allGroups = state.sideScenes
-    ? [...groups, ...sideStagesData]
-    : groups;
-
-  const currentDayGroups = allGroups.filter(group => group.DAY === state.day);
+  const currentDayGroups = groups.filter(group => group.DAY === state.day);
 
   return (
     <div className={`App ${selectedGroup ? 'group-selected' : ''}`}>
@@ -291,7 +287,7 @@ function AppContent() {
               />
             ) : (
               <WeeklyView
-                groups={[...groups, ...sideStagesData]}
+                groups={groups}
                 onGroupClick={(g) => handleGroupSelect(g, { clientX: window.innerWidth / 2 - 200, clientY: window.innerHeight / 2 - 200 })}
                 customEvents={isGuestMode ? (guestRo.customEvents || []) : customEvents}
                 onEditCustomEvent={isGuestMode ? () => { } : handleEditCustomEvent}

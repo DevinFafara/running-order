@@ -10,22 +10,16 @@ const StatsPanel = ({ onClose, customEvents = [] }) => {
     const { state, userState } = useCheckedState();
     const effectiveState = userState || state;
 
-    const { data: groups, sideStagesData } = useLineup();
+    const { data: groups } = useLineup();
     const [expandedDays, setExpandedDays] = useState({});
     const [gaugeHeight, setGaugeHeight] = useState(0);
     const [animatedTotal, setAnimatedTotal] = useState(0);
     const [isCapturing, setIsCapturing] = useState(false);
     const panelRef = React.useRef(null);
 
-    const allGroups = useMemo(() => {
-        return effectiveState.sideScenes && sideStagesData
-            ? [...groups, ...sideStagesData]
-            : groups;
-    }, [groups, sideStagesData, effectiveState.sideScenes]);
-
     const stats = useMemo(() => {
-        return calculateStats(allGroups, effectiveState.taggedBands);
-    }, [allGroups, effectiveState.taggedBands]);
+        return calculateStats(groups, effectiveState.taggedBands);
+    }, [groups, effectiveState.taggedBands]);
 
     const hoursTotal = Math.round(stats.totalMinutes / 60);
 

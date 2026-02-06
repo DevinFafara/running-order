@@ -5,11 +5,9 @@ import { GOOGLE_SHEETS_URL } from '../constants';
 const CACHE_KEY = 'lineup-data';
 const TIMESTAMP_KEY = 'lineup-timestamp';
 const FALLBACK_URL = '/lineup.json';
-const SIDESTAGES_URL = '/lineup_sidestages.json';
 
 export const useLineup = () => {
     const [data, setData] = useState([]);
-    const [sideStagesData, setSideStagesData] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -33,19 +31,6 @@ export const useLineup = () => {
             }
         } catch (err) {
             console.warn('Background update check failed', err);
-        }
-    }, []);
-
-    const loadSideStages = useCallback(async () => {
-        try {
-            const response = await fetch(SIDESTAGES_URL);
-            if (response.ok) {
-                const sideData = await response.json();
-                setSideStagesData(sideData);
-            }
-        } catch (err) {
-            console.warn('Could not load side stages:', err);
-            setSideStagesData([]);
         }
     }, []);
 
@@ -81,14 +66,13 @@ export const useLineup = () => {
     }, []);
 
     useEffect(() => {
-        Promise.all([loadData(), loadSideStages()]).catch(console.error);
+        loadData().catch(console.error);
         const intervalId = setInterval(checkForUpdates, 60000);
         return () => clearInterval(intervalId);
-    }, [loadData, loadSideStages, checkForUpdates]);
+    }, [loadData, checkForUpdates]);
 
     return {
         data,
-        sideStagesData,
         loading,
         error,
         refresh: () => loadData(true)
