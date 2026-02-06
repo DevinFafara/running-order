@@ -812,6 +812,14 @@
         gap: 8px;
     }
 
+    .stats-weekly-persona {
+        color: #FFD700;
+        font-family: 'Metal Mania', cursive, sans-serif;
+        font-size: 1.1rem;
+        margin-top: 5px;
+        text-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+    }
+
     .daily-rank-title {
         font-size: 0.7rem;
         color: #aaa;

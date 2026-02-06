@@ -1,23 +1,6 @@
 
 import { STAGE_CONFIG } from '../constants';
 
-// Mots-clés ignorés pour la simplification des styles
-const IGNORED_KEYWORDS = ['Metal', 'Rock', 'Core', 'Music'];
-
-// Familles de styles pour le regroupement
-const STYLE_FAMILIES = {
-    'Death': ['Death', 'Grind', 'Brutal'],
-    'Black': ['Black', 'Pagan', 'Viking'],
-    'Thrash': ['Thrash', 'Speed'],
-    'Heavy': ['Heavy', 'Power', 'NWOBHM', 'Glam'],
-    'Hardcore': ['Hardcore', 'Beatdown', 'Punk', 'Ska'],
-    'Stoner': ['Stoner', 'Doom', 'Sludge', 'Psych'],
-    'Core': ['Metalcore', 'Deathcore', 'Post-Hardcore'],
-    'Indus': ['Industrial', 'EBM', 'Cyber'],
-    'Prog': ['Progressive', 'Avant-Garde'],
-    'Rock': ['Hard Rock', 'Classic Rock', 'Blues', 'Garage'],
-};
-
 // Limites physiques de concerts par jour pour le calcul du niveau
 const DAILY_LIMITS = {
     'Jeudi': 10,
@@ -40,20 +23,6 @@ export const timeToMinutes = (timeStr) => {
 };
 
 /**
- * Détermine la famille de style dominante
- */
-export const getStyleFamily = (detailedStyle) => {
-    if (!detailedStyle) return 'Unknown';
-
-    for (const [family, keywords] of Object.entries(STYLE_FAMILIES)) {
-        if (keywords.some(k => detailedStyle.includes(k))) {
-            return family;
-        }
-    }
-    return detailedStyle.split(' ')[0]; // Fallback
-};
-
-/**
  * Analyse les statistiques utilisateur
  */
 export const calculateStats = (lineup, taggedBands) => {
@@ -61,7 +30,6 @@ export const calculateStats = (lineup, taggedBands) => {
         totalBands: 0,
         effectiveTotal: 0, // Nouveau: total plafonné par jour
         totalMinutes: 0,
-        styles: {},
         days: {
             'Jeudi': { count: 0, minutes: 0, stages: {} },
             'Vendredi': { count: 0, minutes: 0, stages: {} },
@@ -109,10 +77,6 @@ export const calculateStats = (lineup, taggedBands) => {
             }
         }
         // ...
-
-        // Style Analysis
-        const family = getStyleFamily(group.STYLE);
-        stats.styles[family] = (stats.styles[family] || 0) + 1;
     });
 
     // 1.5 Calcul du Total Effectif (Plafonnement journalier) et Intensité
@@ -307,10 +271,20 @@ export const calculateStats = (lineup, taggedBands) => {
         stats.averageCompletion = 0;
     }
 
-    // 6. Calcul des Personas par jour
+    // 6. Calcul des Personas par jour avec historique pour variété
+    const history = { noms: new Set(), adjs: new Set(), univs: new Set() };
     Object.entries(stats.days).forEach(([day, data]) => {
         const dailyBands = myBands.filter(b => b.DAY === day);
-        stats.days[day].persona = calculateDayPersona(dailyBands, taggedBands);
+        const persona = calculateDayPersona(dailyBands, taggedBands, history);
+
+        // On enregistre les mots choisis dans l'historique pour le jour suivant
+        if (persona.chosen) {
+            history.noms.add(persona.chosen.nom);
+            history.adjs.add(persona.chosen.adj);
+            history.univs.add(persona.chosen.univ);
+        }
+
+        stats.days[day].persona = persona;
     });
 
     // Détermination du Rang
@@ -320,6 +294,10 @@ export const calculateStats = (lineup, taggedBands) => {
     else if (stats.averageCompletion < 90) stats.rank = "Hellbanger";
     else stats.rank = "Trve";
 
+    // 7. Calcul du Persona Hebdomadaire (Global)
+    // On passe aussi l'historique pour essayer d'avoir un titre hebdomadaire différent des titres journaliers
+    stats.weeklyPersona = calculateDayPersona(myBands, taggedBands, history);
+
     return stats;
 };
 
@@ -328,170 +306,222 @@ export const calculateStats = (lineup, taggedBands) => {
 // ==========================================
 
 const STYLE_PERSONA = {
-    "punk": {
-        "noms": ["Rebelle", "Émeutier", "Outsider"],
-        "adjectifs": ["Furieux", "Sale", "Insoumis"],
-        "univers": ["de la Rue", "du Squat", "de l'Underground"]
-    },
-    "hardcore": {
-        "noms": ["Guerrier", "Forcené", "Survivant"],
-        "adjectifs": ["Brutal", "Inflexible", "Radical"],
-        "univers": ["de la Zone", "de la Cave", "de l'Arène"]
-    },
     "sludge": {
-        "noms": ["Marcheur", "Prêcheur", "Fantôme"],
-        "adjectifs": ["Poisseux", "Lourd", "Marécageux"],
-        "univers": ["du Bayou", "du Marais", "des Abysses"]
-    },
-    "stoner": {
-        "noms": ["Voyageur", "Rêveur", "Nomade"],
-        "adjectifs": ["Cosmique", "Embrumé", "Psychédélique"],
-        "univers": ["du Désert", "de l'Espace", "de l'Infini"]
-    },
-    "post": {
-        "noms": ["Explorateur", "Bâtisseur", "Passeur"],
-        "adjectifs": ["Atmosphérique", "Éthéré", "Mélancolique"],
-        "univers": ["des Horizons", "des Ruines", "d'Autres Dimensions"]
-    },
-    "rock": {
-        "noms": ["Rôdeur", "Leader", "Performer"],
-        "adjectifs": ["Brûlant", "Charismatique", "Électrique"],
-        "univers": ["de la Scène", "de la Route", "du Bar Enfumè"]
-    },
-    "black": {
-        "noms": ["Sorcier", "Ermite", "Prophète"],
-        "adjectifs": ["Glacial", "Blasphématoire", "Sombre"],
-        "univers": ["de la Forêt Noire", "du Nord", "de l'Enfer"]
-    },
-    "folk": {
-        "noms": ["Conteur", "Barde", "Voyageur"],
-        "adjectifs": ["Ancien", "Rustique", "Authentique"],
-        "univers": ["des Montagnes", "du Village", "des Chemins"]
-    },
-    "indus": {
-        "noms": ["Architecte", "Cyborg", "Opérateur"],
-        "adjectifs": ["Mécanique", "Froid", "Dystopique"],
-        "univers": ["de l'Usine", "de la Mégapole", "du Réseau"]
+        "noms": ["Prophète"],
+        "adjectifs": ["Sale"],
+        "univers": ["du Bayou"]
     },
     "death": {
-        "noms": ["Bourreau", "Nécromancien", "Destructeur"],
-        "adjectifs": ["Mortel", "Sanglant", "Impitoyable"],
-        "univers": ["des Catacombes", "des Ruines", "des Enfers"]
-    },
-    "thrash": {
-        "noms": ["Furieux", "Chasseur", "Dévastateur"],
-        "adjectifs": ["Rapide", "Tranchant", "Violent"],
-        "univers": ["de la Tempête", "de la Zone Rouge", "du Chaos"]
-    },
-    "heavy": {
-        "noms": ["Chevalier", "Champion", "Gardien"],
-        "adjectifs": ["Épique", "Puissant", "Majestueux"],
-        "univers": ["de la Forteresse", "du Royaume", "du Valhalla"]
+        "noms": ["Goule"],
+        "adjectifs": ["Impitoyable"],
+        "univers": ["du Chaos"]
     },
     "metalcore": {
-        "noms": ["Combattant", "Résistant", "Leader"],
-        "adjectifs": ["Moderne", "Explosif", "Torturé"],
-        "univers": ["du Front", "de l'Arène", "du Bunker"]
+        "noms": ["Adepte"],
+        "adjectifs": ["Implacable"],
+        "univers": ["des Temps Modernes"]
     },
     "nu": {
-        "noms": ["Provocateur", "Hybride", "Outsider"],
-        "adjectifs": ["Instable", "Déchaîné", "Brisé"],
-        "univers": ["de la Banlieue", "du Terrain Vague", "de la Zone Grise"]
+        "noms": ["Hybride"],
+        "adjectifs": ["Instable"],
+        "univers": ["de la Street"]
+    },
+    "heavy": {
+        "noms": ["Sentinelle"],
+        "adjectifs": ["Immuable"],
+        "univers": ["de la Forteresse"]
+    },
+    "punk": {
+        "noms": ["Punk"],
+        "adjectifs": ["Irascible"],
+        "univers": ["de la Rue"]
+    },
+    "hardcore": {
+        "noms": ["Rebelle"],
+        "adjectifs": ["Insoumis"],
+        "univers": ["du Pit"]
+    },
+    "stoner": {
+        "noms": ["Nomade"],
+        "adjectifs": ["Cosmique"],
+        "univers": ["du Désert"]
+    },
+    "post": {
+        "noms": ["Prodige"],
+        "adjectifs": ["Onirique"],
+        "univers": ["d'Autres Dimensions"]
+    },
+    "rock": {
+        "noms": ["Icône"],
+        "adjectifs": ["Électrique"],
+        "univers": ["on the road"]
+    },
+    "black": {
+        "noms": ["Ombre"],
+        "adjectifs": ["Funeste"],
+        "univers": ["de la Forêt Noire"]
+    },
+    "folk": {
+        "noms": ["Barde"],
+        "adjectifs": ["Antique"],
+        "univers": ["des Tavernes"]
+    },
+    "indus": {
+        "noms": ["Cyborg"],
+        "adjectifs": ["Mécanique"],
+        "univers": ["de l'Usine"]
+    },
+    "thrash": {
+        "noms": ["Bête"],
+        "adjectifs": ["Féroce"],
+        "univers": ["de la Tempête"]
     },
     "power": {
-        "noms": ["Héros", "Paladin", "Champion"],
-        "adjectifs": ["Lumineux", "Glorieux", "Vaillant"],
-        "univers": ["des Cieux", "des Légendes", "du Sacré"]
-    },
-    "grunge": {
-        "noms": ["Paumé", "Solitaire", "Poète"],
-        "adjectifs": ["Désabusé", "Sale", "Nostalgique"],
-        "univers": ["du Garage", "de la Pluie", "du Vide"]
+        "noms": ["Légende"],
+        "adjectifs": ["Épique"],
+        "univers": ["de la Légende"]
     },
     "prog": {
-        "noms": ["Architecte", "Alchimiste", "Visionnaire"],
-        "adjectifs": ["Complexe", "Cérébral", "Mystique"],
-        "univers": ["du Labyrinthe", "de l'Esprit", "du Fractal"]
+        "noms": ["Visionnaire"],
+        "adjectifs": ["Intello"],
+        "univers": ["du Fractal Infini"]
     },
     "alternatif": {
-        "noms": ["Curieux", "Explorateur", "Expérimentateur"],
-        "adjectifs": ["Libre", "Créatif", "Hybride"],
-        "univers": ["des Zones Libres", "des Réseaux", "de l'Ombre"]
+        "noms": ["Guide"],
+        "adjectifs": ["Libre"],
+        "univers": ["des Horizons"]
     },
     "hard": {
-        "noms": ["Rider", "Rocker", "Performer"],
-        "adjectifs": ["Bruyant", "Direct", "Brûlant"],
-        "univers": ["de l'Autoroute", "du Stade", "du Club"]
-    }
+        "noms": ["Star"],
+        "adjectifs": ["Intrépide"],
+        "univers": ["du Stade"]
+    },
 };
 
-/**
- * Calcule le Persona du Jour en fonction des styles écoutés
- */
-export const calculateDayPersona = (dayBands, taggedBands) => {
-    const scores = {};
 
-    // Initialiser scores
+/**
+ * Calcule le Persona du Jour en fonction des styles écoutés ET des scènes fréquentées
+ */
+export const calculateDayPersona = (dayBands, taggedBands, history = null) => {
+    if (!dayBands || dayBands.length === 0) return { title: "Simple Festivalier", testTitle: "Simple Festivalier", scores: {}, recipe: {} };
+
+    // --- 1. RÈGLES DE PRIORITÉ PAR SCÈNE ---
+    const stageCounts = {};
+    dayBands.forEach(b => {
+        const s = (b.SCENE || "").toUpperCase();
+        stageCounts[s] = (stageCounts[s] || 0) + 1;
+    });
+
+    const total = dayBands.length;
+    const getS = (keys) => keys.reduce((sum, k) => sum + (stageCounts[k] || 0), 0);
+
+    const ms = getS(['MAINSTAGE 1', 'MAINSTAGE 2']);
+    const wz = getS(['WARZONE']);
+    const vy = getS(['VALLEY']);
+    const al = getS(['ALTAR']);
+    const te = getS(['TEMPLE']);
+
+    let priorityTitle = null;
+    if (ms / total > 0.75) priorityTitle = "Campeur de Mainstage";
+    else if (wz / total > 0.75) priorityTitle = "Squatteur de Warzone";
+    else if (vy / total > 0.75) priorityTitle = "Ermite de la Valley";
+    else if ((wz + vy) / total > 0.75) priorityTitle = "Marginal sympathique";
+    else if (al / total > 0.75) priorityTitle = "Résident de l'Altar";
+    else if (te / total > 0.75) priorityTitle = "Disciple du Temple";
+    else if ((al + te) / total > 0.75) priorityTitle = "Adepte des Tentes";
+
+    if (priorityTitle) {
+        return {
+            title: priorityTitle,
+            testTitle: priorityTitle,
+            scores: {},
+            recipe: { isPriority: true, name: priorityTitle }
+        };
+    }
+
+    // --- 2. LOGIQUE DE STYLE (SI PAS DE PRIORITÉ) ---
+    const scores = {};
     Object.keys(STYLE_PERSONA).forEach(key => scores[key] = 0);
 
-    // Calculer les scores
     dayBands.forEach(band => {
         const styleLow = (band.STYLE || "").toLowerCase();
-
-        // Obtenir poids de l'intérêt
         const interest = taggedBands[band.id]?.interest;
-        let weight = 0;
-        if (interest === 'must_see') weight = 3;
-        else if (interest === 'interested') weight = 2;
-        else if (interest === 'curious') weight = 1;
-
+        let weight = interest === 'must_see' ? 3 : interest === 'interested' ? 2 : interest === 'curious' ? 1 : 0;
         if (weight === 0) return;
 
-        // Chercher mots clés
         Object.keys(STYLE_PERSONA).forEach(keyword => {
             if (styleLow.includes(keyword)) {
-                // Éviter faux positif pour "hard" (ne pas matcher "hardcore")
                 if (keyword === 'hard' && styleLow.includes('hardcore')) return;
-
                 scores[keyword] += weight;
             }
         });
     });
 
-    // Trier les mots clés par score décroissant
     const topKeywords = Object.entries(scores)
         .filter(([, score]) => score > 0)
         .sort(([, a], [, b]) => b - a);
 
-    // Générer titre
-    let title = "Simple Festivalier";
+    if (topKeywords.length === 0) return { title: "Simple Festivalier", testTitle: "Simple Festivalier", scores: {}, recipe: {} };
 
-    if (topKeywords.length >= 1) {
-        const k1 = topKeywords[0][0]; // Top 1
-        // Random pick pour variété (optionnel, ici on prend index 0 pour stabilité)
-        const nom = STYLE_PERSONA[k1].noms[0];
+    const k1 = topKeywords[0][0]; // 1er
+    const k2 = topKeywords.length >= 2 ? topKeywords[1][0] : k1;
+    const k3 = topKeywords.length >= 3 ? topKeywords[2][0] : k2;
 
-        if (topKeywords.length >= 2) {
-            const k2 = topKeywords[1][0];
-            const adj = STYLE_PERSONA[k2].adjectifs[0];
+    const styles = [k1, k2, k3];
 
-            if (topKeywords.length >= 3) {
-                const k3 = topKeywords[2][0];
-                const univers = STYLE_PERSONA[k3].univers[0];
-                // Titre Full: Nom 1 + Adj 2 + Univers 3
-                title = `${nom} ${adj} ${univers}`;
-            } else {
-                // Titre Duo: Nom 1 + Adj 2
-                title = `${nom} ${adj}`;
-            }
+    // --- LOGIQUE DE VARIÉTÉ SÉQUENTIELLE ---
+    const permutations = [
+        [1, 2, 0], // F1: Nom(S2), Adj(S3), Univ(S1)
+        [0, 2, 1], // F2: Nom(S1), Adj(S3), Univ(S2)
+        [0, 1, 2], // 1-2-3
+        [2, 1, 0], // 3-2-1
+        [1, 0, 2], // 2-1-3
+        [2, 0, 1]  // 3-1-2
+    ];
+
+    let chosen = null;
+    let bestScore = 4; // Score de doublons (plus bas est mieux)
+
+    for (const p of permutations) {
+        const candidate = {
+            nom: STYLE_PERSONA[styles[p[0]]].noms[0],
+            adj: STYLE_PERSONA[styles[p[1]]].adjectifs[0],
+            univ: STYLE_PERSONA[styles[p[2]]].univers[0],
+            formula: `${p[0] + 1}-${p[1] + 1}-${p[2] + 1}`
+        };
+
+        let dupeScore = 0;
+        if (history) {
+            if (history.noms.has(candidate.nom)) dupeScore++;
+            if (history.adjs.has(candidate.adj)) dupeScore++;
+            if (history.univs.has(candidate.univ)) dupeScore++;
         } else {
-            // Titre Solo: Nom 1 + Univers 1
-            const univers = STYLE_PERSONA[k1].univers[0];
-            title = `${nom} ${univers}`;
+            dupeScore = 0; // Pas d'histoire = pas de doublon
+        }
+
+        // Si on a 0 doublon, c'est parfait, on s'arrête là (séquentiel)
+        if (dupeScore === 0) {
+            chosen = candidate;
+            bestScore = 0;
+            break;
+        }
+
+        // Sinon on garde la meilleure rencontre pour le moment
+        if (!chosen || dupeScore < bestScore) {
+            chosen = candidate;
+            bestScore = dupeScore;
         }
     }
 
-    return { title, scores: Object.fromEntries(topKeywords) };
+    const testTitle = `${chosen.nom} ${chosen.adj} ${chosen.univ}`;
+
+    return {
+        title: testTitle,
+        testTitle: testTitle,
+        scores: Object.fromEntries(topKeywords),
+        recipe: { nom: chosen.nom, adj: chosen.adj, univ: chosen.univ, formula: chosen.formula },
+        chosen
+    };
 };
 
 /**
