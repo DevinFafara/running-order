@@ -1,0 +1,152 @@
+/* WelcomeModal.css */
+.welcome-popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    backdrop-filter: blur(3px);
+}
+
+.welcome-popup-content {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+    border-radius: 15px;
+    max-width: 500px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    border: 2px solid #4CAF50;
+    animation: popupSlideIn 0.4s ease-out;
+}
+
+@keyframes popupSlideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.8) translateY(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.welcome-popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 25px 15px;
+    border-bottom: 1px solid #404040;
+}
+
+.welcome-popup-header h2 {
+    color: #4CAF50;
+    font-size: 22px;
+    font-weight: bold;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.welcome-popup-close {
+    background: none;
+    border: none;
+    color: #ccc;
+    font-size: 28px;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.welcome-popup-close:hover {
+    background-color: #4CAF50;
+    color: white;
+    transform: rotate(90deg);
+}
+
+.welcome-popup-body {
+    padding: 20px 25px;
+    color: #e0e0e0;
+    line-height: 1.6;
+}
+
+.welcome-popup-body p {
+    margin-bottom: 15px;
+    font-size: 16px;
+}
+
+.welcome-popup-body strong {
+    color: #4CAF50;
+}
+
+.welcome-popup-footer {
+    color: #ffd700 !important;
+    font-weight: 500;
+    margin-bottom: 0 !important;
+    text-align: center;
+    font-size: 17px;
+}
+
+.welcome-popup-actions {
+    padding: 15px 25px 25px;
+    text-align: center;
+    border-top: 1px solid #404040;
+}
+
+.welcome-popup-button {
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 25px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+}
+
+.welcome-popup-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+    background: linear-gradient(135deg, #45a049 0%, #4CAF50 100%);
+}
+
+.welcome-popup-button:active {
+    transform: translateY(0);
+}
+
+@media screen and (max-width: 600px) {
+    .welcome-popup-content {
+        width: 95%;
+        margin: 10px;
+    }
+
+    .welcome-popup-header,
+    .welcome-popup-body,
+    .welcome-popup-actions {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+
+    .welcome-popup-header h2 {
+        font-size: 18px;
+    }
+
+    .welcome-popup-body p {
+        font-size: 14px;
+    }
+}
