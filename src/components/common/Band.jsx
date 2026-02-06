@@ -14,17 +14,24 @@ const Band = ({ group, selectGroup, selectedGroupId, onTagClick, dayStartMinutes
     const isTagged = hasInterest || hasContext;
 
     // Parsing des heures
+    if (typeof DEBUT !== 'string' || typeof FIN !== 'string') return null;
+
     const debut = DEBUT.split('h');
     const fin = FIN.split('h');
-    if (debut[0] < 4) {
-        debut[0] = +debut[0] + 24;
-    }
-    if (fin[0] < 4) {
-        fin[0] = +fin[0] + 24;
-    }
-    const debutMinutes = (+debut[0]) * 60 + (+debut[1]);
-    const finMinutes = (+fin[0]) * 60 + (+fin[1]);
+
+    if (debut.length < 2) debut[1] = '00';
+    if (fin.length < 2) fin[1] = '00';
+
+    let dH = +debut[0];
+    let fH = +fin[0];
+
+    if (dH < 4) dH += 24;
+    if (fH < 4) fH += 24;
+
+    const debutMinutes = dH * 60 + (+debut[1]);
+    const finMinutes = fH * 60 + (+fin[1]);
     const duree = finMinutes - debutMinutes;
+
     const dureeConcert = duree;
 
     // Couleurs des scènes (principales + annexes)

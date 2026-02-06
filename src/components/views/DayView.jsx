@@ -15,6 +15,8 @@ const CustomEventOverlay = ({ event, onEdit, columnCount, windowWidth, dayStartM
     const { state } = useCheckedState();
 
     // 1. Parse times
+    if (typeof event.startTime !== 'string' || typeof event.endTime !== 'string') return null;
+
     const [startH, startM] = event.startTime.split(':').map(Number);
     const [endH, endM] = event.endTime.split(':').map(Number);
 

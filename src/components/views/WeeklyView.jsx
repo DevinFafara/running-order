@@ -295,6 +295,8 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
                             {/* CUSTOM EVENTS LAYER (Filtered) */}
                             {selectedScenes.includes('CUSTOM') && (customEvents || []).filter(e => e.day === day).map(event => {
                                 // Time Parsing & Position Logic matching WeeklyView layout
+                                if (typeof event.startTime !== 'string' || typeof event.endTime !== 'string') return null;
+
                                 const [startH, startM] = event.startTime.split(':').map(Number);
                                 const [endH, endM] = event.endTime.split(':').map(Number);
 
