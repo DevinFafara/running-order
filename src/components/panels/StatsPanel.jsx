@@ -3,6 +3,7 @@ import { useCheckedState } from '../../context/CheckedStateContext';
 import { useLineup } from '../../hooks/useLineup';
 import { calculateStats } from '../../utils/statsUtils';
 import { STAGE_CONFIG, MAIN_STAGES } from '../../constants';
+import html2canvas from 'html2canvas';
 import './StatsPanel.css';
 
 const StatsPanel = ({ onClose, customEvents = [] }) => {
@@ -15,6 +16,8 @@ const StatsPanel = ({ onClose, customEvents = [] }) => {
     const [expandedDays, setExpandedDays] = useState({});
     const [gaugeHeight, setGaugeHeight] = useState(0);
     const [animatedTotal, setAnimatedTotal] = useState(0);
+    const [isCapturing, setIsCapturing] = useState(false);
+    const panelRef = React.useRef(null);
 
     // Merge data if needed
     const allGroups = useMemo(() => {
@@ -63,6 +66,69 @@ const StatsPanel = ({ onClose, customEvents = [] }) => {
         setExpandedDays(prev => ({ ...prev, [day]: !prev[day] }));
     };
 
+    const handleShare = async () => {
+        if (!panelRef.current) return;
+
+        setIsCapturing(true);
+        // On attend que le bouton de capture soit masqué par React avant de photographier
+        setTimeout(async () => {
+            try {
+                const canvas = await html2canvas(panelRef.current, {
+                    backgroundColor: '#1a1a1a', // On force le fond car le flou ne passe pas bien
+                    scale: 2, // Meilleure résolution
+                    useCORS: true, // Pour les images (logos stages)
+                    logging: false,
+                    onclone: (clonedDoc) => {
+                        const clonedPanel = clonedDoc.querySelector('.stats-panel-container');
+                        if (clonedPanel) {
+                            clonedPanel.style.maxHeight = 'none';
+                            clonedPanel.style.overflow = 'visible';
+                            clonedPanel.style.borderRadius = '0';
+
+                            // On force les valeurs finales pour la capture (évite les bugs d'animation)
+                            const counterVal = clonedPanel.querySelector('.stats-count-val');
+                            if (counterVal) counterVal.innerText = stats.totalBands;
+
+                            const gaugeFill = clonedPanel.querySelector('.rank-gauge-bar-fill');
+                            if (gaugeFill) gaugeFill.style.height = `${stats.averageCompletion}%`;
+                        }
+                    }
+                });
+
+                const image = canvas.toDataURL('image/png');
+
+                // Test Web Share API
+                if (navigator.share && navigator.canShare) {
+                    const blob = await (await fetch(image)).blob();
+                    const file = new File([blob], 'my-hellfest-stats.png', { type: 'image/png' });
+
+                    const shareTitle = `🤘 Mon Profil Hellfest`;
+                    const appUrl = window.location.origin;
+                    const shareText = `Voici mon programme pour l'édition 2025 ! 🔥\n\n🤘 Groupes prévus : ${stats.totalBands}\n🏆 Grade : ${stats.rank}\n\nPrépare ton pèlerinage ici :\n${appUrl}\n\n#Hellfest #HellfestRunningOrder`;
+
+                    if (navigator.canShare({ files: [file] })) {
+                        await navigator.share({
+                            files: [file],
+                            title: shareTitle,
+                            text: shareText
+                        });
+                        setIsCapturing(false);
+                        return;
+                    }
+                }
+
+                // Fallback : téléchargement direct
+                const link = document.createElement('a');
+                link.download = 'hellfest-stats.png';
+                link.href = image;
+                link.click();
+            } catch (err) {
+                console.error('Erreur lors de la capture :', err);
+            }
+            setIsCapturing(false);
+        }, 100);
+    };
+
 
 
     const RANKS = [
@@ -73,24 +139,21 @@ const StatsPanel = ({ onClose, customEvents = [] }) => {
     ];
 
     return (
-        <div className="stats-panel-overlay" onClick={onClose}>
-            <div className="stats-panel-container" onClick={e => e.stopPropagation()}>
-                <button
-                    onClick={onClose}
-                    style={{
-                        position: 'absolute',
-                        top: '15px',
-                        right: '15px',
-                        background: 'transparent',
-                        border: 'none',
-                        color: '#666',
-                        fontSize: '1.2rem',
-                        cursor: 'pointer',
-                        padding: '5px'
-                    }}
-                >
-                    <i className="fa-solid fa-xmark"></i>
-                </button>
+        <div className={`stats-panel-overlay ${isCapturing ? 'capturing' : ''}`} onClick={onClose}>
+            <div className="stats-panel-container" onClick={e => e.stopPropagation()} ref={panelRef}>
+                {!isCapturing && (
+                    <div className="stats-panel-actions">
+                        <button className="stats-share-btn" onClick={handleShare} title="Partager mon profil">
+                            <i className="fa-solid fa-share-nodes"></i>
+                        </button>
+                        <button
+                            onClick={onClose}
+                            className="stats-close-btn"
+                        >
+                            <i className="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                )}
 
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
                     <h2 className="stats-panel-title" style={{ margin: 0 }}>Mon Profil</h2>

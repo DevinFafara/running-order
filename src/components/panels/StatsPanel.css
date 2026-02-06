@@ -13,6 +13,11 @@
     animation: fadeIn 0.3s ease;
 }
 
+.stats-panel-overlay.capturing {
+    background: transparent;
+    backdrop-filter: none;
+}
+
 .stats-panel-container {
     background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
     width: 90%;
@@ -201,15 +206,44 @@
     }
 
     .stats-panel-close-btn {
+        display: none;
+        /* Removed as we use the new action container */
+    }
+
+    .stats-panel-actions {
         position: absolute;
         top: 15px;
-        right: 20px;
-        background: none;
+        right: 15px;
+        display: flex;
+        gap: 10px;
+        z-index: 100;
+    }
+
+    .stats-share-btn,
+    .stats-close-btn {
+        background: rgba(255, 255, 255, 0.1);
         border: none;
-        color: #888;
-        font-size: 2rem;
+        color: #aaa;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         cursor: pointer;
-        line-height: 1;
+        transition: all 0.2s;
+        font-size: 1.1rem;
+    }
+
+    .stats-share-btn:hover {
+        background: #FFD700;
+        color: #000;
+        transform: scale(1.1);
+    }
+
+    .stats-close-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+        color: #fff;
     }
 
     /* --- ID CARD --- */
