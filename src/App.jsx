@@ -14,7 +14,7 @@ import './styles/App.css';
 import CustomEventModal from './components/modals/CustomEventModal';
 import ImportModal from './components/modals/ImportModal';
 import ConfirmationModal from './components/modals/ConfirmationModal';
-import ContactsPanel from './components/panels/ContactsPanel'; // New Import
+import ContactsPanel from './components/panels/ContactsPanel';
 import WelcomeModal from './components/modals/WelcomeModal';
 import { parseShareData } from './utils/sharingUtils';
 
@@ -22,11 +22,10 @@ function AppContent() {
   const { data: groups, sideStagesData, loading, error } = useLineup();
   const { state, setDay, setState, isGuestMode, guestRo, setGuestRo } = useCheckedState();
   const [selectedGroup, setSelectedGroup] = useState(null);
-  const [popoverPosition, setPopoverPosition] = useState(null); // This state is no longer used for GroupCard, but kept for now if other uses exist.
-  const [viewMode, setViewMode] = useState('day'); // 'day' or 'week'
+  const [popoverPosition, setPopoverPosition] = useState(null);
+  const [viewMode, setViewMode] = useState('day');
 
 
-  // Custom Events State
   const [customEvents, setCustomEvents] = useState(() => {
     const saved = localStorage.getItem('customEvents');
     return saved ? JSON.parse(saved) : [];
@@ -35,11 +34,9 @@ function AppContent() {
 
   const [editingEvent, setEditingEvent] = useState(null);
 
-  // Share/Import State
   const [importData, setImportData] = useState(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
-  // Contacts State
   const [contacts, setContacts] = useState(() => {
     const saved = localStorage.getItem('contacts');
     return saved ? JSON.parse(saved) : [];
@@ -51,12 +48,10 @@ function AppContent() {
     localStorage.setItem('contacts', JSON.stringify(contacts));
   }, [contacts]);
 
-  // Save to LocalStorage
   useEffect(() => {
     localStorage.setItem('customEvents', JSON.stringify(customEvents));
   }, [customEvents]);
 
-  // Check URL for Share Token
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const shareToken = params.get('share');
@@ -66,30 +61,24 @@ function AppContent() {
         setImportData(data);
         setIsImportModalOpen(true);
       }
-      // Clean URL
       window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
     }
   }, []);
 
-  // Import Handlers
-
 
   const handleImportReplace = (data) => {
-    // 1. Replace Bands
     setState(prev => ({
       ...prev,
       taggedBands: data.bands
     }));
 
-    // 2. Replace Custom Events
     setCustomEvents(data.customEvents);
     setIsImportModalOpen(false);
   };
 
   const handleSaveContact = (data) => {
-    // Check if already exists by username (not id which is numeric timestamp)
     if (contacts.some(c => c.username === data.username)) {
-      setContactToOverwrite(data); // Trigger confirmation modal
+      setContactToOverwrite(data);
     } else {
       saveContactDirectly(data);
       setIsImportModalOpen(false);
@@ -98,7 +87,6 @@ function AppContent() {
 
   const saveContactDirectly = (data) => {
     setContacts(prev => {
-      // If exists, replace (fallback safety)
       if (prev.some(c => c.username === data.username)) {
         return prev.map(c => c.username === data.username ? { ...c, data: data, importedAt: new Date().toISOString() } : c);
       }
@@ -112,7 +100,6 @@ function AppContent() {
     });
   };
 
-  // Fix the save logic to use username for unicity CHECK
   const handleConfirmOverwrite = () => {
     if (contactToOverwrite) {
       setContacts(prev => prev.map(c => c.username === contactToOverwrite.username ? { ...c, data: contactToOverwrite, importedAt: new Date().toISOString() } : c));
@@ -125,46 +112,23 @@ function AppContent() {
     setContacts(prev => prev.filter(c => c.id !== id));
   };
 
-  // Logic to view/merge/replace FROM a contact
-  // This is handled inside ContactsPanel which re-opens ImportModal or calls handlers directly.
-  // Actually, ContactsPanel will re-open ImportModal in "View Mode".
-  // And ImportModal will call onMerge/onReplace which are ALREADY defined here.
-  // So we just need to pass these handlers if ContactsPanel needs them?
-  // ContactsPanel receives `onCheckContact` which we need to support.
-  // My ContactsPanel implementation used: `onCheckContact(data, mode)`.
-  // Let's implement that in HeaderBar or pass handlers down.
 
-  // Wait, I implemented ContactsPanel to *internally* use ImportModal.
-  // BUT `App.jsx` handles the main "Check URL" ImportModal.
-  // `ContactsPanel` defines its OWN `ImportModal`? 
-  // Let's check `ContactsPanel.jsx`.
-  // Yes, lines 132-150: It renders `ImportModal`.
-  // And it calls `onCheckContact(data, 'merge')`.
-
-  // So `App.jsx` needs to provide `handleCheckContactFromPanel`.
-  // So `App.jsx` needs to provide `handleCheckContactFromPanel`.
   const handleCheckContactFromPanel = (data, mode) => {
     if (mode === 'replace') handleImportReplace(data);
     if (mode === 'view') {
       setGuestRo(data);
-      // Also make sure we are not in modal
-      setIsImportModalOpen(false); // Should not be open if coming from ContactsPanel
-      // But just in case
+      setIsImportModalOpen(false);
     }
   };
-  // Wait, `onCheckContact` signature in `ContactsPanel`: `onCheckContact(data, 'merge')`.
-  // So `handleCheckContactFromPanel` takes `(data, mode)`.
 
   const handleAddCustomEvent = (event) => {
     setCustomEvents(prev => {
       const index = prev.findIndex(e => e.id === event.id);
       if (index !== -1) {
-        // Update
         const newEvents = [...prev];
         newEvents[index] = event;
         return newEvents;
       }
-      // Create
       return [...prev, event];
     });
     setEditingEvent(null);
@@ -184,13 +148,10 @@ function AppContent() {
   };
 
 
-  // SWIPE LOGIC
   const swipeHandlers = useSwipeable({
     onSwipedLeft: (eventData) => {
-      // Ignore swipes on the GroupCard
       if (eventData.event.target.closest('.group-card')) return;
 
-      // Next Day
       if (viewMode === 'day') {
         const currentIndex = DAYS.indexOf(state.day);
         if (currentIndex !== -1 && currentIndex < DAYS.length - 1) {
@@ -199,10 +160,8 @@ function AppContent() {
       }
     },
     onSwipedRight: (eventData) => {
-      // Ignore swipes on the GroupCard
       if (eventData.event.target.closest('.group-card')) return;
 
-      // Previous Day
       if (viewMode === 'day') {
         const currentIndex = DAYS.indexOf(state.day);
         if (currentIndex > 0) {
@@ -222,36 +181,29 @@ function AppContent() {
     if (group) {
       setSelectedGroup(group);
 
-      // Calculate optimized position (prevent overflow right/bottom)
-      // Only set initial position if NO group was selected previously
       if (!selectedGroup && event) {
-        // Default offset
         let x = event.clientX + 20;
         let y = event.clientY;
 
-        // Simple boundary check (assuming card width ~350px, height ~400px)
         const viewportWidth = window.innerWidth;
         const viewportHeight = window.innerHeight;
 
-        // If screen is large enough for popover behavior
         if (viewportWidth > 600) {
-          if (x + 350 > viewportWidth) x = event.clientX - 370; // Show on left if too close to right edge
-          if (y + 400 > viewportHeight) y = viewportHeight - 420; // Shift up if too close to bottom
-          if (y < 60) y = 60; // Keep below header
+          if (x + 350 > viewportWidth) x = event.clientX - 370;
+          if (y + 400 > viewportHeight) y = viewportHeight - 420;
+          if (y < 60) y = 60;
         }
 
         setPopoverPosition({ x, y });
       }
 
-      // Mobile Auto-Scroll Logic
       if (window.innerWidth <= 600) {
         setTimeout(() => {
           const element = document.getElementById(`group-${group.id}`);
           if (element) {
-            // "Translate" effect: bringing the element to center of viewport
             element.scrollIntoView({ block: 'center', behavior: 'smooth' });
           }
-        }, 350); // Wait for Card Slide-Up Animation to finish (approx 300ms)
+        }, 350);
       }
 
     } else {
@@ -339,8 +291,8 @@ function AppContent() {
               />
             ) : (
               <WeeklyView
-                groups={[...groups, ...sideStagesData]} // Always pass all groups including side stages
-                onGroupClick={(g) => handleGroupSelect(g, { clientX: window.innerWidth / 2 - 200, clientY: window.innerHeight / 2 - 200 })} // Mock position for now
+                groups={[...groups, ...sideStagesData]}
+                onGroupClick={(g) => handleGroupSelect(g, { clientX: window.innerWidth / 2 - 200, clientY: window.innerHeight / 2 - 200 })}
                 customEvents={isGuestMode ? (guestRo.customEvents || []) : customEvents}
                 onEditCustomEvent={isGuestMode ? () => { } : handleEditCustomEvent}
               />
@@ -349,7 +301,6 @@ function AppContent() {
         </Routes>
       </main>
 
-      {/* Custom Event Modal */}
       <CustomEventModal
         isOpen={isCustomModalOpen}
         onClose={() => {
@@ -362,12 +313,10 @@ function AppContent() {
         eventToEdit={editingEvent}
       />
 
-      {/* Import Modal */}
       <ImportModal
         isOpen={isImportModalOpen}
         onClose={() => setIsImportModalOpen(false)}
         data={importData}
-        // onMerge removed
         onReplace={handleImportReplace}
         onSave={handleSaveContact}
         onView={(data) => {
@@ -393,7 +342,6 @@ function AppContent() {
         </>
       )}
 
-      {/* Confirmation Modal for Overwrite */}
       <ConfirmationModal
         isOpen={!!contactToOverwrite}
         onClose={() => setContactToOverwrite(null)}

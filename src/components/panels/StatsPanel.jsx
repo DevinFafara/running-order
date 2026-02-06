@@ -8,8 +8,6 @@ import './StatsPanel.css';
 
 const StatsPanel = ({ onClose, customEvents = [] }) => {
     const { state, userState } = useCheckedState();
-    // Use userState (real user data) if available, otherwise fall back to state (display state)
-    // This ensures StatsPanel always shows the USER's stats, even in Guest Mode.
     const effectiveState = userState || state;
 
     const { data: groups, sideStagesData } = useLineup();
@@ -19,7 +17,6 @@ const StatsPanel = ({ onClose, customEvents = [] }) => {
     const [isCapturing, setIsCapturing] = useState(false);
     const panelRef = React.useRef(null);
 
-    // Merge data if needed
     const allGroups = useMemo(() => {
         return effectiveState.sideScenes && sideStagesData
             ? [...groups, ...sideStagesData]
@@ -32,14 +29,11 @@ const StatsPanel = ({ onClose, customEvents = [] }) => {
 
     const hoursTotal = Math.round(stats.totalMinutes / 60);
 
-    // Animation Effect
     React.useEffect(() => {
-        // Delay slighty for enter animation
         const timer = setTimeout(() => {
             setGaugeHeight(stats.averageCompletion);
         }, 300);
 
-        // Counter Animation
         let start = 0;
         const end = stats.totalBands;
 
@@ -70,13 +64,12 @@ const StatsPanel = ({ onClose, customEvents = [] }) => {
         if (!panelRef.current) return;
 
         setIsCapturing(true);
-        // On attend que le bouton de capture soit masqué par React avant de photographier
         setTimeout(async () => {
             try {
                 const canvas = await html2canvas(panelRef.current, {
-                    backgroundColor: '#1a1a1a', // On force le fond car le flou ne passe pas bien
-                    scale: 2, // Meilleure résolution
-                    useCORS: true, // Pour les images (logos stages)
+                    backgroundColor: '#1a1a1a',
+                    scale: 2,
+                    useCORS: true,
                     logging: false,
                     onclone: (clonedDoc) => {
                         const clonedPanel = clonedDoc.querySelector('.stats-panel-container');
@@ -85,7 +78,6 @@ const StatsPanel = ({ onClose, customEvents = [] }) => {
                             clonedPanel.style.overflow = 'visible';
                             clonedPanel.style.borderRadius = '0';
 
-                            // On force les valeurs finales pour la capture (évite les bugs d'animation)
                             const counterVal = clonedPanel.querySelector('.stats-count-val');
                             if (counterVal) counterVal.innerText = stats.totalBands;
 
@@ -97,7 +89,6 @@ const StatsPanel = ({ onClose, customEvents = [] }) => {
 
                 const image = canvas.toDataURL('image/png');
 
-                // Test Web Share API
                 if (navigator.share && navigator.canShare) {
                     const blob = await (await fetch(image)).blob();
                     const file = new File([blob], 'my-hellfest-stats.png', { type: 'image/png' });
@@ -117,7 +108,6 @@ const StatsPanel = ({ onClose, customEvents = [] }) => {
                     }
                 }
 
-                // Fallback : téléchargement direct
                 const link = document.createElement('a');
                 link.download = 'hellfest-stats.png';
                 link.href = image;
@@ -128,8 +118,6 @@ const StatsPanel = ({ onClose, customEvents = [] }) => {
             setIsCapturing(false);
         }, 100);
     };
-
-
 
     const RANKS = [
         { label: "Trve", bottom: "90%" },
@@ -161,9 +149,7 @@ const StatsPanel = ({ onClose, customEvents = [] }) => {
 
                 <div className="stats-panel-rank-widget">
 
-                    {/* LEFT: GAUGE + LABELS */}
                     <div className="rank-gauge-area">
-                        {/* The Actual Gauge Bar (Clipped) */}
                         <div className="rank-gauge-bar-container">
                             <div
                                 className="rank-gauge-bar-fill"
@@ -171,13 +157,10 @@ const StatsPanel = ({ onClose, customEvents = [] }) => {
                             ></div>
                         </div>
 
-                        {/* The Labels (Absolute positioned relative to area, visible) */}
                         <div className="rank-gauge-labels">
                             {RANKS.map((rank, i) => {
-                                const isCurrent = stats.rank.toLowerCase() === rank.label.toLowerCase();
-                                const isPassed = !isCurrent && stats.averageCompletion >= parseInt(rank.bottom);
-                                const isEmpty = stats.averageCompletion < parseInt(rank.bottom);
                                 const isActive = stats.averageCompletion >= parseInt(rank.bottom);
+                                const isPassed = stats.rank.toLowerCase() !== rank.label.toLowerCase() && isActive;
 
                                 return (
                                     <div
@@ -192,7 +175,6 @@ const StatsPanel = ({ onClose, customEvents = [] }) => {
                         </div>
                     </div>
 
-                    {/* RIGHT: INFO & COUNTERS */}
                     <div className="stats-panel-rank-info">
                         <div className="stats-main-counter">
                             <span className="stats-count-val">{animatedTotal}</span>
@@ -213,23 +195,19 @@ const StatsPanel = ({ onClose, customEvents = [] }) => {
 
                 <div style={{ clear: 'both' }}></div>
 
-                {/* --- DAY INTENSITY with CLASHES --- */}
                 <div className="stats-panel-section-title">MES STATS PAR JOUR</div>
                 <div className="stats-panel-intensity-grid">
                     {Object.entries(stats.days)
                         .filter(([, data]) => data.count > 0)
                         .map(([day, data]) => {
-                            const percentage = data.completionRate || 0; // Use completion rate for intensity
-                            // Filter Clashes for this day
+                            const percentage = data.completionRate || 0;
                             const dayClashes = stats.clashesExtended ? stats.clashesExtended.filter(c => c.day === day) : [];
                             const hasClashes = dayClashes.length > 0;
                             const clashCount = dayClashes.length;
 
-                            // LOGIC: Badge Message & Color
                             let colorClass = 'low';
                             let message = "Promenade de santé ☁️";
 
-                            // 1. Percentage Rules
                             if (percentage >= 50 && percentage < 75) {
                                 colorClass = 'medium';
                                 message = "Rythme de croisière 😎";
@@ -241,10 +219,8 @@ const StatsPanel = ({ onClose, customEvents = [] }) => {
                                 message = "Mode Berserker ⚔️";
                             }
 
-                            // 2. Clash Override Rules
                             if (clashCount > 2) {
-                                colorClass = 'critical'; // Force critical
-                                // Only override message if not already critical "Berserker"
+                                colorClass = 'critical';
                                 if (percentage < 90) {
                                     message = "Sprint infernal 🏃";
                                 }
@@ -308,15 +284,14 @@ const StatsPanel = ({ onClose, customEvents = [] }) => {
                                         </div>
                                     )}
 
-                                    {/* Stage Distribution Bar (Logos) */}
                                     <div className="stats-panel-stage-logos-row">
                                         {[...MAIN_STAGES]
                                             .filter(stageKey => (data.stages && data.stages[stageKey]) > 0)
                                             .sort((a, b) => {
                                                 const countA = (data.stages && data.stages[a]) || 0;
                                                 const countB = (data.stages && data.stages[b]) || 0;
-                                                if (countB !== countA) return countB - countA; // Descending
-                                                return MAIN_STAGES.indexOf(a) - MAIN_STAGES.indexOf(b); // Tie-breaker
+                                                if (countB !== countA) return countB - countA;
+                                                return MAIN_STAGES.indexOf(a) - MAIN_STAGES.indexOf(b);
                                             })
                                             .map(stageKey => {
                                                 const count = data.stages[stageKey];
@@ -337,7 +312,6 @@ const StatsPanel = ({ onClose, customEvents = [] }) => {
                                             })}
                                     </div>
 
-                                    {/* Daily Persona Title Only (Pie Chart Removed) */}
                                     <div className="daily-rank-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginTop: '10px', marginBottom: '10px' }}>
                                         <div className="daily-rank-icon">
                                             <i className="fa-solid fa-medal"></i>
@@ -350,9 +324,6 @@ const StatsPanel = ({ onClose, customEvents = [] }) => {
                             );
                         })}
                 </div>
-
-
-
             </div>
         </div>
     );

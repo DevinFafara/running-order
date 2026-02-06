@@ -4,7 +4,6 @@ import { migrateOldData } from '../utils/migrationUtils';
 
 export const CheckedStateContext = createContext();
 
-// Générer les couleurs par défaut des niveaux d'intérêt
 const getDefaultInterestColors = () => {
     const colors = {};
     Object.keys(INTEREST_LEVELS).forEach(levelId => {
@@ -15,24 +14,19 @@ const getDefaultInterestColors = () => {
 
 const INITIAL_STATE = {
     scenes: {
-        // Scènes principales
         mainstage1: true,
         mainstage2: true,
         warzone: true,
         valley: true,
         altar: true,
         temple: true,
-        // Scènes annexes (visibles seulement si sideScenes = true)
         hellstage: true,
         purple_house: true,
         metal_corner: true,
     },
     color: 'nocolor',
     ...DEFAULT_COLORS,
-    // Nouveau système à 2 dimensions :
-    // { groupId: { interest: 'must_see' | 'interested' | 'curious' | null, context: 'with_friend' | 'strategic' | 'skip' | null, taggedAt: timestamp } }
     taggedBands: {},
-    // Couleurs personnalisées pour les niveaux d'intérêt (les 3 étoiles)
     interestColors: getDefaultInterestColors(),
     reverse: false,
     compact: true,
@@ -54,20 +48,15 @@ export const CheckedStateProvider = ({ children }) => {
             const saved = localStorage.getItem('checkedState');
             if (saved) {
                 const parsed = JSON.parse(saved);
-
-                // Appliquer la migration pour transformer l'ancien format en nouveau
                 const migrated = migrateOldData(parsed);
 
-                // Merge profond et intelligent
                 const mergedState = {
                     ...INITIAL_STATE,
                     ...migrated,
-                    // S'assurer que les nouvelles clés de scènes sont présentes
                     scenes: {
                         ...INITIAL_STATE.scenes,
                         ...(migrated.scenes || {})
                     },
-                    // S'assurer que les nouvelles clés de couleurs sont présentes
                     interestColors: {
                         ...getDefaultInterestColors(),
                         ...(migrated.interestColors || {})
@@ -79,12 +68,10 @@ export const CheckedStateProvider = ({ children }) => {
             console.error("Failed to load state", e);
         }
         return INITIAL_STATE;
-        return INITIAL_STATE;
     });
 
-    const [guestRo, setGuestRo] = useState(null); // { bands, customEvents, username }
+    const [guestRo, setGuestRo] = useState(null);
 
-    // State utilisé pour l'affichage (User ou Guest)
     const displayState = React.useMemo(() => {
         if (guestRo && guestRo.bands) {
             return {
@@ -107,15 +94,13 @@ export const CheckedStateProvider = ({ children }) => {
         setState(prev => ({ ...prev, day }));
     };
 
-    // Définir le niveau d'intérêt d'un groupe (null pour retirer)
     const setInterest = (groupId, interestLevel) => {
-        if (guestRo) return; // Read-only mode
+        if (guestRo) return;
         setState(prev => {
             const newTaggedBands = { ...prev.taggedBands };
             const existing = newTaggedBands[groupId] || {};
 
             if (interestLevel === null && !existing.context) {
-                // Retirer complètement si plus rien
                 delete newTaggedBands[groupId];
             } else {
                 newTaggedBands[groupId] = {
@@ -128,15 +113,13 @@ export const CheckedStateProvider = ({ children }) => {
         });
     };
 
-    // Définir le contexte d'un groupe (null pour retirer)
     const setContext = (groupId, contextType) => {
-        if (guestRo) return; // Read-only mode
+        if (guestRo) return;
         setState(prev => {
             const newTaggedBands = { ...prev.taggedBands };
             const existing = newTaggedBands[groupId] || {};
 
             if (contextType === null && !existing.interest) {
-                // Retirer complètement si plus rien
                 delete newTaggedBands[groupId];
             } else {
                 newTaggedBands[groupId] = {
@@ -149,7 +132,6 @@ export const CheckedStateProvider = ({ children }) => {
         });
     };
 
-    // Toggle rapide d'intérêt (cycle: null -> curious -> interested -> must_see -> null)
     const cycleInterest = (groupId) => {
         const currentTag = getBandTag(groupId);
         const currentInterest = currentTag?.interest;
@@ -168,24 +150,20 @@ export const CheckedStateProvider = ({ children }) => {
         setInterest(groupId, nextInterest);
     };
 
-    // Obtenir les infos de tag d'un groupe (avec migration des anciens formats)
     const getBandTag = (groupId) => {
         const tag = displayState.taggedBands?.[groupId];
         if (!tag) return null;
 
-        // Migration : si le tag est une ancienne chaîne (ex: 'color1' ou 'must_see')
         if (typeof tag === 'string') {
             return {
-                interest: 'must_see', // Par défaut pour les anciens tags
+                interest: 'must_see',
                 context: null,
                 taggedAt: Date.now()
             };
         }
 
-        // Migration : ancien format { category: 'xxx' }
         if (tag.category && !tag.interest) {
             const cat = tag.category;
-            // Mapper l'ancienne catégorie vers le nouveau système
             if (['must_see', 'interested', 'curious'].includes(cat)) {
                 return { interest: cat, context: null, taggedAt: tag.taggedAt };
             } else if (['with_friend', 'strategic', 'skip'].includes(cat)) {
@@ -196,12 +174,10 @@ export const CheckedStateProvider = ({ children }) => {
         return tag;
     };
 
-    // Obtenir la couleur d'un niveau d'intérêt
     const getInterestColor = (interestLevel) => {
         return state.interestColors?.[interestLevel] || INTEREST_LEVELS[interestLevel]?.defaultColor || '#888';
     };
 
-    // Personnaliser la couleur d'un niveau d'intérêt
     const setInterestColor = (interestLevel, color) => {
         setState(prev => ({
             ...prev,
@@ -212,7 +188,6 @@ export const CheckedStateProvider = ({ children }) => {
         }));
     };
 
-    // Réinitialiser les couleurs
     const resetInterestColors = () => {
         setState(prev => ({
             ...prev,
@@ -256,8 +231,8 @@ export const CheckedStateProvider = ({ children }) => {
 
     return (
         <CheckedStateContext.Provider value={{
-            state: displayState, // Transparence : les consommateurs voient l'état actif (Invité ou User)
-            userState: state, // L'état réel de l'utilisateur (pour les stats, préférences, etc.)
+            state: displayState,
+            userState: state,
             isGuestMode: !!guestRo,
             guestRo,
             setGuestRo,

@@ -7,7 +7,6 @@ import ContactsPanel from '../panels/ContactsPanel';
 import ProfileModal from '../modals/ProfileModal';
 import ShareModal from '../modals/ShareModal';
 import { useCheckedState } from '../../context/CheckedStateContext';
-
 import StatsPanel from '../panels/StatsPanel';
 
 const HeaderBar = ({ viewMode, onViewChange, onInteraction, onAddCustomEvent, customEvents, contacts, onDeleteContact, onCheckContact, isGuestMode, guestName, onExitGuestMode, onClearCustomEvents }) => {
@@ -41,7 +40,6 @@ const HeaderBar = ({ viewMode, onViewChange, onInteraction, onAddCustomEvent, cu
         if (id === 'contacts') setContactsOpen(true);
         if (id === 'settings') setSettingsOpen(true);
         if (id === 'credits') setCreditsOpen(true);
-        // Share handled separately via callback
     };
 
     return (
@@ -189,7 +187,7 @@ const HeaderBar = ({ viewMode, onViewChange, onInteraction, onAddCustomEvent, cu
             <ShareModal
                 isOpen={shareOpen}
                 onClose={() => setShareOpen(false)}
-                taggedBands={userState ? userState.taggedBands : {}} // Using userState from context
+                taggedBands={userState ? userState.taggedBands : {}}
                 customEvents={customEvents}
             />
         </>

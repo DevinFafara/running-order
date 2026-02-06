@@ -13,18 +13,11 @@ export const useLineup = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Check for updates by comparing content, ignoring volatile timestamps (formulas)
     const checkForUpdates = useCallback(async () => {
         try {
-            // We fetch the full data (since we can't efficiently partial fetch CSV anyway)
-            // and compare the actual DATA content, not just the timestamp line.
-            // This prevents loops when the sheet uses =NOW() in the timestamp field.
-
             const cacheBuster = Date.now();
             const url = `${GOOGLE_SHEETS_URL}&_cb=${cacheBuster}`;
 
-            // Pass true to potential silent mode if implemented later
-            // For now, we reuse the utility
             const result = await fetchAndParseGoogleSheetsCSV(url);
 
             if (!result || !result.data) return;
@@ -33,23 +26,16 @@ export const useLineup = () => {
             const newDataStr = JSON.stringify(result.data);
 
             if (cachedDataStr !== newDataStr) {
-                console.log('🔄 Data content has changed (ignoring timestamp diff), refreshing...');
-                // Update State
+                console.log('🔄 Data content has changed, refreshing...');
                 setData(result.data);
-                // Update Cache
                 localStorage.setItem(CACHE_KEY, newDataStr);
                 localStorage.setItem(TIMESTAMP_KEY, result.timestamp);
-            } else {
-                // Content is identical. Do nothing.
-                // We do NOT update the timestamp in cache, to keep the "original" one.
-                // debug: console.log('✓ Content unchanged.');
             }
         } catch (err) {
             console.warn('Background update check failed', err);
         }
     }, []);
 
-    // Charger les scènes annexes depuis le fichier local
     const loadSideStages = useCallback(async () => {
         try {
             const response = await fetch(SIDESTAGES_URL);
@@ -95,9 +81,8 @@ export const useLineup = () => {
     }, []);
 
     useEffect(() => {
-        // Charger les deux jeux de données en parallèle
         Promise.all([loadData(), loadSideStages()]).catch(console.error);
-        const intervalId = setInterval(checkForUpdates, 60000); // Check every minute
+        const intervalId = setInterval(checkForUpdates, 60000);
         return () => clearInterval(intervalId);
     }, [loadData, loadSideStages, checkForUpdates]);
 
