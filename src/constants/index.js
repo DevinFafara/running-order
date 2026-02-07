@@ -20,63 +20,63 @@ export const STAGE_PAIRS = [
 export const STAGE_CONFIG = {
   [STAGES.MAINSTAGE_1]: {
     name: 'Mainstage 1',
-    icon: '/icons/icon_mainstage_1.png',
+    icon: `${import.meta.env.BASE_URL}icons/icon_mainstage_1.png`,
     slug: 'mainstage1',
     themeColor: '#0055a5',
     bandColor: '#9eaad3'
   },
   [STAGES.MAINSTAGE_2]: {
     name: 'Mainstage 2',
-    icon: '/icons/icon_mainstage_2.png',
+    icon: `${import.meta.env.BASE_URL}icons/icon_mainstage_2.png`,
     slug: 'mainstage2',
     themeColor: '#a6a19b',
     bandColor: '#d4d2cf'
   },
   [STAGES.WARZONE]: {
     name: 'Warzone',
-    icon: '/icons/icon_warzone.png',
+    icon: `${import.meta.env.BASE_URL}icons/icon_warzone.png`,
     slug: 'warzone',
     themeColor: '#949b1a',
     bandColor: '#cecb93'
   },
   [STAGES.VALLEY]: {
     name: 'Valley',
-    icon: '/icons/icon_valley.png',
+    icon: `${import.meta.env.BASE_URL}icons/icon_valley.png`,
     slug: 'valley',
     themeColor: '#ce7c19',
     bandColor: '#eabe97'
   },
   [STAGES.ALTAR]: {
     name: 'Altar',
-    icon: '/icons/icon_altar.png',
+    icon: `${import.meta.env.BASE_URL}icons/icon_altar.png`,
     slug: 'altar',
     themeColor: '#dc2829',
     bandColor: '#f19e9e'
   },
   [STAGES.TEMPLE]: {
     name: 'Temple',
-    icon: '/icons/icon_temple.png',
+    icon: `${import.meta.env.BASE_URL}icons/icon_temple.png`,
     slug: 'temple',
     themeColor: '#93a7b0',
     bandColor: '#cbd4d8'
   },
   [STAGES.HELLSTAGE]: {
     name: 'Hellstage',
-    icon: '/running-order/icons/hellStage.png',
+    icon: `${import.meta.env.BASE_URL}icons/hellStage.png`,
     slug: 'hellstage',
     themeColor: '#239c60',
     bandColor: '#a0d8b7'
   },
   [STAGES.METAL_CORNER]: {
     name: 'Metal Corner',
-    icon: '/running-order/icons/metalCorner.png',
+    icon: `${import.meta.env.BASE_URL}icons/metalCorner.png`,
     slug: 'metal_corner',
     themeColor: '#9f9c78',
     bandColor: '#d0cfae'
   },
   [STAGES.PURPLE_HOUSE]: {
     name: 'Purple House',
-    icon: '/running-order/icons/purple.png',
+    icon: `${import.meta.env.BASE_URL}icons/purple.png`,
     slug: 'purple_house',
     themeColor: '#9500c6',
     bandColor: '#d6b2e0'
