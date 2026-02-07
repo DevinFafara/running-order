@@ -259,7 +259,7 @@ const STYLE_PERSONA = {
     "punk": {
         "noms": ["Punk"],
         "adjectifs": ["Irascible"],
-        "univers": ["de la Rue"]
+        "univers": ["des bas-fonds"]
     },
     "hardcore": {
         "noms": ["Rebelle"],
@@ -279,7 +279,7 @@ const STYLE_PERSONA = {
     "rock": {
         "noms": ["Icône"],
         "adjectifs": ["Électrique"],
-        "univers": ["on the road"]
+        "univers": ["des Salles Obscures"]
     },
     "black": {
         "noms": ["Ombre"],
