@@ -12,6 +12,7 @@ export default defineConfig({
       injectRegister: 'auto',
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,json}'],
+        maximumFileSizeToCacheInBytes: 3000000,
         // On s'assure que lineup.json est bien mis en cache
         runtimeCaching: [
           {
