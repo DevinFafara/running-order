@@ -2,7 +2,7 @@
   "name": "running-order2",
   "private": true,
   "version": "0.0.0",
-  "homepage": "https://jycudonnec.github.io/running-order/",
+  "homepage": "https://jycudonnec.github.io/running-order2/",
   "type": "module",
   "scripts": {
     "dev": "vite",
