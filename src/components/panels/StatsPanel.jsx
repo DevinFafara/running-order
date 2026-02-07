@@ -179,8 +179,8 @@ const StatsPanel = ({ onClose, customEvents = [] }) => {
                             Rang : <span className="stats-rank-name">{stats.rank?.toUpperCase() || "TOURISTE"}</span>
                         </div>
                         {stats.weeklyPersona && (
-                            <div className="stats-weekly-persona">
-                                {stats.weeklyPersona.testTitle}
+                            <div className="stats-rank-display" style={{ fontSize: '1.2rem', marginTop: '5px' }}>
+                                Classe : <span className="stats-rank-name">{stats.weeklyPersona.testTitle}</span>
                             </div>
                         )}
                     </div>
