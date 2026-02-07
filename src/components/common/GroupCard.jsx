@@ -318,7 +318,7 @@ const GroupCard = ({ group, position, onClose, onPositionChange }) => {
                                 // removed background and padding
                             }}>
                                 <img
-                                    src={bandLogos[group.GROUPE]}
+                                    src={`${import.meta.env.BASE_URL}${bandLogos[group.GROUPE]}`}
                                     alt={group.GROUPE}
                                     style={{
                                         maxWidth: '100%',
@@ -370,7 +370,7 @@ const GroupCard = ({ group, position, onClose, onPositionChange }) => {
                             {/* Qobuz en premier - Partenaire officiel Hellfest */}
                             {group.QOBUZ && (
                                 <a href={group.QOBUZ} target="_blank" rel="noopener noreferrer" className="link-btn qobuz">
-                                    <img src="/icons/qobuz_icon.png" alt="Qobuz" className="qobuz-icon" />
+                                    <img src={`${import.meta.env.BASE_URL}icons/qobuz_icon.png`} alt="Qobuz" className="qobuz-icon" />
                                     Qobuz
                                 </a>
                             )}

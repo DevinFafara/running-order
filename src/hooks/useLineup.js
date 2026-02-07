@@ -4,7 +4,7 @@ import { GOOGLE_SHEETS_URL } from '../constants';
 
 const CACHE_KEY = 'lineup-data';
 const TIMESTAMP_KEY = 'lineup-timestamp';
-const FALLBACK_URL = '/lineup.json';
+const FALLBACK_URL = `${import.meta.env.BASE_URL}lineup.json`;
 
 export const useLineup = () => {
     const [data, setData] = useState([]);
