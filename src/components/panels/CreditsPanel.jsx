@@ -62,10 +62,6 @@ const CreditsPanel = ({ isOpen, onClose }) => {
                             </a>
                         </li>
                     </ul>
-
-                    <div className="credits-footer">
-                        <p>Made with 🤘 for metalheads</p>
-                    </div>
                 </div>
             </div>
         </div>
