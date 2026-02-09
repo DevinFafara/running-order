@@ -5,9 +5,9 @@ import Band from '../common/Band';
 import TagMenu from '../common/TagMenu';
 
 // Composant HourTag (comme dans running-order original)
-const HourTag = ({ hour, i }) => (
-    <div className='hours' style={{ top: `${(i * 60) - 5}px` }}>
-        <span className='hourtags'>{hour}</span>
+const HourTag = ({ hour }) => (
+    <div className='hours' style={{ top: `${hour.top - 5}px` }}>
+        <span className='hourtags'>{hour.label}</span>
     </div>
 );
 
@@ -304,60 +304,27 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day, customEvents = [],
 
     const getHours = () => {
         const hours = [];
-        // Loop from start hour to end hour
-        // startMin / 60 rounded down
         const startH = Math.floor(dayStartMinutes / 60);
         const endH = Math.ceil(dayEndMinutes / 60);
 
-        for (let h = startH; h < endH; h++) { // < endH often enough? or <= ? Original seemed to cover full range.
-            // Original logic went backwards or unordered. Let's just generate linear list.
-            // We need string "HH:00".
-            // If h >= 24, display h-24.
+        for (let h = startH; h <= endH; h++) {
             const displayH = h >= 24 ? h - 24 : h;
-            hours.push(`${displayH.toString().padStart(2, '0')}:00`);
+            const hourLabel = `${displayH.toString().padStart(2, '0')}:00`;
+            const timeInMinutes = h * 60;
+
+            // Calculate absolute top position based on current view mode
+            let top;
+            if (state.reverse) {
+                // Inverted: Morning at top (0px = dayStartMinutes)
+                top = timeInMinutes - dayStartMinutes;
+            } else {
+                // Normal: Evening at top (0px = dayEndMinutes)
+                top = dayEndMinutes - timeInMinutes;
+            }
+
+            hours.push({ label: hourLabel, top });
         }
-
-        // Original logic was reverse if state.reverse.
-        // If reverse, we want higher times at TOP? No wait.
-        // Band.jsx Reverse: return adjustedDebut - startOfDayMinutes (Top is 0 at start of day)
-        // Band.jsx Normal: return endOfDayMinutes - adjustedFin (Top is 0 at end of day)
-
-        // So in "Normal" (bottom-up?), the HTML list order doesn't dictate position, 
-        // but `HourTag` uses `style={{ top: (i * 60) - 5 }}`. 
-        // This implies the standard HTML flow is Top-to-Bottom.
-        // Wait. `HourTag` logic: `top: i * 60`. 
-        // If I render 10:00, 11:00, 12:00... 
-        // 10:00 is at 0px. 11:00 at 60px.
-        // This corresponds to `adjustedDebut - startOfDayMinutes`. 
-        // So standard HTML flow is Time Increasing Downwards.
-
-        // Band.jsx "Reverse": `adjustedDebut - startOfDayMinutes`. 
-        // If adjustedDebut = 10h (600), start = 10h (600) -> 0px.
-        // If adjustedDebut = 11h (660) -> 60px.
-        // So "Reverse" mode corresponds to Time Increasing Downwards (Top to Bottom).
-
-        // Band.jsx "Normal": `endOfDayMinutes - adjustedFin`.
-        // If endOfday = 02h (26h=1560).
-        // If fin = 02h (1560) -> 0px.
-        // If fin = 01h (1500) -> 60px.
-        // So "Normal" mode corresponds to Time Increasing Upwards (Bottom to Top).
-
-        // So `getHours()` array order matters if `HourTag` uses index `i` for top position.
-
-        if (state.reverse) {
-            // "Reverse" = Time starts at Top (10:00) and goes down.
-            // Hours should be [10:00, 11:00, ...]
-            // Loop from startH to endH is correct.
-            return hours;
-        } else {
-            // "Normal" = Time starts at Bottom? 0px is Top.
-            // In Normal mode, 0px is End of Day.
-            // So we need labels starting from End of Day going down to Start of Day.
-            // i=0 -> Top=0px -> End of Day (02:00)
-            // i=1 -> Top=60px -> 01:00
-            // So we need reverse list.
-            return hours.reverse();
-        }
+        return hours;
     };
 
     // Vue étendue (6+ colonnes) sur grands écrans
@@ -452,7 +419,7 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day, customEvents = [],
                             <div className="scene-bands with-hours" style={{ height: getSceneBandsHeight() }}>
                                 {/* Tags d'heures */}
                                 {hours.map((hour, i) => (
-                                    <HourTag key={i} hour={hour} i={i} />
+                                    <HourTag key={i} hour={hour} />
                                 ))}
 
                                 {/* Groupes */}
