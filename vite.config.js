@@ -4,7 +4,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/running-order2/',
+  base: '/running-order/',
   plugins: [
     react(),
     VitePWA({
@@ -43,8 +43,8 @@ export default defineConfig({
         ]
       },
       manifest: {
-        name: 'Hellfest Running Order Planner',
-        short_name: 'Hellfest RO',
+        name: 'Hellfest RO Planner',
+        short_name: 'RO Planner',
         description: 'Préparez votre planning pour le Hellfest Open Air Festival',
         theme_color: '#000000',
         background_color: '#000000',

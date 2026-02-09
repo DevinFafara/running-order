@@ -47,7 +47,18 @@ const HeaderBar = ({ viewMode, onViewChange, onInteraction, onAddCustomEvent, cu
             <header>
                 <div className="header-left" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span className="header-title">Hellfest-RO</span>
+                        <img
+                            src={`${import.meta.env.BASE_URL}icons/icon-192x192.png`}
+                            alt="RO Planner Logo"
+                            style={{
+                                height: '35px',
+                                width: '35px',
+                                borderRadius: '8px',
+                                boxShadow: '0 0 10px rgba(0,0,0,0.5)',
+                                border: '1px solid rgba(255,255,255,0.05)'
+                            }}
+                        />
+                        <span className="header-title" style={{ fontFamily: 'Metal Mania', letterSpacing: '1px' }}>RO Planner</span>
                         {!isOnline && (
                             <span
                                 title="Mode Hors-ligne (Données en cache)"

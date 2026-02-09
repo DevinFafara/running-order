@@ -76,14 +76,16 @@ header {
   align-items: center;
   justify-content: space-between;
   z-index: 100;
-  height: 40px;
+  height: 50px;
   padding: 0 15px;
 }
 
 .header-title {
-  font-size: 14px;
+  font-size: 1.15rem;
   font-weight: 600;
   color: white;
+  text-transform: uppercase;
+  vertical-align: middle;
 }
 
 /* === TOOLBAR === */
