@@ -3,11 +3,11 @@ export const migrateOldData = (oldState) => {
 
     const newState = { ...oldState };
 
-    if (oldState.color1 || oldState.color2 || oldState.color3) {
+    if (!oldState.interestColors && (oldState.color1 || oldState.color2 || oldState.color3)) {
         newState.interestColors = {
-            must_see: oldState.color1 || "#FFEC61",
-            interested: oldState.color2 || "#8AFF61",
-            curious: oldState.color3 || "#61D6FF"
+            must_see: oldState.color1 || "#FFD700",
+            interested: oldState.color2 || "#4A90D9",
+            curious: oldState.color3 || "#50C878"
         };
     }
 
