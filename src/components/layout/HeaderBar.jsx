@@ -138,6 +138,8 @@ const HeaderBar = ({ viewMode, onViewChange, onInteraction, onAddCustomEvent, cu
                         <i className={`fa-solid ${viewMode === 'week' ? 'fa-calendar-day' : 'fa-calendar-week'}`}></i>
                     </button>
 
+                    {/* Map icon hidden from toolbar for production testing — moved to Settings */}
+                    {/* 
                     <button
                         className={`toolbar-btn ${viewMode === 'map' ? 'active' : ''}`}
                         title="Carte du site"
@@ -148,6 +150,7 @@ const HeaderBar = ({ viewMode, onViewChange, onInteraction, onAddCustomEvent, cu
                     >
                         <i className="fa-solid fa-map-location-dot"></i>
                     </button>
+*/}
 
                     <button
                         className={`toolbar-btn ${profileOpen ? 'active' : ''}`}
@@ -177,6 +180,7 @@ const HeaderBar = ({ viewMode, onViewChange, onInteraction, onAddCustomEvent, cu
                 isOpen={settingsOpen}
                 onClose={() => setSettingsOpen(false)}
                 onClearCustomEvents={onClearCustomEvents}
+                onViewChange={onViewChange}
             />
 
             <CreditsPanel

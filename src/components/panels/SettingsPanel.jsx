@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useCheckedState } from '../../context/CheckedStateContext';
 import { INTEREST_LEVELS, INTEREST_ORDER } from '../../constants';
 
-const SettingsPanel = ({ isOpen, onClose, onClearCustomEvents }) => {
+const SettingsPanel = ({ isOpen, onClose, onClearCustomEvents, onViewChange }) => {
     const { state, setState, getInterestColor, setInterestColor, resetInterestColors, clearAllFavorites } = useCheckedState();
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
     const [confirmDelete, setConfirmDelete] = useState(false);
@@ -154,6 +154,42 @@ const SettingsPanel = ({ isOpen, onClose, onClearCustomEvents }) => {
                             Action irréversible : Efface tous les favoris et les créneaux personnalisés.
                         </p>
                     )}
+                </div>
+
+                {/* Section Expérimentale */}
+                <div className="settings-section" style={{ borderTop: '1px solid rgba(255,255,255,0.05)', marginTop: '20px', paddingTop: '10px' }}>
+                    <h3 style={{ fontSize: '0.9rem', color: '#ffc800', opacity: 0.8 }}>
+                        <i className="fa-solid fa-flask" style={{ marginRight: '8px' }}></i>
+                        Fonctionnalités expérimentales
+                    </h3>
+                    <button
+                        className="settings-option"
+                        style={{
+                            width: '100%',
+                            background: 'rgba(255, 200, 0, 0.05)',
+                            border: '1px dashed rgba(255, 200, 0, 0.2)',
+                            borderRadius: '8px',
+                            padding: '12px',
+                            marginTop: '10px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            textAlign: 'left',
+                            color: '#fff'
+                        }}
+                        onClick={() => {
+                            onViewChange('map');
+                            onClose();
+                        }}
+                    >
+                        <div className="settings-option-info">
+                            <i className="fa-solid fa-map-location-dot" style={{ color: '#ffc800' }}></i>
+                            <div>
+                                <span className="settings-option-title" style={{ color: '#ffc800' }}>Carte du site (Alpha)</span>
+                                <span className="settings-option-desc">Afficher le plan interactif et les concerts en cours</span>
+                            </div>
+                        </div>
+                    </button>
                 </div>
             </div>
         </div>
