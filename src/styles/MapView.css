@@ -282,6 +282,7 @@
     position: relative;
     flex: 1;
     overflow: hidden;
+    touch-action: none;
 }
 
 .map-view__container--pan {

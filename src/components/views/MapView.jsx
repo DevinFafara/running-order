@@ -176,7 +176,6 @@ const MapView = ({ groups, onGroupSelect }) => {
     }, [editMode, pan]);
 
     const onTouchMove = useCallback((e) => {
-        e.preventDefault();
         if (e.touches.length === 1 && isDragging.current) {
             const raw = { x: panStart.current.x + e.touches[0].clientX - dragStart.current.x, y: panStart.current.y + e.touches[0].clientY - dragStart.current.y };
             const { w: iW, h: iH } = getImgSize();
