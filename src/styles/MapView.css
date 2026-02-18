@@ -571,20 +571,7 @@
         height: calc(100vh - 100px);
     }
 
-    .stage-marker__dot {
-        width: 36px;
-        height: 36px;
-    }
-
-    .stage-marker--playing .stage-marker__dot {
-        width: 42px;
-        height: 42px;
-    }
-
-    .stage-marker__icon {
-        width: 20px;
-        height: 20px;
-    }
+    /* Keeping dot/icon sizes uniform as requested (55px) */
 
     .stage-marker__chip {
         min-width: 70px;

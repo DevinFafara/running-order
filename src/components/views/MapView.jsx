@@ -6,7 +6,7 @@ import '../../styles/MapView.css';
 
 const ALL_STAGE_KEYS = Object.keys(STAGES);
 
-const MIN_ZOOM = 0.5;
+const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 1.0;
 const ZOOM_STEP = 0.25;
 const ZOOM_WHEEL_STEP = 0.08;
