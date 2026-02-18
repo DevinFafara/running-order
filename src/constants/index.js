@@ -23,63 +23,72 @@ export const STAGE_CONFIG = {
     icon: `${import.meta.env.BASE_URL}icons/icon_mainstage_1.png`,
     slug: 'mainstage1',
     themeColor: '#0055a5',
-    bandColor: '#9eaad3'
+    bandColor: '#9eaad3',
+    mapPosition: { left: '67%', top: '75%' }
   },
   [STAGES.MAINSTAGE_2]: {
     name: 'Mainstage 2',
     icon: `${import.meta.env.BASE_URL}icons/icon_mainstage_2.png`,
     slug: 'mainstage2',
     themeColor: '#a6a19b',
-    bandColor: '#d4d2cf'
+    bandColor: '#d4d2cf',
+    mapPosition: { left: '72%', top: '75%' }
   },
   [STAGES.WARZONE]: {
     name: 'Warzone',
     icon: `${import.meta.env.BASE_URL}icons/icon_warzone.png`,
     slug: 'warzone',
     themeColor: '#949b1a',
-    bandColor: '#cecb93'
+    bandColor: '#cecb93',
+    mapPosition: { left: '85%', top: '40%' }
   },
   [STAGES.VALLEY]: {
     name: 'Valley',
     icon: `${import.meta.env.BASE_URL}icons/icon_valley.png`,
     slug: 'valley',
     themeColor: '#ce7c19',
-    bandColor: '#eabe97'
+    bandColor: '#eabe97',
+    mapPosition: { left: '60%', top: '25%' }
   },
   [STAGES.ALTAR]: {
     name: 'Altar',
     icon: `${import.meta.env.BASE_URL}icons/icon_altar.png`,
     slug: 'altar',
     themeColor: '#dc2829',
-    bandColor: '#f19e9e'
+    bandColor: '#f19e9e',
+    mapPosition: { left: '53%', top: '65%' }
   },
   [STAGES.TEMPLE]: {
     name: 'Temple',
     icon: `${import.meta.env.BASE_URL}icons/icon_temple.png`,
     slug: 'temple',
     themeColor: '#93a7b0',
-    bandColor: '#cbd4d8'
+    bandColor: '#cbd4d8',
+    mapPosition: { left: '46%', top: '60%' }
   },
   [STAGES.HELLSTAGE]: {
     name: 'Hellstage',
     icon: `${import.meta.env.BASE_URL}icons/hellStage.png`,
     slug: 'hellstage',
     themeColor: '#239c60',
-    bandColor: '#a0d8b7'
+    bandColor: '#a0d8b7',
+    mapPosition: { left: '33%', top: '38%' }
   },
   [STAGES.METAL_CORNER]: {
     name: 'Metal Corner',
     icon: `${import.meta.env.BASE_URL}icons/metalCorner.png`,
     slug: 'metal_corner',
     themeColor: '#9f9c78',
-    bandColor: '#d0cfae'
+    bandColor: '#d0cfae',
+    mapPosition: { left: '20%', top: '25%' }
   },
   [STAGES.PURPLE_HOUSE]: {
     name: 'Purple House',
     icon: `${import.meta.env.BASE_URL}icons/purple.png`,
     slug: 'purple_house',
     themeColor: '#9500c6',
-    bandColor: '#d6b2e0'
+    bandColor: '#d6b2e0',
+    mapPosition: { left: '25%', top: '31%' }
   },
 };
 

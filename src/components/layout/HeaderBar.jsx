@@ -139,6 +139,17 @@ const HeaderBar = ({ viewMode, onViewChange, onInteraction, onAddCustomEvent, cu
                     </button>
 
                     <button
+                        className={`toolbar-btn ${viewMode === 'map' ? 'active' : ''}`}
+                        title="Carte du site"
+                        onClick={() => {
+                            if (onInteraction) onInteraction();
+                            onViewChange(viewMode === 'map' ? 'day' : 'map');
+                        }}
+                    >
+                        <i className="fa-solid fa-map-location-dot"></i>
+                    </button>
+
+                    <button
                         className={`toolbar-btn ${profileOpen ? 'active' : ''}`}
                         title="Menu Profil"
                         onClick={() => {

@@ -8,6 +8,7 @@ import HeaderBar from './components/layout/HeaderBar';
 import Navigation from './components/layout/Navigation';
 import DayView from './components/views/DayView';
 import WeeklyView from './components/views/WeeklyView';
+import MapView from './components/views/MapView';
 import GroupCard from './components/common/GroupCard';
 import './styles/App.css';
 
@@ -284,6 +285,11 @@ function AppContent() {
                 customEvents={isGuestMode ? (guestRo.customEvents || []) : customEvents}
                 onDeleteCustomEvent={isGuestMode ? () => { } : handleDeleteCustomEvent}
                 onEditCustomEvent={isGuestMode ? () => { } : handleEditCustomEvent}
+              />
+            ) : viewMode === 'map' ? (
+              <MapView
+                groups={groups}
+                onGroupSelect={(g) => handleGroupSelect(g, { clientX: window.innerWidth / 2 - 175, clientY: window.innerHeight / 2 - 200 })}
               />
             ) : (
               <WeeklyView
