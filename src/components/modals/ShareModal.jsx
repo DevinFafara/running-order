@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { generateShareLink } from '../../utils/sharingUtils';
 
 const ShareModal = ({ isOpen, onClose, taggedBands, customEvents }) => {
-    const [step, setStep] = useState('input'); // 'input', 'result'
+    const [step, setStep] = useState('input');
     const [username, setUsername] = useState(() => localStorage.getItem('myNickname') || '');
     const [shareUrl, setShareUrl] = useState('');
     const [copied, setCopied] = useState(false);
@@ -12,9 +12,6 @@ const ShareModal = ({ isOpen, onClose, taggedBands, customEvents }) => {
         if (isOpen) {
             setStep('input');
             setCopied(false);
-            // If username exists, pre-fill but let them confirm/change? 
-            // Or auto-generate if they've shared before?
-            // Let's stick to input step for better UX "Who are you?"
         }
     }, [isOpen]);
 
@@ -24,7 +21,13 @@ const ShareModal = ({ isOpen, onClose, taggedBands, customEvents }) => {
         const url = generateShareLink(taggedBands, includeCustom ? customEvents : [], username);
         setShareUrl(url);
         setStep('result');
-        if (typeof umami !== 'undefined') umami.track('share-planning', { method: 'url' });
+        if (typeof umami !== 'undefined') umami.track('share-planning', {
+            method: 'url',
+            token_length: shareUrl.split('=')[1]?.length || 0,
+            bands_count: Object.keys(taggedBands).length,
+            has_custom_events: customEvents.length > 0,
+            username: username || 'anonymous'
+        });
     };
 
     if (!isOpen) return null;
@@ -158,7 +161,6 @@ const ShareModal = ({ isOpen, onClose, taggedBands, customEvents }) => {
 
                 {step === 'result' && (
                     <>
-                        {/* Link Display */}
                         <div style={{
                             display: 'flex',
                             background: '#111',
@@ -186,7 +188,6 @@ const ShareModal = ({ isOpen, onClose, taggedBands, customEvents }) => {
                             />
                         </div>
 
-                        {/* Actions */}
                         <div style={{ display: 'flex', gap: '10px' }}>
                             <button
                                 onClick={handleCopy}
