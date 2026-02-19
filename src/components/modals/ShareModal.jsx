@@ -24,6 +24,7 @@ const ShareModal = ({ isOpen, onClose, taggedBands, customEvents }) => {
         const url = generateShareLink(taggedBands, includeCustom ? customEvents : [], username);
         setShareUrl(url);
         setStep('result');
+        if (typeof umami !== 'undefined') umami.track('share-planning', { method: 'url' });
     };
 
     if (!isOpen) return null;

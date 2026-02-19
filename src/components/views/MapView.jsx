@@ -12,12 +12,30 @@ const ZOOM_STEP = 0.25;
 const ZOOM_WHEEL_STEP = 0.08;
 const ROTATION_STEP = 15;
 
-function parseTime(str) {
-    if (!str) return null;
-    const [h, m] = str.split(':').map(Number);
-    let mins = h * 60 + m;
-    if (h < 6) mins += 24 * 60;
-    return mins;
+// Hellfest 2026 dates: Mercredi 17 → Dimanche 21 juin 2026
+const FESTIVAL_DATES = [
+    new Date(2026, 5, 17), // Mercredi (month is 0-indexed)
+    new Date(2026, 5, 18), // Jeudi
+    new Date(2026, 5, 19), // Vendredi
+    new Date(2026, 5, 20), // Samedi
+    new Date(2026, 5, 21), // Dimanche
+];
+
+/**
+ * Returns the festival day index (0–4) if we are currently during the Hellfest,
+ * or null if we are outside the festival period.
+ * Handles post-midnight: before 6am counts as the previous day's festival day.
+ */
+function getAutoFestivalDayIndex() {
+    const now = new Date();
+    const h = now.getHours();
+    // If before 6am, consider it still the previous calendar day
+    const adjustedDate = new Date(now);
+    if (h < 6) adjustedDate.setDate(adjustedDate.getDate() - 1);
+
+    const dateStr = adjustedDate.toDateString();
+    const idx = FESTIVAL_DATES.findIndex(d => d.toDateString() === dateStr);
+    return idx >= 0 ? idx : null;
 }
 
 function clampPan(px, py, zoom, containerW, containerH, imgW, imgH) {
@@ -32,38 +50,31 @@ function clampPan(px, py, zoom, containerW, containerH, imgW, imgH) {
     };
 }
 
-// Detect the current festival day (default to first day if outside festival)
-function getCurrentDayIndex() {
-    const now = new Date();
-    const h = now.getHours();
-    const dow = now.getDay(); // 0=Sun, 1=Mon, ... 3=Wed, 4=Thu, 5=Fri, 6=Sat
-    // Hellfest: Wed=0, Thu=1, Fri=2, Sat=3, Sun=4
-    // If it's before 6am, we're still on the previous day's schedule
-    const adjustedDow = h < 6 ? (dow === 0 ? 6 : dow - 1) : dow;
-    const dayMap = { 3: 0, 4: 1, 5: 2, 6: 3, 0: 4 }; // Wed→0, Thu→1, Fri→2, Sat→3, Sun→4
-    return dayMap[adjustedDow] ?? 0;
-}
-
 const MapView = ({ groups, onGroupSelect }) => {
     const [editMode, setEditMode] = useState(false);
     const [copiedCoords, setCopiedCoords] = useState(null);
 
-    // Day + time simulation
-    const [simDayIndex, setSimDayIndex] = useState(getCurrentDayIndex);
-    const [simHour, setSimHour] = useState('');
-    const [simMinute, setSimMinute] = useState('00');
-    const isSimulating = simHour !== '';
-    const simMinutes = isSimulating
-        ? (() => { const h = Number(simHour); const m = Number(simMinute); let mins = h * 60 + m; if (h < 6) mins += 24 * 60; return mins; })()
-        : null;
+    // Day simulation — null means "neutral" (no festival day active)
+    // Auto-detects if we're actually during the Hellfest
+    const [simDayIndex, setSimDayIndex] = useState(() => getAutoFestivalDayIndex());
+    const isPreviewActive = simDayIndex !== null;
+    const isFestivalLive = getAutoFestivalDayIndex() !== null;
 
-    // Filter groups by selected day — memoized to avoid infinite re-render loop
+    // Filter groups by selected day, or empty array if no day selected
     const dayGroups = useMemo(
-        () => groups.filter(g => g.DAY === DAYS[simDayIndex]),
+        () => simDayIndex !== null ? groups.filter(g => g.DAY === DAYS[simDayIndex]) : [],
         [groups, simDayIndex]
     );
 
-    const stageStatus = useCurrentBands(dayGroups, simMinutes);
+    // When in preview mode (not during live festival), don't use real time
+    // During live festival, use real time (simMinutes = null lets useCurrentBands use real clock)
+    const simMinutes = isPreviewActive && !isFestivalLive ? 15 * 60 : null; // default to 15h for preview
+    const stageStatus = useCurrentBands(dayGroups, isPreviewActive && !isFestivalLive ? simMinutes : null);
+
+    // Format simulated time for display
+    const simTimeLabel = simMinutes !== null
+        ? `${String(Math.floor((simMinutes % (24 * 60)) / 60 + (simMinutes >= 24 * 60 ? 0 : 0))).padStart(2, '0')}h${String(simMinutes % 60).padStart(2, '0')}`
+        : null;
 
     const [pan, setPan] = useState({ x: 0, y: 0 });
     const [zoom, setZoom] = useState(1.0);
@@ -244,52 +255,7 @@ const MapView = ({ groups, onGroupSelect }) => {
                     {/* Reset */}
                     <button className="map-zoom-btn map-zoom-btn--reset map-zoom-btn--standalone" onClick={resetView} title="Réinitialiser vue"><i className="fa-solid fa-arrows-to-dot" /></button>
 
-                    {/* Day + Time simulator */}
-                    <div
-                        className={`map-sim-group ${isSimulating ? 'map-sim-group--active' : ''}`}
-                        onClick={e => e.stopPropagation()}
-                        onMouseDown={e => e.stopPropagation()}
-                        onTouchStart={e => e.stopPropagation()}
-                    >
-                        <i className="fa-solid fa-clock-rotate-left map-sim-icon" />
-                        <select
-                            className="map-sim-select"
-                            value={simDayIndex}
-                            onChange={e => setSimDayIndex(Number(e.target.value))}
-                        >
-                            {DAYS.map((day, i) => (
-                                <option key={day} value={i}>{day}</option>
-                            ))}
-                        </select>
-                        <span className="map-sim-sep">|</span>
-                        <select
-                            className="map-sim-select map-sim-select--time"
-                            value={simHour}
-                            onChange={e => setSimHour(e.target.value)}
-                        >
-                            <option value="">--h</option>
-                            {Array.from({ length: 17 }, (_, i) => (i + 11) % 24).map(h => (
-                                <option key={h} value={String(h).padStart(2, '0')}>
-                                    {String(h).padStart(2, '0')}h
-                                </option>
-                            ))}
-                        </select>
-                        <select
-                            className="map-sim-select map-sim-select--time"
-                            value={simMinute}
-                            onChange={e => setSimMinute(e.target.value)}
-                            disabled={!isSimulating}
-                        >
-                            {['00', '15', '30', '45'].map(m => (
-                                <option key={m} value={m}>{m}</option>
-                            ))}
-                        </select>
-                        {isSimulating && (
-                            <button className="map-sim-reset-btn" onClick={() => { setSimHour(''); setSimMinute('00'); }} title="Heure réelle">
-                                <i className="fa-solid fa-xmark" />
-                            </button>
-                        )}
-                    </div>
+
 
                     {/* Edit mode */}
                     <button
@@ -353,24 +319,49 @@ const MapView = ({ groups, onGroupSelect }) => {
                 </div>
             </div>
 
-            <LiveClock isSimulating={isSimulating} simHour={simHour} simMinute={simMinute} simDay={DAYS[simDayIndex]} />
+            <div className="map-view__clock-area">
+                <button
+                    className={`map-preview-btn ${isPreviewActive && !isFestivalLive ? 'map-preview-btn--active' : ''}`}
+                    onClick={() => {
+                        if (!isPreviewActive) {
+                            // Start preview at first day (Mercredi)
+                            setSimDayIndex(0);
+                        } else if (simDayIndex < DAYS.length - 1) {
+                            // Cycle to next day
+                            setSimDayIndex(simDayIndex + 1);
+                        } else {
+                            // After last day, turn off preview
+                            setSimDayIndex(isFestivalLive ? getAutoFestivalDayIndex() : null);
+                        }
+                    }}
+                    title={isPreviewActive ? `Aperçu: ${DAYS[simDayIndex]} ${simTimeLabel || ''} (clic = jour suivant)` : 'Aperçu programme'}
+                >
+                    <i className={`fa-solid ${isPreviewActive && !isFestivalLive ? 'fa-eye' : 'fa-calendar-day'}`} />
+                    {isPreviewActive && !isFestivalLive ? `${DAYS[simDayIndex]} ${simTimeLabel}` : 'Aperçu'}
+                </button>
+                <LiveClock isPreviewActive={isPreviewActive} isFestivalLive={isFestivalLive} simDay={simDayIndex !== null ? DAYS[simDayIndex] : null} simTimeLabel={simTimeLabel} />
+            </div>
         </div>
     );
 };
 
-const LiveClock = ({ isSimulating, simHour, simMinute, simDay }) => {
+const LiveClock = ({ isPreviewActive, isFestivalLive, simDay, simTimeLabel }) => {
     const [time, setTime] = React.useState(new Date());
     React.useEffect(() => {
-        if (isSimulating) return;
         const id = setInterval(() => setTime(new Date()), 1000);
         return () => clearInterval(id);
-    }, [isSimulating]);
+    }, []);
     const pad = n => String(n).padStart(2, '0');
-    const label = isSimulating
-        ? `⏱ ${simDay} ${simHour}:${simMinute}`
-        : `${pad(time.getHours())}:${pad(time.getMinutes())}:${pad(time.getSeconds())}`;
+    const timeStr = `${pad(time.getHours())}:${pad(time.getMinutes())}:${pad(time.getSeconds())}`;
+
+    // During preview (not live festival), show simulated day + time
+    const isSimDisplay = isPreviewActive && !isFestivalLive;
+    const label = isSimDisplay && simDay
+        ? `⏱ ${simDay} ${simTimeLabel || ''}`
+        : timeStr;
+
     return (
-        <div className={`map-view__clock ${isSimulating ? 'map-view__clock--sim' : ''}`}>
+        <div className={`map-view__clock ${isSimDisplay ? 'map-view__clock--sim' : ''}`}>
             <i className="fa-solid fa-clock" /> {label}
         </div>
     );
