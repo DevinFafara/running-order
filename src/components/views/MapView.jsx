@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
-import { STAGES, DAYS } from '../../constants';
+import { STAGES, DAYS, MAP_POIS } from '../../constants';
 import { useCurrentBands } from '../../hooks/useCurrentBands';
 import StageMarker from '../map/StageMarker';
 import '../../styles/MapView.css';
@@ -53,6 +53,7 @@ function clampPan(px, py, zoom, containerW, containerH, imgW, imgH) {
 const MapView = ({ groups, onGroupSelect }) => {
     const [editMode, setEditMode] = useState(false);
     const [copiedCoords, setCopiedCoords] = useState(null);
+    const [activePoiId, setActivePoiId] = useState(null);
 
     // Day simulation — null means "neutral" (no festival day active)
     // Auto-detects if we're actually during the Hellfest
@@ -90,7 +91,7 @@ const MapView = ({ groups, onGroupSelect }) => {
     const innerRef = useRef(null);
     const imgRef = useRef(null);
 
-    const mapSrc = `${import.meta.env.BASE_URL}hf_map.png`;
+    const mapSrc = `${import.meta.env.BASE_URL}hf-map.svg`;
 
     const getContainerSize = () => {
         const el = containerRef.current;
@@ -99,7 +100,7 @@ const MapView = ({ groups, onGroupSelect }) => {
 
     const getImgSize = () => {
         const el = imgRef.current;
-        return el ? { w: el.naturalWidth || el.clientWidth, h: el.naturalHeight || el.clientHeight } : { w: 1024, h: 659 };
+        return el ? { w: el.naturalWidth || el.clientWidth, h: el.naturalHeight || el.clientHeight } : { w: 4597, h: 2654 };
     };
 
     // ── Zoom ──────────────────────────────────────────────────────────────────
@@ -213,6 +214,7 @@ const MapView = ({ groups, onGroupSelect }) => {
 
     // ── Edit mode click ───────────────────────────────────────────────────────
     const handleMapClick = useCallback((e) => {
+        if (activePoiId) setActivePoiId(null);
         if (!editMode) return;
         const inner = innerRef.current;
         if (!inner) return;
@@ -313,6 +315,17 @@ const MapView = ({ groups, onGroupSelect }) => {
                         );
                     })}
 
+                    {/* POI Markers */}
+                    {MAP_POIS.map((poi) => (
+                        <POIMarker
+                            key={poi.id}
+                            poi={poi}
+                            activePoiId={activePoiId}
+                            setActivePoiId={setActivePoiId}
+                            counterTransform={counterTransform}
+                        />
+                    ))}
+
                     {editMode && copiedCoords && (
                         <div className="map-edit-crosshair" style={{ left: copiedCoords.left, top: copiedCoords.top }} />
                     )}
@@ -363,6 +376,36 @@ const LiveClock = ({ isPreviewActive, isFestivalLive, simDay, simTimeLabel }) =>
     return (
         <div className={`map-view__clock ${isSimDisplay ? 'map-view__clock--sim' : ''}`}>
             <i className="fa-solid fa-clock" /> {label}
+        </div>
+    );
+};
+
+const POIMarker = ({ poi, counterTransform, activePoiId, setActivePoiId }) => {
+    const showLabel = activePoiId === poi.id;
+
+    return (
+        <div
+            className={`poi-marker ${showLabel ? 'poi-marker--active' : ''}`}
+            style={{ left: poi.mapPosition.left, top: poi.mapPosition.top }}
+            onClick={(e) => {
+                e.stopPropagation();
+                setActivePoiId(showLabel ? null : poi.id);
+            }}
+        >
+            <div className="poi-marker__inner" style={{ transform: counterTransform }}>
+                <div
+                    className="poi-marker__dot"
+                    style={{ backgroundColor: poi.color || '#333', cursor: 'pointer', pointerEvents: 'auto' }}
+                >
+                    <i className={`${poi.icon} poi-marker__icon`} title={poi.name}></i>
+                </div>
+
+                {showLabel && (
+                    <div className="poi-marker__label">
+                        {poi.name}
+                    </div>
+                )}
+            </div>
         </div>
     );
 };
