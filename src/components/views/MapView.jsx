@@ -10,7 +10,6 @@ const MIN_ZOOM = 0.25;
 const MAX_ZOOM = 1.0;
 const ZOOM_STEP = 0.25;
 const ZOOM_WHEEL_STEP = 0.08;
-const ROTATION_STEP = 15;
 
 // Hellfest 2026 dates: Mercredi 17 → Dimanche 21 juin 2026
 const FESTIVAL_DATES = [
@@ -77,15 +76,12 @@ const MapView = ({ groups, onGroupSelect }) => {
         ? `${String(Math.floor((simMinutes % (24 * 60)) / 60 + (simMinutes >= 24 * 60 ? 0 : 0))).padStart(2, '0')}h${String(simMinutes % 60).padStart(2, '0')}`
         : null;
 
-    const [pan, setPan] = useState({ x: 0, y: 0 });
-    const [zoom, setZoom] = useState(1.0);
-    const [rotation, setRotation] = useState(0);
+    const [view, setView] = useState({ zoom: 1.0, x: 0, y: 0 });
 
     const isDragging = useRef(false);
     const dragStart = useRef({ x: 0, y: 0 });
     const panStart = useRef({ x: 0, y: 0 });
     const lastPinchDist = useRef(null);
-    const lastPinchAngle = useRef(null);
 
     const containerRef = useRef(null);
     const innerRef = useRef(null);
@@ -105,38 +101,43 @@ const MapView = ({ groups, onGroupSelect }) => {
 
     // ── Zoom ──────────────────────────────────────────────────────────────────
     const changeZoom = useCallback((delta, focalX = null, focalY = null) => {
-        setZoom(prev => {
-            const next = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, prev + delta));
-            if (next === prev) return prev;
-            setPan(prevPan => {
-                let nx = prevPan.x;
-                let ny = prevPan.y;
-                if (focalX !== null && focalY !== null) {
-                    const { w: cW, h: cH } = getContainerSize();
-                    const focalOffsetX = focalX - cW / 2;
-                    const focalOffsetY = focalY - cH / 2;
-                    const mapPtX = (focalOffsetX - prevPan.x) / prev;
-                    const mapPtY = (focalOffsetY - prevPan.y) / prev;
-                    nx = focalOffsetX - mapPtX * next;
-                    ny = focalOffsetY - mapPtY * next;
-                }
-                const { w: iW, h: iH } = getImgSize();
+        setView(prev => {
+            const nextZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, prev.zoom + delta));
+            if (nextZoom === prev.zoom) return prev;
+
+            let nx = prev.x;
+            let ny = prev.y;
+
+            if (focalX !== null && focalY !== null) {
                 const { w: cW, h: cH } = getContainerSize();
-                return clampPan(nx, ny, next, cW, cH, iW, iH);
-            });
-            return next;
+                const focalOffsetX = focalX - cW / 2;
+                const focalOffsetY = focalY - cH / 2;
+
+                // Project current focal point to the image plane at zoom 1.0 (relative to image center)
+                const mapPtX = (focalOffsetX - prev.x) / prev.zoom;
+                const mapPtY = (focalOffsetY - prev.y) / prev.zoom;
+
+                // Adjust pan so the same map point remains under the same focal point
+                nx = focalOffsetX - mapPtX * nextZoom;
+                ny = focalOffsetY - mapPtY * nextZoom;
+            }
+
+            const { w: iW, h: iH } = getImgSize();
+            const { w: cW, h: cH } = getContainerSize();
+            const clamped = clampPan(nx, ny, nextZoom, cW, cH, iW, iH);
+
+            return { zoom: nextZoom, x: clamped.x, y: clamped.y };
         });
     }, []);
 
-    const changeRotation = useCallback((delta) => {
-        setRotation(prev => (prev + delta + 360) % 360);
-    }, []);
+
 
     // ── Mouse wheel zoom ──────────────────────────────────────────────────────
     const onWheel = useCallback((e) => {
         e.preventDefault();
         const rect = containerRef.current.getBoundingClientRect();
-        changeZoom(e.deltaY < 0 ? ZOOM_WHEEL_STEP : -ZOOM_WHEEL_STEP, e.clientX - rect.left, e.clientY - rect.top);
+        const delta = e.deltaY < 0 ? ZOOM_WHEEL_STEP : -ZOOM_WHEEL_STEP;
+        changeZoom(delta, e.clientX - rect.left, e.clientY - rect.top);
     }, [changeZoom]);
 
     useEffect(() => {
@@ -151,17 +152,18 @@ const MapView = ({ groups, onGroupSelect }) => {
         if (editMode || e.button !== 0) return;
         isDragging.current = true;
         dragStart.current = { x: e.clientX, y: e.clientY };
-        panStart.current = { ...pan };
+        panStart.current = { x: view.x, y: view.y };
         e.preventDefault();
-    }, [editMode, pan]);
+    }, [editMode, view.x, view.y]);
 
     const onMouseMove = useCallback((e) => {
         if (!isDragging.current) return;
         const raw = { x: panStart.current.x + e.clientX - dragStart.current.x, y: panStart.current.y + e.clientY - dragStart.current.y };
         const { w: iW, h: iH } = getImgSize();
         const { w: cW, h: cH } = getContainerSize();
-        setPan(clampPan(raw.x, raw.y, zoom, cW, cH, iW, iH));
-    }, [zoom]);
+        const clamped = clampPan(raw.x, raw.y, view.zoom, cW, cH, iW, iH);
+        setView(prev => ({ ...prev, x: clamped.x, y: clamped.y }));
+    }, [view.zoom]);
 
     const onMouseUp = useCallback(() => { isDragging.current = false; }, []);
 
@@ -177,40 +179,37 @@ const MapView = ({ groups, onGroupSelect }) => {
         if (e.touches.length === 1) {
             isDragging.current = true;
             dragStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-            panStart.current = { ...pan };
+            panStart.current = { x: view.x, y: view.y };
         } else if (e.touches.length === 2) {
             isDragging.current = false;
             const dx = e.touches[0].clientX - e.touches[1].clientX;
             const dy = e.touches[0].clientY - e.touches[1].clientY;
             lastPinchDist.current = Math.hypot(dx, dy);
-            lastPinchAngle.current = Math.atan2(dy, dx) * (180 / Math.PI);
         }
-    }, [editMode, pan]);
+    }, [editMode, view.x, view.y]);
 
     const onTouchMove = useCallback((e) => {
         if (e.touches.length === 1 && isDragging.current) {
             const raw = { x: panStart.current.x + e.touches[0].clientX - dragStart.current.x, y: panStart.current.y + e.touches[0].clientY - dragStart.current.y };
             const { w: iW, h: iH } = getImgSize();
             const { w: cW, h: cH } = getContainerSize();
-            setPan(clampPan(raw.x, raw.y, zoom, cW, cH, iW, iH));
+            const clamped = clampPan(raw.x, raw.y, view.zoom, cW, cH, iW, iH);
+            setView(prev => ({ ...prev, x: clamped.x, y: clamped.y }));
         } else if (e.touches.length === 2) {
             const dx = e.touches[0].clientX - e.touches[1].clientX;
             const dy = e.touches[0].clientY - e.touches[1].clientY;
             const dist = Math.hypot(dx, dy);
-            const angle = Math.atan2(dy, dx) * (180 / Math.PI);
             if (lastPinchDist.current !== null) {
                 const rect = containerRef.current.getBoundingClientRect();
                 changeZoom((dist - lastPinchDist.current) / 400,
                     (e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left,
                     (e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top);
             }
-            if (lastPinchAngle.current !== null) setRotation(prev => (prev + angle - lastPinchAngle.current + 360) % 360);
             lastPinchDist.current = dist;
-            lastPinchAngle.current = angle;
         }
-    }, [zoom, changeZoom]);
+    }, [view.zoom, changeZoom]);
 
-    const onTouchEnd = useCallback(() => { isDragging.current = false; lastPinchDist.current = null; lastPinchAngle.current = null; }, []);
+    const onTouchEnd = useCallback(() => { isDragging.current = false; lastPinchDist.current = null; }, []);
 
     // ── Edit mode click ───────────────────────────────────────────────────────
     const handleMapClick = useCallback((e) => {
@@ -225,8 +224,8 @@ const MapView = ({ groups, onGroupSelect }) => {
         navigator.clipboard.writeText(`mapPosition: { left: '${x}%', top: '${y}%' }`).catch(() => { });
     }, [editMode]);
 
-    const counterTransform = `scale(${1 / zoom}) rotate(${-rotation}deg)`;
-    const resetView = useCallback(() => { setZoom(1); setPan({ x: 0, y: 0 }); setRotation(0); }, []);
+    const counterTransform = `scale(${1 / view.zoom})`;
+    // Suppression du bouton de réinitialisation via resetView non utilisé dans le header désormais
 
 
     return (
@@ -242,20 +241,10 @@ const MapView = ({ groups, onGroupSelect }) => {
                 <div className="map-view__controls">
                     {/* Zoom */}
                     <div className="map-zoom-btns">
-                        <button className="map-zoom-btn" onClick={() => changeZoom(-ZOOM_STEP)} disabled={zoom <= MIN_ZOOM} title="Zoom arrière"><i className="fa-solid fa-minus" /></button>
-                        <span className="map-zoom-level">{Math.round(zoom * 100)}%</span>
-                        <button className="map-zoom-btn" onClick={() => changeZoom(ZOOM_STEP)} disabled={zoom >= MAX_ZOOM} title="Zoom avant"><i className="fa-solid fa-plus" /></button>
+                        <button className="map-zoom-btn" onClick={() => changeZoom(-ZOOM_STEP)} disabled={view.zoom <= MIN_ZOOM} title="Zoom arrière"><i className="fa-solid fa-minus" /></button>
+                        <span className="map-zoom-level">{Math.round(view.zoom * 100)}%</span>
+                        <button className="map-zoom-btn" onClick={() => changeZoom(ZOOM_STEP)} disabled={view.zoom >= MAX_ZOOM} title="Zoom avant"><i className="fa-solid fa-plus" /></button>
                     </div>
-
-                    {/* Rotation */}
-                    <div className="map-zoom-btns">
-                        <button className="map-zoom-btn" onClick={() => changeRotation(-ROTATION_STEP)} title="Rotation anti-horaire"><i className="fa-solid fa-rotate-left" /></button>
-                        <span className="map-zoom-level">{Math.round(rotation)}°</span>
-                        <button className="map-zoom-btn" onClick={() => changeRotation(ROTATION_STEP)} title="Rotation horaire"><i className="fa-solid fa-rotate-right" /></button>
-                    </div>
-
-                    {/* Reset */}
-                    <button className="map-zoom-btn map-zoom-btn--reset map-zoom-btn--standalone" onClick={resetView} title="Réinitialiser vue"><i className="fa-solid fa-arrows-to-dot" /></button>
 
 
 
@@ -297,7 +286,7 @@ const MapView = ({ groups, onGroupSelect }) => {
                 <div
                     className="map-view__inner"
                     ref={innerRef}
-                    style={{ transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom}) rotate(${rotation}deg)` }}
+                    style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.zoom})` }}
                 >
                     <img ref={imgRef} src={mapSrc} alt="Plan du site Hellfest" className="map-view__bg" draggable={false} />
 
