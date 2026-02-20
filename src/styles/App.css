@@ -754,8 +754,8 @@ nav button:hover {
     }
   }
 
-  /* Padding when GroupCard is open to show content behind it */
-  .App.group-selected .content {
+  /* Padding when GroupCard is open to show content behind it (not for map view) */
+  .App.group-selected:not(.view-map) .content {
     padding-bottom: var(--group-card-height, 420px);
     transition: padding-bottom 0.1s ease;
     /* Faster transition for drag sync */

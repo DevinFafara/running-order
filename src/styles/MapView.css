@@ -710,3 +710,10 @@
     border: 5px solid transparent;
     border-top-color: rgba(0, 0, 0, 0.85);
 }
+
+/* Mobile: shrink map when GroupCard is open */
+@media screen and (max-width: 600px) {
+    .App.group-selected.view-map .map-view {
+        height: calc(100vh - 50px - var(--group-card-height, 300px));
+    }
+}
