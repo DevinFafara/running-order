@@ -5,7 +5,7 @@
 .map-view {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 110px);
+    height: calc(100vh - 50px);
     background: #0d0d0d;
     overflow: hidden;
     position: relative;
@@ -622,10 +622,6 @@
    ============================================ */
 
 @media (max-width: 600px) {
-    .map-view {
-        height: calc(100vh - 100px);
-    }
-
     /* Keeping dot/icon sizes uniform as requested (55px) */
 
     .stage-marker__chip {

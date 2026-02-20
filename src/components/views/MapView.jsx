@@ -6,7 +6,7 @@ import '../../styles/MapView.css';
 
 const ALL_STAGE_KEYS = Object.keys(STAGES);
 
-const MIN_ZOOM = 0.25;
+const MIN_ZOOM = 0.20;
 const MAX_ZOOM = 1.0;
 const ZOOM_STEP = 0.25;
 const ZOOM_WHEEL_STEP = 0.08;
@@ -76,7 +76,8 @@ const MapView = ({ groups, onGroupSelect }) => {
         ? `${String(Math.floor((simMinutes % (24 * 60)) / 60 + (simMinutes >= 24 * 60 ? 0 : 0))).padStart(2, '0')}h${String(simMinutes % 60).padStart(2, '0')}`
         : null;
 
-    const [view, setView] = useState({ zoom: 1.0, x: 0, y: 0 });
+    const [view, setView] = useState({ zoom: 0.20, x: 0, y: 0 });
+    const [initialCentered, setInitialCentered] = useState(false);
 
     const isDragging = useRef(false);
     const dragStart = useRef({ x: 0, y: 0 });
@@ -98,6 +99,34 @@ const MapView = ({ groups, onGroupSelect }) => {
         const el = imgRef.current;
         return el ? { w: el.naturalWidth || el.clientWidth, h: el.naturalHeight || el.clientHeight } : { w: 4597, h: 2654 };
     };
+
+    // Center map on left part once image is loaded
+    useEffect(() => {
+        if (initialCentered) return;
+        const img = imgRef.current;
+        if (!img) return;
+
+        const doCenter = () => {
+            const { w: cW, h: cH } = getContainerSize();
+            const { w: iW, h: iH } = getImgSize();
+            const zoom = 0.20;
+            // Target point: far left side of the map (Mainstage area)
+            const targetX = iW * 0.05;
+            const targetY = iH * 0.40;
+            const px = -(targetX * zoom - cW / 2);
+            const py = -(targetY * zoom - cH / 2);
+            const clamped = clampPan(px, py, zoom, cW, cH, iW, iH);
+            setView({ zoom, x: clamped.x, y: clamped.y });
+            setInitialCentered(true);
+        };
+
+        if (img.complete && img.naturalWidth > 0) {
+            doCenter();
+        } else {
+            img.addEventListener('load', doCenter, { once: true });
+            return () => img.removeEventListener('load', doCenter);
+        }
+    }, [initialCentered]);
 
     // ── Zoom ──────────────────────────────────────────────────────────────────
     const changeZoom = useCallback((delta, focalX = null, focalY = null) => {
