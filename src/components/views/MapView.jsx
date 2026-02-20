@@ -248,14 +248,16 @@ const MapView = ({ groups, onGroupSelect }) => {
 
 
 
-                    {/* Edit mode */}
-                    <button
-                        className={`map-edit-btn ${editMode ? 'map-edit-btn--active' : ''}`}
-                        onClick={() => { setEditMode(v => !v); setCopiedCoords(null); }}
-                    >
-                        <i className={`fa-solid ${editMode ? 'fa-xmark' : 'fa-crosshairs'}`} />
-                        <span>{editMode ? 'Quitter' : 'Éditer'}</span>
-                    </button>
+                    {/* Edit mode: only visible on localhost */}
+                    {(window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && (
+                        <button
+                            className={`map-edit-btn ${editMode ? 'map-edit-btn--active' : ''}`}
+                            onClick={() => { setEditMode(v => !v); setCopiedCoords(null); }}
+                        >
+                            <i className={`fa-solid ${editMode ? 'fa-xmark' : 'fa-crosshairs'}`} />
+                            <span>{editMode ? 'Quitter' : 'Éditer'}</span>
+                        </button>
+                    )}
                 </div>
             </div>
 

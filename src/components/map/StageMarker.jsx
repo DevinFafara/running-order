@@ -67,6 +67,22 @@ const StageMarker = ({ stageKey, stageData, onSelect, counterTransform }) => {
                             <div className="stage-marker__pulse" style={{ borderColor: color }} />
                         )}
                         <img src={config.icon} alt={config.name} className="stage-marker__icon" />
+
+                        {/* Status Badges on the dot edge */}
+                        {tags && (
+                            <div className="stage-marker__badges">
+                                {tags.stars > 0 && (
+                                    <div className="stage-marker__badge stage-marker__badge--interest" style={{ color: tags.interestColor }}>
+                                        ★
+                                    </div>
+                                )}
+                                {tags.contextIcon && (
+                                    <div className="stage-marker__badge stage-marker__badge--context">
+                                        {tags.contextIcon}
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     {/* Info chip */}
@@ -85,21 +101,7 @@ const StageMarker = ({ stageKey, stageData, onSelect, counterTransform }) => {
 
                         {displayGroup ? (
                             <div className="stage-marker__chip-content">
-                                <div className="stage-marker__chip-band-row">
-                                    <span className="stage-marker__chip-band">{displayGroup.GROUPE}</span>
-                                    {tags && (
-                                        <div className="stage-marker__chip-tags">
-                                            {tags.stars > 0 && (
-                                                <span className="stage-marker__chip-stars" style={{ color: tags.interestColor }}>
-                                                    {'★'.repeat(tags.stars)}
-                                                </span>
-                                            )}
-                                            {tags.contextIcon && (
-                                                <span className="stage-marker__chip-context">{tags.contextIcon}</span>
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
+                                <span className="stage-marker__chip-band">{displayGroup.GROUPE}</span>
                                 <span className="stage-marker__chip-time">
                                     {status === 'playing'
                                         ? `${displayGroup.DEBUT?.replace('h', ':')}—${displayGroup.FIN?.replace('h', ':')}`

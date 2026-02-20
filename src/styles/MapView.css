@@ -470,10 +470,48 @@
     flex-shrink: 0;
 }
 
-.stage-marker__chip-tags {
+/* Badges on the dot edge */
+.stage-marker__badges {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 5;
+}
+
+.stage-marker__badge {
+    position: absolute;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
     display: flex;
     align-items: center;
-    gap: 4px;
+    justify-content: center;
+    pointer-events: auto;
+}
+
+.stage-marker__badge--interest {
+    top: -4px;
+    right: -12px;
+    font-size: 0.7rem;
+}
+
+.stage-marker--left .stage-marker__badge--interest {
+    right: auto;
+    left: -12px;
+}
+
+.stage-marker__badge--context {
+    bottom: -4px;
+    right: -12px;
+    font-size: 0.7rem;
+}
+
+.stage-marker--left .stage-marker__badge--context {
+    right: auto;
+    left: -12px;
 }
 
 .stage-marker__chip-stars {
