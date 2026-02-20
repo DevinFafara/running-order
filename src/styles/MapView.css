@@ -659,6 +659,10 @@
     z-index: 5;
 }
 
+.poi-marker--active {
+    z-index: 100;
+}
+
 .poi-marker__inner {
     display: flex;
     flex-direction: column;
