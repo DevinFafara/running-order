@@ -311,18 +311,42 @@
 
 .stage-marker {
     position: absolute;
-    transform: translate(-50%, -50%);
     z-index: 10;
     cursor: pointer;
 }
 
-/* Counter-transform wrapper */
 .stage-marker__inner {
-    position: relative;
-    transform-origin: center center;
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform-origin: 0 0;
+    will-change: transform;
 }
 
-/* Pulse ring: inside the dot, centered on it */
+/* The visual pill container */
+.stage-marker__wrap {
+    display: flex;
+    align-items: center;
+    background: rgba(12, 12, 12, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 40px;
+    padding: 3px;
+    gap: 10px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.stage-marker--right .stage-marker__wrap {
+    padding-right: 14px;
+}
+
+.stage-marker--left .stage-marker__wrap {
+    flex-direction: row-reverse;
+    padding-left: 14px;
+}
+
+/* Pulse ring: restored to exact original aspect (200%, 2px) */
 .stage-marker__pulse {
     position: absolute;
     width: 200%;
@@ -331,35 +355,24 @@
     border: 2px solid;
     animation: pulse-ring 1.5s ease-out infinite;
     pointer-events: none;
-    z-index: 0;
+    z-index: -1;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
 }
 
-/* Icon dot — uniform size for all states */
+/* Icon dot - uniform 42px for the pill design */
 .stage-marker__dot {
-    width: 55px;
-    height: 55px;
+    width: 42px;
+    height: 42px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 2.5px solid rgba(255, 255, 255, 0.35);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 2px solid rgba(255, 255, 255, 0.3);
     position: relative;
     z-index: 1;
     flex-shrink: 0;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
-}
-
-.stage-marker:hover .stage-marker__dot {
-    transform: scale(1.1);
-    border-color: rgba(255, 255, 255, 0.7);
-}
-
-.stage-marker--playing .stage-marker__dot {
-    border-color: rgba(255, 255, 255, 0.6);
 }
 
 .stage-marker__icon {
@@ -372,52 +385,51 @@
     z-index: 1;
 }
 
-/* ── Info chip — absolutely positioned below the dot ──────────────────── */
+/* ── Info chip structure ── */
 .stage-marker__chip {
-    position: absolute;
-    top: calc(100% + 6px);
-    left: 50%;
-    transform: translateX(-50%);
     display: flex;
     flex-direction: column;
-    align-items: center;
-    background: rgba(8, 8, 8, 0.82);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    padding: 5px 9px;
-    min-width: 90px;
-    max-width: 160px;
-    text-align: center;
-    backdrop-filter: blur(6px);
-    gap: 2px;
+    justify-content: center;
+    gap: 1px;
     pointer-events: none;
-    transition: border-color 0.3s;
-    white-space: nowrap;
-    z-index: 2;
+    z-index: 1;
 }
 
-.stage-marker--playing .stage-marker__chip {
-    border-color: rgba(255, 68, 68, 0.4);
-    background: rgba(12, 4, 4, 0.88);
+.stage-marker--left .stage-marker__chip {
+    align-items: flex-end;
+    text-align: right;
 }
 
-.stage-marker--next .stage-marker__chip {
-    border-color: rgba(255, 165, 0, 0.3);
+.stage-marker--right .stage-marker__chip {
+    align-items: flex-start;
+    text-align: left;
+}
+
+.stage-marker__chip-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.stage-marker--left .stage-marker__chip-header {
+    flex-direction: row-reverse;
 }
 
 .stage-marker__chip-stage {
     font-size: 0.65rem;
     font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.08em;
     line-height: 1;
+    white-space: nowrap;
 }
 
 .stage-marker__chip-badge {
     font-size: 0.6rem;
     font-weight: 700;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.05em;
     line-height: 1;
+    white-space: nowrap;
 }
 
 .stage-marker__chip-badge--live {
@@ -426,30 +438,43 @@
 
 .stage-marker__chip-badge--next {
     color: #ffa500;
-    text-transform: uppercase;
+}
+
+.stage-marker__chip-content {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.stage-marker--left .stage-marker__chip-content {
+    flex-direction: row-reverse;
 }
 
 .stage-marker__chip-band {
-    font-size: 0.78rem;
-    font-weight: 700;
+    font-size: 0.82rem;
+    font-weight: 800;
     color: #ffffff;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 145px;
-    line-height: 1.2;
+    letter-spacing: -0.01em;
+    flex-shrink: 0;
 }
 
 .stage-marker__chip-time {
-    font-size: 0.65rem;
-    color: rgba(255, 255, 255, 0.5);
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.6);
+    background: rgba(255, 255, 255, 0.1);
+    padding: 1px 5px;
+    border-radius: 4px;
     font-family: 'Roboto', monospace;
-    line-height: 1;
+    white-space: nowrap;
 }
 
 .stage-marker__chip-idle {
     font-size: 0.7rem;
-    color: rgba(255, 255, 255, 0.25);
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.3);
+    font-style: italic;
 }
 
 

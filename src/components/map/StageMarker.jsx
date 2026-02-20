@@ -19,6 +19,9 @@ const StageMarker = ({ stageKey, stageData, onSelect, counterTransform }) => {
     const isPlaying = status === 'playing';
     const isNext = status === 'next';
 
+    // Alignment: MS1, Warzone and Altar have info on the left
+    const isLeftAligned = stageKey === 'MAINSTAGE_1' || stageKey === 'WARZONE' || stageKey === 'ALTAR';
+
     const handleClick = (e) => {
         e.stopPropagation();
         if (displayGroup && onSelect) onSelect(displayGroup);
@@ -26,51 +29,58 @@ const StageMarker = ({ stageKey, stageData, onSelect, counterTransform }) => {
 
     return (
         <div
-            className={`stage-marker stage-marker--${status}`}
+            className={`stage-marker stage-marker--${status} ${isLeftAligned ? 'stage-marker--left' : 'stage-marker--right'}`}
             style={{ left, top }}
             onClick={handleClick}
         >
-            {/* Counter-transform wrapper: cancels map zoom + rotation */}
-            <div className="stage-marker__inner" style={{ transform: counterTransform }}>
+            {/* Counter-transform wrapper: cancels map zoom and anchors the icon center at (0,0) */}
+            <div
+                className="stage-marker__inner"
+                style={{
+                    transform: `${counterTransform} translate(${isLeftAligned ? 'calc(-100% + 21px)' : '-21px'}, -21px)`
+                }}
+            >
 
-                {/* Icon dot — pulse ring lives INSIDE so it's always centered on the dot */}
-                <div
-                    className="stage-marker__dot"
-                    style={{ backgroundColor: color, boxShadow: `0 0 10px ${color}99` }}
-                >
-                    {isPlaying && (
-                        <div className="stage-marker__pulse" style={{ borderColor: color }} />
-                    )}
-                    <img src={config.icon} alt={config.name} className="stage-marker__icon" />
-                </div>
+                <div className="stage-marker__wrap">
+                    {/* Icon dot */}
+                    <div
+                        className="stage-marker__dot"
+                        style={{ backgroundColor: color }}
+                    >
+                        {isPlaying && (
+                            <div className="stage-marker__pulse" style={{ borderColor: color }} />
+                        )}
+                        <img src={config.icon} alt={config.name} className="stage-marker__icon" />
+                    </div>
 
-                {/* Info chip — absolutely positioned below the dot */}
-                <div className={`stage-marker__chip stage-marker__chip--${status}`}>
-                    <span className="stage-marker__chip-stage" style={{ color }}>
-                        {config.name}
-                    </span>
-
-                    {isPlaying && displayGroup && (
-                        <>
-                            <span className="stage-marker__chip-badge stage-marker__chip-badge--live">● LIVE</span>
-                            <span className="stage-marker__chip-band">{displayGroup.GROUPE}</span>
-                            <span className="stage-marker__chip-time">
-                                {displayGroup.DEBUT?.replace('h', ':')}&ndash;{displayGroup.FIN?.replace('h', ':')}
+                    {/* Info chip */}
+                    <div className={`stage-marker__chip stage-marker__chip--${status}`}>
+                        <div className="stage-marker__chip-header">
+                            <span className="stage-marker__chip-stage" style={{ color }}>
+                                {config.name}
                             </span>
-                        </>
-                    )}
+                            {isPlaying && displayGroup && (
+                                <span className="stage-marker__chip-badge stage-marker__chip-badge--live">● LIVE</span>
+                            )}
+                            {isNext && displayGroup && (
+                                <span className="stage-marker__chip-badge stage-marker__chip-badge--next">Prochain</span>
+                            )}
+                        </div>
 
-                    {isNext && displayGroup && (
-                        <>
-                            <span className="stage-marker__chip-badge stage-marker__chip-badge--next">Prochain</span>
-                            <span className="stage-marker__chip-band">{displayGroup.GROUPE}</span>
-                            <span className="stage-marker__chip-time">{displayGroup.DEBUT?.replace('h', ':')}</span>
-                        </>
-                    )}
-
-                    {status === 'idle' && (
-                        <span className="stage-marker__chip-idle">—</span>
-                    )}
+                        {displayGroup ? (
+                            <div className="stage-marker__chip-content">
+                                <span className="stage-marker__chip-band">{displayGroup.GROUPE}</span>
+                                <span className="stage-marker__chip-time">
+                                    {status === 'playing'
+                                        ? `${displayGroup.DEBUT?.replace('h', ':')}—${displayGroup.FIN?.replace('h', ':')}`
+                                        : displayGroup.DEBUT?.replace('h', ':')
+                                    }
+                                </span>
+                            </div>
+                        ) : (
+                            <span className="stage-marker__chip-idle">Inactif</span>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
