@@ -1,14 +1,13 @@
 import React from 'react';
+import { useCheckedState } from '../../context/CheckedStateContext';
+import { INTEREST_LEVELS, CONTEXT_TAGS } from '../../constants';
 
 /**
  * StageMarker — Positioned marker on the festival map for a single stage.
- *
- * The dot is centered on the map coordinates.
- * The pulse ring lives inside the dot so it's always centered on it.
- * The chip is absolutely positioned below the dot.
  */
 const StageMarker = ({ stageKey, stageData, onSelect, counterTransform }) => {
     const { playing, next, status, config } = stageData;
+    const { getBandTag, getInterestColor } = useCheckedState();
 
     if (!config || !config.mapPosition) return null;
 
@@ -27,6 +26,24 @@ const StageMarker = ({ stageKey, stageData, onSelect, counterTransform }) => {
         if (displayGroup && onSelect) onSelect(displayGroup);
     };
 
+    // Helper to get user tags for the displayed group
+    const getGroupTags = () => {
+        if (!displayGroup) return null;
+        const tag = getBandTag(displayGroup.id);
+        if (!tag) return null;
+
+        const interest = INTEREST_LEVELS[tag.interest];
+        const context = CONTEXT_TAGS[tag.context];
+
+        return {
+            stars: interest ? interest.stars : 0,
+            interestColor: tag.interest ? getInterestColor(tag.interest) : null,
+            contextIcon: context ? context.icon : null
+        };
+    };
+
+    const tags = getGroupTags();
+
     return (
         <div
             className={`stage-marker stage-marker--${status} ${isLeftAligned ? 'stage-marker--left' : 'stage-marker--right'}`}
@@ -40,14 +57,13 @@ const StageMarker = ({ stageKey, stageData, onSelect, counterTransform }) => {
                     transform: `${counterTransform} translate(${isLeftAligned ? 'calc(-100% + 21px)' : '-21px'}, -21px)`
                 }}
             >
-
                 <div className="stage-marker__wrap">
                     {/* Icon dot */}
                     <div
                         className="stage-marker__dot"
                         style={{ backgroundColor: color }}
                     >
-                        {isPlaying && (
+                        {status === 'playing' && (
                             <div className="stage-marker__pulse" style={{ borderColor: color }} />
                         )}
                         <img src={config.icon} alt={config.name} className="stage-marker__icon" />
@@ -69,7 +85,21 @@ const StageMarker = ({ stageKey, stageData, onSelect, counterTransform }) => {
 
                         {displayGroup ? (
                             <div className="stage-marker__chip-content">
-                                <span className="stage-marker__chip-band">{displayGroup.GROUPE}</span>
+                                <div className="stage-marker__chip-band-row">
+                                    <span className="stage-marker__chip-band">{displayGroup.GROUPE}</span>
+                                    {tags && (
+                                        <div className="stage-marker__chip-tags">
+                                            {tags.stars > 0 && (
+                                                <span className="stage-marker__chip-stars" style={{ color: tags.interestColor }}>
+                                                    {'★'.repeat(tags.stars)}
+                                                </span>
+                                            )}
+                                            {tags.contextIcon && (
+                                                <span className="stage-marker__chip-context">{tags.contextIcon}</span>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
                                 <span className="stage-marker__chip-time">
                                     {status === 'playing'
                                         ? `${displayGroup.DEBUT?.replace('h', ':')}—${displayGroup.FIN?.replace('h', ':')}`
