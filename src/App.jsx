@@ -271,7 +271,12 @@ function AppContent() {
         </div>
       )}
 
-      {viewMode === 'day' && <Navigation />}
+      {viewMode === 'day' && (
+        <Navigation
+          groups={groups}
+          onSelectGroup={handleGroupSelect}
+        />
+      )}
 
       <main className="content" {...swipeHandlers}>
         <Routes>
