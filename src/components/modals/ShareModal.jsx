@@ -21,14 +21,7 @@ const ShareModal = ({ isOpen, onClose, taggedBands, customEvents }) => {
         const url = generateShareLink(taggedBands, includeCustom ? customEvents : [], username);
         setShareUrl(url);
         setStep('result');
-        if (typeof umami !== 'undefined') umami.track('share-planning', {
-            method: 'url',
-            url: url,
-            token_length: shareUrl.split('=')[1]?.length || 0,
-            bands_count: Object.keys(taggedBands).length,
-            has_custom_events: customEvents.length > 0,
-            username: username || 'anonymous'
-        });
+        // Analytics removed
     };
 
     if (!isOpen) return null;

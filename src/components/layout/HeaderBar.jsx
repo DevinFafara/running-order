@@ -44,7 +44,6 @@ const HeaderBar = ({
     const handleOpenPanel = (id) => {
         if (id === 'stats') {
             setStatsOpen(true);
-            if (typeof umami !== 'undefined') umami.track('open-stats');
         }
         if (id === 'playlists') setPlaylistOpen(true);
         if (id === 'contacts') setContactsOpen(true);

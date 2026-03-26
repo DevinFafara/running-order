@@ -128,7 +128,7 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
                             }
                             fileName={`Hellfest2026_RunningOrder_${filterMode}.pdf`}
                             className="export-pdf-btn"
-                            onClick={() => typeof umami !== 'undefined' && umami.track('pdf-export')}
+                            onClick={() => {}} // Analytics removed
                         >
                             {({ blob, url, loading, error }) => (
                                 <>
