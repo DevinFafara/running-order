@@ -1,6 +1,6 @@
 import React from 'react';
 import { Document, Page, View, Text, StyleSheet, Font } from '@react-pdf/renderer';
-import { STAGE_CONFIG, INTEREST_LEVELS } from '../../constants';
+import { STAGE_CONFIG, INTEREST_LEVELS, CONTEXT_TAGS } from '../../constants';
 import { calculateWeeklyLayout } from '../../utils/pdfLayout';
 import { timeToMinutes } from '../../utils/statsUtils';
 import chroma from 'chroma-js';
@@ -189,8 +189,12 @@ const WeeklyPDF = ({ groups, customEvents, selectedScenes, filterMode, colorMode
                                                 {item.band.DEBUT}-{item.band.FIN}
                                             </Text>
                                             {isTagged && (
-                                                <Text style={[styles.star, { color: interestColor, fontSize: 10, top: 0, right: 2 }]}>
-                                                    *
+                                                <Text style={[styles.star, { color: interestColor, fontSize: 8, top: 2, right: 2 }]}>
+                                                    {tagInfo.interest ? (
+                                                        '*'.repeat(INTEREST_LEVELS[tagInfo.interest]?.stars || 1)
+                                                    ) : (
+                                                        CONTEXT_TAGS[tagInfo.context]?.icon || ''
+                                                    )}
                                                 </Text>
                                             )}
                                         </View>

@@ -132,6 +132,67 @@
     border-color: #e74c3c;
 }
 
+/* New Filters (Interest & Context) */
+.weekly-filters-categories {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 4px 8px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.weekly-filters-separator-small {
+    width: 1px;
+    height: 18px;
+    background: rgba(255, 255, 255, 0.2);
+    margin: 0 4px;
+}
+
+.interest-filter-btn,
+.context-filter-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-width: 32px;
+    height: 28px;
+}
+
+.interest-filter-btn.active {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--level-color);
+    box-shadow: 0 0 8px var(--level-color);
+}
+
+.interest-filter-btn:not(.active) {
+    color: #444;
+}
+
+.interest-filter-btn.active i {
+    color: var(--level-color);
+    text-shadow: 0 0 4px var(--level-color);
+}
+
+.context-filter-btn.active {
+    background: rgba(231, 76, 60, 0.2);
+    border-color: #e74c3c;
+    box-shadow: 0 0 8px rgba(231, 76, 60, 0.4);
+}
+
+.context-filter-btn:not(.active) {
+    filter: grayscale(1);
+    opacity: 0.2;
+}
+
 .weekly-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -336,12 +397,17 @@
     gap: 4px;
 }
 
-.weekly-band-star {
+.weekly-band-tag-indicator {
     position: absolute;
     top: 2px;
-    right: 2px;
-    color: gold;
-    font-size: 0.7rem;
+    right: 3px;
+    display: flex;
+    align-items: center;
+    gap: 1px;
+}
+
+.weekly-band-tag-indicator i {
+    text-shadow: 0 0 3px rgba(0, 0, 0, 0.8);
 }
 
 .export-pdf-btn {

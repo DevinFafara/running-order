@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import chroma from 'chroma-js';
 import { useCheckedState } from '../../context/CheckedStateContext';
 import { useLineup } from '../../hooks/useLineup'; // Assuming this hook exists or we pass groups as prop
-import { STAGE_CONFIG, INTEREST_LEVELS } from '../../constants';
+import { STAGE_CONFIG, INTEREST_LEVELS, INTEREST_ORDER, CONTEXT_TAGS, CONTEXT_ORDER } from '../../constants';
 // Reuse timeToMinutes for layout calcs
 import TagMenu from '../common/TagMenu';
 import { PDFDownloadLink } from '@react-pdf/renderer';
@@ -31,6 +31,8 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
     const [filterMode, setFilterMode] = useState('favorites'); // 'favorites' or 'all'
     const [colorMode, setColorMode] = useState('transparent'); // 'transparent' or 'scene'
     const [selectedScenes, setSelectedScenes] = useState(() => [...Object.keys(STAGE_CONFIG), 'CUSTOM']);
+    const [selectedInterests, setSelectedInterests] = useState(['must_see', 'interested', 'curious']);
+    const [selectedContexts, setSelectedContexts] = useState(['with_friend', 'strategic', 'skip']);
     const [tagMenuState, setTagMenuState] = useState({ open: false, groupId: null, position: { x: 0, y: 0 } });
 
     // Handle Right Click (Context Menu)
@@ -68,6 +70,19 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
         );
     };
 
+    // Toggle categories
+    const toggleInterest = (interestId) => {
+        setSelectedInterests(prev =>
+            prev.includes(interestId) ? prev.filter(i => i !== interestId) : [...prev, interestId]
+        );
+    };
+
+    const toggleContext = (contextId) => {
+        setSelectedContexts(prev =>
+            prev.includes(contextId) ? prev.filter(c => c !== contextId) : [...prev, contextId]
+        );
+    };
+
     // Toggle All Scenes
     const toggleAllScenes = () => {
         const allKeys = [...Object.keys(STAGE_CONFIG), 'CUSTOM'];
@@ -84,13 +99,25 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
         if (!groups) return [];
         let selection = groups.filter(g => selectedScenes.includes(g.SCENE));
 
-        // If 'favorites' mode, keep only tagged bands
+        // If 'favorites' mode, apply interest/context filters
         if (filterMode === 'favorites') {
-            selection = selection.filter(g => state.taggedBands[g.id]);
+            selection = selection.filter(g => {
+                const tag = getBandTag(g.id);
+                if (!tag) return false;
+                
+                // Match if interest is in selectedInterests OR context is in selectedContexts
+                const interestMatch = tag.interest && selectedInterests.includes(tag.interest);
+                const contextMatch = tag.context && selectedContexts.includes(tag.context);
+                
+                // If it has NO interest and NO context (old data), count as favorites
+                if (!tag.interest && !tag.context) return true;
+
+                return interestMatch || contextMatch;
+            });
         }
 
         return selection;
-    }, [groups, filterMode, state.taggedBands, selectedScenes]);
+    }, [groups, filterMode, state.taggedBands, selectedScenes, selectedInterests, selectedContexts, getBandTag]);
 
     // --- 2. LAYOUT ALGORITHM (The "Clashfinder" Logic) ---
     const dayColumns = useMemo(() => {
@@ -208,6 +235,47 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
                             Couleurs Scènes
                         </button>
                     </div>
+
+                    {filterMode === 'favorites' && (
+                        <div className="weekly-filters-categories">
+                            {INTEREST_ORDER.map(levelId => {
+                                const level = INTEREST_LEVELS[levelId];
+                                const isActive = selectedInterests.includes(levelId);
+                                return (
+                                    <button
+                                        key={levelId}
+                                        className={`interest-filter-btn ${isActive ? 'active' : ''}`}
+                                        onClick={() => toggleInterest(levelId)}
+                                        style={{ 
+                                            '--level-color': getInterestColor(levelId),
+                                            opacity: isActive ? 1 : 0.4 
+                                        }}
+                                        title={level.label}
+                                    >
+                                        {Array.from({ length: level.stars }).map((_, i) => (
+                                            <i key={i} className="fa-solid fa-star" style={{ fontSize: '0.65rem' }}></i>
+                                        ))}
+                                    </button>
+                                );
+                            })}
+                            <div className="weekly-filters-separator-small" />
+                            {CONTEXT_ORDER.map(tagId => {
+                                const tag = CONTEXT_TAGS[tagId];
+                                const isActive = selectedContexts.includes(tagId);
+                                return (
+                                    <button
+                                        key={tagId}
+                                        className={`context-filter-btn ${isActive ? 'active' : ''}`}
+                                        onClick={() => toggleContext(tagId)}
+                                        style={{ opacity: isActive ? 1 : 0.4 }}
+                                        title={tag.label}
+                                    >
+                                        <span style={{ fontSize: '1.1rem' }}>{tag.icon}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -282,10 +350,16 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
                                             </div>
                                             {isTagged && (
                                                 <div
-                                                    className="weekly-band-star"
+                                                    className="weekly-band-tag-indicator"
                                                     style={{ color: interestColor }}
                                                 >
-                                                    ★
+                                                    {tagData.interest ? (
+                                                        Array.from({ length: INTEREST_LEVELS[tagData.interest]?.stars || 1 }).map((_, i) => (
+                                                            <i key={i} className="fa-solid fa-star" style={{ fontSize: '0.6rem' }}></i>
+                                                        ))
+                                                    ) : (
+                                                        <span style={{ fontSize: '0.7rem' }}>{CONTEXT_TAGS[tagData.context]?.icon}</span>
+                                                    )}
                                                 </div>
                                             )}
                                         </div>
