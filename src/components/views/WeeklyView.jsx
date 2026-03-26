@@ -252,9 +252,7 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
                                         }}
                                         title={level.label}
                                     >
-                                        {Array.from({ length: level.stars }).map((_, i) => (
-                                            <i key={i} className="fa-solid fa-star" style={{ fontSize: '0.65rem' }}></i>
-                                        ))}
+                                        <i className="fa-solid fa-star"></i>
                                     </button>
                                 );
                             })}
@@ -354,9 +352,7 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
                                                     style={{ color: interestColor }}
                                                 >
                                                     {tagData.interest ? (
-                                                        Array.from({ length: INTEREST_LEVELS[tagData.interest]?.stars || 1 }).map((_, i) => (
-                                                            <i key={i} className="fa-solid fa-star" style={{ fontSize: '0.6rem' }}></i>
-                                                        ))
+                                                        <i className="fa-solid fa-star" style={{ fontSize: '0.7rem' }}></i>
                                                     ) : (
                                                         <span style={{ fontSize: '0.7rem' }}>{CONTEXT_TAGS[tagData.context]?.icon}</span>
                                                     )}

@@ -191,7 +191,7 @@ const WeeklyPDF = ({ groups, customEvents, selectedScenes, filterMode, colorMode
                                             {isTagged && (
                                                 <Text style={[styles.star, { color: interestColor, fontSize: 8, top: 2, right: 2 }]}>
                                                     {tagInfo.interest ? (
-                                                        '*'.repeat(INTEREST_LEVELS[tagInfo.interest]?.stars || 1)
+                                                        '*'
                                                     ) : (
                                                         CONTEXT_TAGS[tagInfo.context]?.icon || ''
                                                     )}
