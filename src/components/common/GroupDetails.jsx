@@ -1,27 +1,18 @@
 import React from 'react';
+import { STAGE_CONFIG } from '../../constants';
 import './GroupDetails.css';
 
 const GroupDetails = ({ group, onClose }) => {
     if (!group) return null;
 
-    const sceneColors = {
-        'MAINSTAGE 1': '#9eaad3',
-        'MAINSTAGE 2': '#d4d2cf',
-        'WARZONE': '#cecb93',
-        'VALLEY': '#eabe97',
-        'ALTAR': '#f19e9e',
-        'TEMPLE': '#cbd4d8',
-        'HELLSTAGE': '#a0d8b7',
-        'METAL_CORNER': '#d0cfae',
-        'PURPLE_HOUSE': '#d6b2e0',
-    };
+    const sceneColor = STAGE_CONFIG[group.SCENE]?.bandColor || '#333';
 
     return (
         <div className="group-details">
             <button className="details-close-btn" onClick={onClose}>×</button>
 
             <div className="group-name">
-                <h3 style={{ backgroundColor: sceneColors[group.SCENE] || '#333' }}>
+                <h3 style={{ backgroundColor: sceneColor }}>
                     {group.GROUPE}
                 </h3>
             </div>

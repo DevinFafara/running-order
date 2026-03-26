@@ -1,7 +1,7 @@
 import React from 'react';
 import chroma from 'chroma-js';
 import { useCheckedState } from '../../context/CheckedStateContext';
-import { INTEREST_LEVELS, CONTEXT_TAGS } from '../../constants';
+import { STAGE_CONFIG, INTEREST_LEVELS, CONTEXT_TAGS } from '../../constants';
 
 const Band = ({ group, selectGroup, selectedGroupId, onTagClick, dayStartMinutes, dayEndMinutes }) => {
     const { GROUPE, SCENE, DEBUT, FIN, id } = group;
@@ -34,19 +34,7 @@ const Band = ({ group, selectGroup, selectedGroupId, onTagClick, dayStartMinutes
 
     const dureeConcert = duree;
 
-    // Couleurs des scènes (principales + annexes)
-    const sceneColors = {
-        "MAINSTAGE 1": '#0055a5',
-        "MAINSTAGE 2": '#a6a19b',
-        "WARZONE": '#949b1a',
-        "VALLEY": '#ce7c19',
-        "ALTAR": '#dc2829',
-        "TEMPLE": '#93a7b0',
-        // Scènes annexes
-        "HELLSTAGE": '#239c60',
-        "PURPLE_HOUSE": '#9500c6',
-        "METAL_CORNER": '#9f9c78'
-    };
+    const sceneColor = STAGE_CONFIG[SCENE]?.themeColor || '#333';
 
     // Calcul du top : positionnement vertical basé sur l'heure
     // Référence : 1px = 1 minute, 0px = heure de fin de journée
@@ -156,8 +144,8 @@ const Band = ({ group, selectGroup, selectedGroupId, onTagClick, dayStartMinutes
                 position: 'absolute',
                 top: getTop(),
                 height: `${dureeConcert}px`,
-                border: `0px solid ${sceneColors[SCENE]}`,
-                backgroundColor: chroma(sceneColors[SCENE]).luminance(0.6).hex(),
+                border: `0px solid ${sceneColor}`,
+                backgroundColor: chroma(sceneColor).luminance(0.6).hex(),
                 display: (!state.scenes[SCENE.toLowerCase().replace(' ', '')]) ? 'none' : 'flex',
             }}
             onClick={handleClick}

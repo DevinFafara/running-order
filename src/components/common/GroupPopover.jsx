@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useCheckedState } from '../../context/CheckedStateContext';
+import { STAGE_CONFIG, INTEREST_LEVELS } from '../../constants';
 
 const GroupPopover = ({ group, position, onClose, onShowDetails }) => {
     const popoverRef = useRef(null);
@@ -7,17 +8,7 @@ const GroupPopover = ({ group, position, onClose, onShowDetails }) => {
 
     const isTagged = !!state.taggedBands[group.id];
 
-    // Couleurs des scènes
-    const sceneColors = {
-        'MAINSTAGE 1': '#0055a5',
-        'MAINSTAGE 2': '#a6a19b',
-        'WARZONE': '#949b1a',
-        'VALLEY': '#ce7c19',
-        'ALTAR': '#dc2829',
-        'TEMPLE': '#93a7b0',
-    };
-
-    const sceneColor = sceneColors[group.SCENE] || '#333';
+    const sceneColor = STAGE_CONFIG[group.SCENE]?.themeColor || '#333';
 
     // Calculer la position du popover pour qu'il reste visible
     const [adjustedPosition, setAdjustedPosition] = useState(position);
@@ -84,21 +75,21 @@ const GroupPopover = ({ group, position, onClose, onShowDetails }) => {
                     <button
                         className={`popover-action-btn ${getBandTag(group.id)?.interest === 'must_see' ? 'active' : ''}`}
                         onClick={() => { setInterest(group.id, getBandTag(group.id)?.interest === 'must_see' ? null : 'must_see'); onClose(); }}
-                        style={{ '--btn-color': '#50C878' }}
+                        style={{ '--btn-color': INTEREST_LEVELS.must_see.defaultColor }}
                     >
                         <i className="fa-solid fa-star"></i> Incontournable
                     </button>
                     <button
                         className={`popover-action-btn ${getBandTag(group.id)?.interest === 'interested' ? 'active' : ''}`}
                         onClick={() => { setInterest(group.id, getBandTag(group.id)?.interest === 'interested' ? null : 'interested'); onClose(); }}
-                        style={{ '--btn-color': '#FFD700' }}
+                        style={{ '--btn-color': INTEREST_LEVELS.interested.defaultColor }}
                     >
                         <i className="fa-solid fa-star-half-stroke"></i> Intéressé
                     </button>
                     <button
                         className={`popover-action-btn ${getBandTag(group.id)?.interest === 'curious' ? 'active' : ''}`}
                         onClick={() => { setInterest(group.id, getBandTag(group.id)?.interest === 'curious' ? null : 'curious'); onClose(); }}
-                        style={{ '--btn-color': '#3498db' }}
+                        style={{ '--btn-color': INTEREST_LEVELS.curious.defaultColor }}
                     >
                         <i className="fa-regular fa-star"></i> Curieux
                     </button>

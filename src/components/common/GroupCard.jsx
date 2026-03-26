@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSwipeable } from 'react-swipeable';
 import { useCheckedState } from '../../context/CheckedStateContext';
-import { INTEREST_LEVELS, INTEREST_ORDER, CONTEXT_TAGS, CONTEXT_ORDER } from '../../constants';
+import { STAGE_CONFIG, INTEREST_LEVELS, INTEREST_ORDER, CONTEXT_TAGS, CONTEXT_ORDER } from '../../constants';
 // Import Logos
 import bandLogos from '../../data/bandLogos.json';
 
@@ -37,15 +37,7 @@ const GroupCard = ({ group, position, onClose, onPositionChange }) => {
     const currentInterest = bandTag?.interest;
     const currentContext = bandTag?.context;
 
-    const sceneColors = {
-        'MAINSTAGE 1': '#0055a5',
-        'MAINSTAGE 2': '#a6a19b',
-        'WARZONE': '#949b1a',
-        'VALLEY': '#ce7c19',
-        'ALTAR': '#dc2829',
-        'TEMPLE': '#93a7b0',
-    };
-    const sceneColor = sceneColors[group.SCENE] || '#333';
+    const sceneColor = STAGE_CONFIG[group.SCENE]?.themeColor || '#333';
 
     // Init note safely
     useEffect(() => {

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { useCheckedState } from '../../context/CheckedStateContext';
+import { STAGE_CONFIG } from '../../constants';
 
 const GroupModal = ({ group, onClose }) => {
     const modalRef = useRef(null);
@@ -7,17 +8,7 @@ const GroupModal = ({ group, onClose }) => {
 
     const isTagged = !!state.taggedBands[group.id];
 
-    // Couleurs des scènes
-    const sceneColors = {
-        'MAINSTAGE 1': '#0055a5',
-        'MAINSTAGE 2': '#a6a19b',
-        'WARZONE': '#949b1a',
-        'VALLEY': '#ce7c19',
-        'ALTAR': '#dc2829',
-        'TEMPLE': '#93a7b0',
-    };
-
-    const sceneColor = sceneColors[group.SCENE] || '#333';
+    const sceneColor = STAGE_CONFIG[group.SCENE]?.themeColor || '#333';
 
     // Empêcher le scroll du body quand la modale est ouverte
     useEffect(() => {
