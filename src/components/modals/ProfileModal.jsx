@@ -1,6 +1,6 @@
 import React from 'react';
 
-const ProfileModal = ({ isOpen, onClose, onOpenPanel, onShare }) => {
+const ProfileModal = ({ isOpen, onClose, onOpenPanel, onShare, isInstallable, isInstalled, onInstall, hasPrompt, platform, onShowPwaGuide }) => {
     if (!isOpen) return null;
 
     const MENU_ITEMS = [
@@ -8,6 +8,7 @@ const ProfileModal = ({ isOpen, onClose, onOpenPanel, onShare }) => {
         { id: 'playlists', label: 'Playlists', icon: 'fa-solid fa-music', color: '#1DB954' },
         { id: 'contacts', label: 'Mes Contacts', icon: 'fa-solid fa-address-book', color: '#2196F3' },
         { id: 'share', label: 'Partager', icon: 'fa-solid fa-share-nodes', color: '#9C27B0' },
+        { id: 'install', label: isInstalled ? 'Installée' : 'Installer', icon: 'fa-solid fa-download', color: isInstalled ? '#555' : '#00b894', disabled: isInstalled },
         { id: 'settings', label: 'Paramètres', icon: 'fa-solid fa-gear', color: '#aaa' },
         { id: 'credits', label: 'Crédits', icon: 'fa-solid fa-heart', color: '#ff6b6b' },
     ];
@@ -72,6 +73,17 @@ const ProfileModal = ({ isOpen, onClose, onOpenPanel, onShare }) => {
                         <button
                             key={item.id}
                             onClick={() => {
+                                if (item.id === 'install') {
+                                    if (!isInstalled) {
+                                        if (hasPrompt) {
+                                            onInstall();
+                                        } else {
+                                            if (onShowPwaGuide) onShowPwaGuide();
+                                        }
+                                    }
+                                    onClose();
+                                    return;
+                                }
                                 onClose();
                                 if (item.id === 'share') {
                                     onShare();
@@ -79,6 +91,7 @@ const ProfileModal = ({ isOpen, onClose, onOpenPanel, onShare }) => {
                                     onOpenPanel(item.id);
                                 }
                             }}
+                            disabled={item.disabled}
                             style={{
                                 display: 'flex',
                                 flexDirection: 'column',
@@ -89,9 +102,10 @@ const ProfileModal = ({ isOpen, onClose, onOpenPanel, onShare }) => {
                                 backgroundColor: '#2a2a2a',
                                 border: '1px solid #444',
                                 borderRadius: '12px',
-                                color: '#eee',
-                                cursor: 'pointer',
-                                transition: '0.2s'
+                                color: item.disabled ? '#444' : '#eee',
+                                cursor: item.disabled ? 'default' : 'pointer',
+                                transition: '0.2s',
+                                opacity: item.disabled ? 0.6 : 1
                             }}
                         >
                             <div style={{

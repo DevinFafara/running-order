@@ -5,6 +5,7 @@ import { DAYS } from './constants';
 import { CheckedStateProvider, useCheckedState } from './context/CheckedStateContext';
 import { useLineup } from './hooks/useLineup';
 import HeaderBar from './components/layout/HeaderBar';
+import { usePWA } from './hooks/usePWA';
 import Navigation from './components/layout/Navigation';
 import DayView from './components/views/DayView';
 import WeeklyView from './components/views/WeeklyView';
@@ -23,6 +24,7 @@ function AppContent() {
   const { data: groups, loading, error } = useLineup();
   const { state, setDay, setState, isGuestMode, guestRo, setGuestRo } = useCheckedState();
   const [selectedGroup, setSelectedGroup] = useState(null);
+  const { isInstallable, isInstalled, installApp, hasPrompt, platform } = usePWA();
   const [popoverPosition, setPopoverPosition] = useState(null);
   const [viewMode, setViewMode] = useState('day');
 
@@ -234,6 +236,11 @@ function AppContent() {
         guestName={isGuestMode ? guestRo.username : null}
         onExitGuestMode={() => setGuestRo(null)}
         onClearCustomEvents={handleClearCustomEvents}
+        isInstallable={isInstallable}
+        isInstalled={isInstalled}
+        installApp={installApp}
+        hasPrompt={hasPrompt}
+        platform={platform}
       />
 
       {isGuestMode && (

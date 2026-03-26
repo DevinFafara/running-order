@@ -8,8 +8,14 @@ import ProfileModal from '../modals/ProfileModal';
 import ShareModal from '../modals/ShareModal';
 import { useCheckedState } from '../../context/CheckedStateContext';
 import StatsPanel from '../panels/StatsPanel';
+import PWAInstallModal from '../modals/PWAInstallModal';
 
-const HeaderBar = ({ viewMode, onViewChange, onInteraction, onAddCustomEvent, customEvents, contacts, onDeleteContact, onCheckContact, isGuestMode, guestName, onExitGuestMode, onClearCustomEvents }) => {
+const HeaderBar = ({ 
+    viewMode, onViewChange, onInteraction, onAddCustomEvent, 
+    customEvents, contacts, onDeleteContact, onCheckContact, 
+    isGuestMode, guestName, onExitGuestMode, onClearCustomEvents,
+    isInstallable, isInstalled, installApp, hasPrompt, platform
+}) => {
     const { userState } = useCheckedState();
     const [playlistOpen, setPlaylistOpen] = useState(false);
     const [filterOpen, setFilterOpen] = useState(false);
@@ -19,6 +25,7 @@ const HeaderBar = ({ viewMode, onViewChange, onInteraction, onAddCustomEvent, cu
     const [contactsOpen, setContactsOpen] = useState(false);
     const [profileOpen, setProfileOpen] = useState(false);
     const [shareOpen, setShareOpen] = useState(false);
+    const [pwaGuideOpen, setPwaGuideOpen] = useState(false);
     const [isOnline, setIsOnline] = useState(navigator.onLine);
 
     React.useEffect(() => {
@@ -211,6 +218,18 @@ const HeaderBar = ({ viewMode, onViewChange, onInteraction, onAddCustomEvent, cu
                 onClose={() => setProfileOpen(false)}
                 onOpenPanel={handleOpenPanel}
                 onShare={() => setShareOpen(true)}
+                isInstallable={isInstallable}
+                isInstalled={isInstalled}
+                onInstall={installApp}
+                hasPrompt={hasPrompt}
+                platform={platform}
+                onShowPwaGuide={() => setPwaGuideOpen(true)}
+            />
+
+            <PWAInstallModal
+                isOpen={pwaGuideOpen}
+                onClose={() => setPwaGuideOpen(false)}
+                platform={platform}
             />
 
             <ShareModal
