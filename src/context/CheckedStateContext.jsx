@@ -1,7 +1,7 @@
 import React, { createContext, useState, useEffect, useContext, useRef, useCallback } from 'react';
 import { DEFAULT_COLORS, INTEREST_LEVELS, CONTEXT_TAGS } from '../constants';
 import { migrateOldData } from '../utils/migrationUtils';
-import { encodeROForServer, decodeROFromServer } from '../utils/sharingUtils';
+import { encodeROForServer, decodeROFromServer, encodeContacts, decodeContacts } from '../utils/sharingUtils';
 import { api } from '../services/api';
 
 export const CheckedStateContext = createContext();
@@ -119,6 +119,8 @@ export const CheckedStateProvider = ({ children, user }) => {
     // ─── Custom events (read from App.jsx, needed for server sync) ──────
     // We need access to customEvents for encoding. App.jsx will pass them via context.
     const [customEventsForSync, setCustomEventsForSync] = useState([]);
+    const [contactsForSync, setContactsForSync] = useState([]);
+    const [serverContacts, setServerContacts] = useState(null); // contacts loaded from server
 
     // ─── Initial load from server ───────────────────────────────────────
     useEffect(() => {
@@ -171,6 +173,14 @@ export const CheckedStateProvider = ({ children, user }) => {
                 // Store the encoded value to avoid re-saving what we just loaded
                 lastSavedEncodedRef.current = serverData.favorites;
 
+                // Load contacts from server
+                if (serverData.contacts && Array.isArray(serverData.contacts) && serverData.contacts.length > 0) {
+                    const decodedContacts = decodeContacts(serverData.contacts);
+                    if (decodedContacts.length > 0) {
+                        setServerContacts(decodedContacts);
+                    }
+                }
+
             } catch (err) {
                 if (err.status !== 404) {
                     console.warn('Failed to load RO from server:', err.message);
@@ -204,6 +214,7 @@ export const CheckedStateProvider = ({ children, user }) => {
                 await api.saveRO(user.username, {
                     avatar_url: user.avatar_url || null,
                     favorites: encoded,
+                    contacts: encodeContacts(contactsForSync),
                     community_opt_in: consentChoice === 'full',
                     favorites_count: Object.keys(state.taggedBands).length
                 });
@@ -224,7 +235,7 @@ export const CheckedStateProvider = ({ children, user }) => {
         return () => {
             if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
         };
-    }, [state.taggedBands, customEventsForSync, shouldSync, user, consentChoice]);
+    }, [state.taggedBands, customEventsForSync, contactsForSync, shouldSync, user, consentChoice]);
 
     // ─── Resolve conflict ───────────────────────────────────────────────
     const resolveConflict = useCallback((choice) => {
@@ -416,7 +427,9 @@ export const CheckedStateProvider = ({ children, user }) => {
             resolveConflict,
             consentChoice,
             setConsentChoice,
-            setCustomEventsForSync
+            setCustomEventsForSync,
+            setContactsForSync,
+            serverContacts
         }}>
             {children}
         </CheckedStateContext.Provider>

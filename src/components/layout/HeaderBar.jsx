@@ -72,6 +72,31 @@ const HeaderBar = ({
                             }}
                         />
                         <span className="header-title" style={{ fontFamily: 'Metal Mania', letterSpacing: '1px' }}>RO Planner</span>
+                        {isAuthenticated && username && (
+                            <span
+                                title={`Connecté en tant que ${username}`}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                    fontSize: '0.7rem',
+                                    color: '#aaa',
+                                    background: 'rgba(255,255,255,0.06)',
+                                    padding: '2px 8px',
+                                    borderRadius: '10px',
+                                    border: '1px solid rgba(255,255,255,0.08)'
+                                }}
+                            >
+                                <span style={{
+                                    width: '6px',
+                                    height: '6px',
+                                    borderRadius: '50%',
+                                    backgroundColor: '#4CAF50',
+                                    flexShrink: 0
+                                }}></span>
+                                {username}
+                            </span>
+                        )}
                         {!isOnline && (
                             <span
                                 title="Mode Hors-ligne (Données en cache)"

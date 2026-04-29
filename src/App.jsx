@@ -29,7 +29,8 @@ function AppContent() {
   const {
     state, setDay, setState, isGuestMode, guestRo, setGuestRo,
     saveStatus, conflictData, resolveConflict,
-    consentChoice, setConsentChoice, setCustomEventsForSync
+    consentChoice, setConsentChoice, setCustomEventsForSync,
+    setContactsForSync, serverContacts
   } = useCheckedState();
   const { user, isAuthenticated } = useAuth();
   const [selectedGroup, setSelectedGroup] = useState(null);
@@ -59,6 +60,18 @@ function AppContent() {
   useEffect(() => {
     setCustomEventsForSync(customEvents);
   }, [customEvents, setCustomEventsForSync]);
+
+  // Sync contacts to CheckedStateContext for server sync
+  useEffect(() => {
+    setContactsForSync(contacts);
+  }, [contacts, setContactsForSync]);
+
+  // Restore contacts from server if local is empty
+  useEffect(() => {
+    if (serverContacts && serverContacts.length > 0 && contacts.length === 0) {
+      setContacts(serverContacts);
+    }
+  }, [serverContacts]);
 
   useEffect(() => {
     localStorage.setItem('contacts', JSON.stringify(contacts));

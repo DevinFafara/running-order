@@ -162,6 +162,7 @@ app.post('/api/ro/:username', verifyAuth, async (req, res) => {
         username,
         avatar_url: req.body.avatar_url || null,
         favorites: req.body.favorites || '',
+        contacts: req.body.contacts || [],
         community_opt_in: req.body.community_opt_in ?? false,
         favorites_count: req.body.favorites_count ?? 0,
         updated_at: new Date().toISOString()

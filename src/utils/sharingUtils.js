@@ -193,3 +193,51 @@ export const decodeROFromServer = (encoded) => {
         return null;
     }
 };
+
+/**
+ * Encode contacts array for server storage.
+ * Each contact's RO data (bands + customEvents) is re-encoded as a compact LZString.
+ * @param {Array} contacts - Array of contact objects from App.jsx
+ * @returns {Array} Compact contacts array for JSON storage
+ */
+export const encodeContacts = (contacts) => {
+    if (!contacts || !Array.isArray(contacts)) return [];
+
+    return contacts.map(contact => {
+        const data = contact.data;
+        if (!data) return null;
+
+        return {
+            username: contact.username,
+            favorites: encodeROForServer(data.bands || {}, data.customEvents || []),
+            importedAt: contact.importedAt || null
+        };
+    }).filter(Boolean);
+};
+
+/**
+ * Decode server-stored contacts back into the format used by App.jsx.
+ * @param {Array} serverContacts - Compact contacts from server JSON
+ * @returns {Array} Full contact objects for App.jsx state
+ */
+export const decodeContacts = (serverContacts) => {
+    if (!serverContacts || !Array.isArray(serverContacts)) return [];
+
+    return serverContacts.map(sc => {
+        const decoded = decodeROFromServer(sc.favorites);
+        if (!decoded) return null;
+
+        return {
+            id: Date.now() + Math.random(),
+            username: sc.username,
+            data: {
+                username: sc.username,
+                bands: decoded.taggedBands,
+                customEvents: decoded.customEvents,
+                bandCount: Object.keys(decoded.taggedBands).length,
+                eventCount: decoded.customEvents.length
+            },
+            importedAt: sc.importedAt || null
+        };
+    }).filter(Boolean);
+};
