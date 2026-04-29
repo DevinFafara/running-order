@@ -33,3 +33,7 @@ Thumbs.db
 # Cache
 .cache/
 .eslintcache
+
+# Backend data (generated at runtime)
+backend/data/
+backend/node_modules/
