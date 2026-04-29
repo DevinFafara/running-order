@@ -1,12 +1,13 @@
 import React from 'react';
 
-const ProfileModal = ({ isOpen, onClose, onOpenPanel, onShare, isInstallable, isInstalled, onInstall, hasPrompt, platform, onShowPwaGuide }) => {
+const ProfileModal = ({ isOpen, onClose, onOpenPanel, onShare, isInstallable, isInstalled, onInstall, hasPrompt, platform, onShowPwaGuide, isAuthenticated, username }) => {
     if (!isOpen) return null;
 
     const MENU_ITEMS = [
         { id: 'stats', label: 'Mes Stats', icon: 'fa-solid fa-chart-pie', color: '#FFD700' },
         { id: 'playlists', label: 'Playlists', icon: 'fa-solid fa-music', color: '#1DB954' },
         { id: 'contacts', label: 'Mes Contacts', icon: 'fa-solid fa-address-book', color: '#2196F3' },
+        ...(isAuthenticated ? [{ id: 'community', label: 'Communauté', icon: 'fa-solid fa-users', color: '#FF6B35' }] : []),
         { id: 'share', label: 'Partager', icon: 'fa-solid fa-share-nodes', color: '#9C27B0' },
         { id: 'install', label: isInstalled ? 'Installée' : 'Installer', icon: 'fa-solid fa-download', color: isInstalled ? '#555' : '#00b894', disabled: isInstalled },
         { id: 'settings', label: 'Paramètres', icon: 'fa-solid fa-gear', color: '#aaa' },
@@ -63,6 +64,18 @@ const ProfileModal = ({ isOpen, onClose, onOpenPanel, onShare, isInstallable, is
                 }}>
                     MENU
                 </h2>
+
+                {isAuthenticated && username && (
+                    <div style={{
+                        textAlign: 'center',
+                        marginBottom: '15px',
+                        fontSize: '0.85rem',
+                        color: '#888'
+                    }}>
+                        <i className="fa-solid fa-user" style={{ marginRight: '6px', color: '#FFD700' }}></i>
+                        {username}
+                    </div>
+                )}
 
                 <div style={{
                     display: 'grid',

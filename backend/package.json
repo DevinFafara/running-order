@@ -1,0 +1,14 @@
+{
+  "name": "ro-planner-backend",
+  "version": "1.0.0",
+  "description": "Backend API pour le Hellfest RO Planner — stockage JSON par utilisateur",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "cors": "^2.8.5"
+  }
+}

@@ -4,6 +4,7 @@ import FilterPanel from '../panels/FilterPanel';
 import SettingsPanel from '../panels/SettingsPanel';
 import CreditsPanel from '../panels/CreditsPanel';
 import ContactsPanel from '../panels/ContactsPanel';
+import CommunityPanel from '../panels/CommunityPanel';
 import ProfileModal from '../modals/ProfileModal';
 import ShareModal from '../modals/ShareModal';
 import { useCheckedState } from '../../context/CheckedStateContext';
@@ -14,7 +15,8 @@ const HeaderBar = ({
     viewMode, onViewChange, onInteraction, onAddCustomEvent, 
     customEvents, contacts, onDeleteContact, onCheckContact, 
     isGuestMode, guestName, onExitGuestMode, onClearCustomEvents,
-    isInstallable, isInstalled, installApp, hasPrompt, platform
+    isInstallable, isInstalled, installApp, hasPrompt, platform,
+    isAuthenticated, username
 }) => {
     const { userState } = useCheckedState();
     const [playlistOpen, setPlaylistOpen] = useState(false);
@@ -23,6 +25,7 @@ const HeaderBar = ({
     const [creditsOpen, setCreditsOpen] = useState(false);
     const [statsOpen, setStatsOpen] = useState(false);
     const [contactsOpen, setContactsOpen] = useState(false);
+    const [communityOpen, setCommunityOpen] = useState(false);
     const [profileOpen, setProfileOpen] = useState(false);
     const [shareOpen, setShareOpen] = useState(false);
     const [pwaGuideOpen, setPwaGuideOpen] = useState(false);
@@ -47,6 +50,7 @@ const HeaderBar = ({
         }
         if (id === 'playlists') setPlaylistOpen(true);
         if (id === 'contacts') setContactsOpen(true);
+        if (id === 'community') setCommunityOpen(true);
         if (id === 'settings') setSettingsOpen(true);
         if (id === 'credits') setCreditsOpen(true);
     };
@@ -223,6 +227,18 @@ const HeaderBar = ({
                 hasPrompt={hasPrompt}
                 platform={platform}
                 onShowPwaGuide={() => setPwaGuideOpen(true)}
+                isAuthenticated={isAuthenticated}
+                username={username}
+            />
+
+            <CommunityPanel
+                isOpen={communityOpen}
+                onClose={() => setCommunityOpen(false)}
+                onViewUserRO={(data) => {
+                    onCheckContact(data, 'view');
+                    setCommunityOpen(false);
+                }}
+                currentUsername={username}
             />
 
             <PWAInstallModal

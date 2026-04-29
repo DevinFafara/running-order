@@ -2,18 +2,24 @@ import LZString from 'lz-string';
 
 /**
  * Generates a compressed shareable link containing the user's running order.
- * @param {Object} taggedBands - The state.taggedBands object { id: { interest: 1|2|3, ... } }
+ * @param {Object} taggedBands - The state.taggedBands object { id: { interest, context, ... } }
  * @param {Array} customEvents - Array of custom event objects
  * @param {string} username - The user's nickname
  * @returns {string} The complete share URL
  */
 export const generateShareLink = (taggedBands, customEvents, username = '') => {
-    // 1. Minify Data
-    // We only need the ID and the interest level for bands.
+    // 1. Minify Data — include both interest AND context
     const minimalBands = {};
     Object.entries(taggedBands).forEach(([id, data]) => {
-        if (data.interest) {
+        if (data.interest && data.context) {
+            // Both interest and context → object format
+            minimalBands[id] = { i: data.interest, c: data.context };
+        } else if (data.interest) {
+            // Interest only → string format (backward compatible with old links)
             minimalBands[id] = data.interest;
+        } else if (data.context) {
+            // Context only → object format
+            minimalBands[id] = { c: data.context };
         }
     });
 
@@ -37,20 +43,13 @@ export const generateShareLink = (taggedBands, customEvents, username = '') => {
     const compressed = LZString.compressToEncodedURIComponent(jsonString);
 
     // 3. Construct URL
-    // Use hash query param strategy compatible with HashRouter if needed, 
-    // but usually query string ?share=... works best.
-    // If using HashRouter (#/), the search param usually comes AFTER the hash in some setups, or BEFORE.
-    // React Router DOM v6 HashRouter: window.location.hash might contain the query.
-    // Let's safe-bet on putting it in the search part of the hash: `#/current-route?share=...`
-
     const baseUrl = window.location.origin + window.location.pathname;
-    // We want the user to land on the app.
-    // If we simply append ?share=XYZ to root, it works.
     return `${baseUrl}?share=${compressed}#${window.location.hash.replace('#', '')}`;
 };
 
 /**
  * Parses a share token back into usable data.
+ * Handles both old format (interest only as string) and new format (object with interest + context).
  * @param {string} token - The compressed identifier from the URL
  * @returns {Object|null} The parsed data { bands: {}, customEvents: [] } or null if invalid
  */
@@ -63,11 +62,20 @@ export const parseShareData = (token) => {
 
         if (!data || (!data.b && !data.c)) return null;
 
-        // Reconstruct format
+        // Reconstruct format — handle both old and new encoding
         const bands = {};
         if (data.b) {
-            Object.entries(data.b).forEach(([id, interest]) => {
-                bands[id] = { interest: interest }; // We reconstruct the full object structure
+            Object.entries(data.b).forEach(([id, val]) => {
+                if (typeof val === 'string') {
+                    // Old format: value is just the interest string (e.g. "must_see")
+                    bands[id] = { interest: val };
+                } else if (typeof val === 'object' && val !== null) {
+                    // New format: value is { i: interest, c: context }
+                    bands[id] = {
+                        interest: val.i || null,
+                        context: val.c || null
+                    };
+                }
             });
         }
 
@@ -95,6 +103,93 @@ export const parseShareData = (token) => {
 
     } catch (e) {
         console.error("Failed to parse share data", e);
+        return null;
+    }
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Server-side storage helpers
+// These use the same encoding format as share links, but without
+// the username embedded (it's stored separately in the JSON file).
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Encode taggedBands + customEvents into a compressed string for server storage.
+ * @param {Object} taggedBands - The state.taggedBands object
+ * @param {Array} customEvents - Array of custom event objects
+ * @returns {string} LZString-compressed string
+ */
+export const encodeROForServer = (taggedBands, customEvents = []) => {
+    const minimalBands = {};
+    Object.entries(taggedBands).forEach(([id, data]) => {
+        if (data.interest && data.context) {
+            minimalBands[id] = { i: data.interest, c: data.context };
+        } else if (data.interest) {
+            minimalBands[id] = data.interest;
+        } else if (data.context) {
+            minimalBands[id] = { c: data.context };
+        }
+    });
+
+    const minimalEvents = customEvents.map(e => ({
+        t: e.title,
+        d: e.day,
+        s: e.startTime,
+        e: e.endTime,
+        y: e.type
+    }));
+
+    const payload = { b: minimalBands, c: minimalEvents };
+    return LZString.compressToEncodedURIComponent(JSON.stringify(payload));
+};
+
+/**
+ * Decode a server-stored compressed string back into taggedBands + customEvents.
+ * @param {string} encoded - LZString-compressed string from server
+ * @returns {Object|null} { taggedBands: {}, customEvents: [] } or null if invalid
+ */
+export const decodeROFromServer = (encoded) => {
+    try {
+        if (!encoded) return null;
+
+        const decompressed = LZString.decompressFromEncodedURIComponent(encoded);
+        if (!decompressed) return null;
+
+        const data = JSON.parse(decompressed);
+        if (!data) return null;
+
+        const taggedBands = {};
+        if (data.b) {
+            Object.entries(data.b).forEach(([id, val]) => {
+                if (typeof val === 'string') {
+                    taggedBands[id] = { interest: val, taggedAt: Date.now() };
+                } else if (typeof val === 'object' && val !== null) {
+                    taggedBands[id] = {
+                        interest: val.i || null,
+                        context: val.c || null,
+                        taggedAt: Date.now()
+                    };
+                }
+            });
+        }
+
+        const customEvents = [];
+        if (data.c && Array.isArray(data.c)) {
+            data.c.forEach(e => {
+                customEvents.push({
+                    id: Date.now() + Math.random(),
+                    title: e.t,
+                    day: e.d,
+                    startTime: e.s,
+                    endTime: e.e,
+                    type: e.y
+                });
+            });
+        }
+
+        return { taggedBands, customEvents };
+    } catch (e) {
+        console.error("Failed to decode server RO data", e);
         return null;
     }
 };

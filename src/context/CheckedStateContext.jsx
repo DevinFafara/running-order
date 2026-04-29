@@ -1,6 +1,8 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext, useRef, useCallback } from 'react';
 import { DEFAULT_COLORS, INTEREST_LEVELS, CONTEXT_TAGS } from '../constants';
 import { migrateOldData } from '../utils/migrationUtils';
+import { encodeROForServer, decodeROFromServer } from '../utils/sharingUtils';
+import { api } from '../services/api';
 
 export const CheckedStateContext = createContext();
 
@@ -42,7 +44,9 @@ const INITIAL_STATE = {
     language: "fr",
 };
 
-export const CheckedStateProvider = ({ children }) => {
+const AUTOSAVE_DELAY = 1500; // ms
+
+export const CheckedStateProvider = ({ children, user }) => {
     const [state, setState] = useState(() => {
         try {
             const saved = localStorage.getItem('checkedState');
@@ -72,6 +76,31 @@ export const CheckedStateProvider = ({ children }) => {
 
     const [guestRo, setGuestRo] = useState(null);
 
+    // ─── Server sync state ──────────────────────────────────────────────
+    const [saveStatus, setSaveStatus] = useState('idle'); // 'idle' | 'saving' | 'saved' | 'error'
+    const [conflictData, setConflictData] = useState(null); // null | { server: {...}, local: {...} }
+    const [consentChoice, setConsentChoiceState] = useState(() => {
+        return localStorage.getItem('ro_consent') || null; // 'full' | 'private' | 'local_only' | null
+    });
+
+    const saveTimeoutRef = useRef(null);
+    const savedFadeTimeoutRef = useRef(null);
+    const lastSavedEncodedRef = useRef(null); // Track last saved value to avoid redundant saves
+    const initialLoadDoneRef = useRef(false);
+
+    // Persist consent choice
+    const setConsentChoice = useCallback((choice) => {
+        setConsentChoiceState(choice);
+        if (choice) {
+            localStorage.setItem('ro_consent', choice);
+        } else {
+            localStorage.removeItem('ro_consent');
+        }
+    }, []);
+
+    // Should we sync with server?
+    const shouldSync = user && consentChoice && consentChoice !== 'local_only';
+
     const displayState = React.useMemo(() => {
         if (guestRo && guestRo.bands) {
             return {
@@ -82,9 +111,140 @@ export const CheckedStateProvider = ({ children }) => {
         return state;
     }, [state, guestRo]);
 
+    // ─── LocalStorage persistence (always active) ───────────────────────
     useEffect(() => {
         localStorage.setItem('checkedState', JSON.stringify(state));
     }, [state]);
+
+    // ─── Custom events (read from App.jsx, needed for server sync) ──────
+    // We need access to customEvents for encoding. App.jsx will pass them via context.
+    const [customEventsForSync, setCustomEventsForSync] = useState([]);
+
+    // ─── Initial load from server ───────────────────────────────────────
+    useEffect(() => {
+        if (!shouldSync || initialLoadDoneRef.current) return;
+        initialLoadDoneRef.current = true;
+
+        const loadFromServer = async () => {
+            try {
+                const serverData = await api.getRO(user.username);
+                if (!serverData || !serverData.favorites) return;
+
+                const decoded = decodeROFromServer(serverData.favorites);
+                if (!decoded) return;
+
+                // Compare with local data
+                const localTaggedBands = state.taggedBands;
+                const serverTaggedBands = decoded.taggedBands;
+
+                const localKeys = Object.keys(localTaggedBands).sort().join(',');
+                const serverKeys = Object.keys(serverTaggedBands).sort().join(',');
+
+                const localHasData = Object.keys(localTaggedBands).length > 0;
+                const serverHasData = Object.keys(serverTaggedBands).length > 0;
+
+                if (localHasData && serverHasData && localKeys !== serverKeys) {
+                    // Conflict: both have data but they differ
+                    setConflictData({
+                        server: {
+                            taggedBands: serverTaggedBands,
+                            customEvents: decoded.customEvents,
+                            bandCount: Object.keys(serverTaggedBands).length,
+                            updatedAt: serverData.updated_at
+                        },
+                        local: {
+                            taggedBands: localTaggedBands,
+                            customEvents: customEventsForSync,
+                            bandCount: Object.keys(localTaggedBands).length
+                        }
+                    });
+                } else if (serverHasData && !localHasData) {
+                    // Server has data, local is empty → use server
+                    setState(prev => ({
+                        ...prev,
+                        taggedBands: serverTaggedBands
+                    }));
+                }
+                // If local has data and server doesn't, we keep local (will auto-save)
+                // If both are identical, nothing to do
+
+                // Store the encoded value to avoid re-saving what we just loaded
+                lastSavedEncodedRef.current = serverData.favorites;
+
+            } catch (err) {
+                if (err.status !== 404) {
+                    console.warn('Failed to load RO from server:', err.message);
+                }
+                // 404 = user has no server data yet, that's fine
+            }
+        };
+
+        loadFromServer();
+    }, [shouldSync, user]);
+
+    // ─── Autosave to server (debounced) ─────────────────────────────────
+    useEffect(() => {
+        if (!shouldSync) return;
+        if (!initialLoadDoneRef.current) return; // Don't save before initial load
+
+        // Clear previous timeout
+        if (saveTimeoutRef.current) {
+            clearTimeout(saveTimeoutRef.current);
+        }
+
+        saveTimeoutRef.current = setTimeout(async () => {
+            try {
+                const encoded = encodeROForServer(state.taggedBands, customEventsForSync);
+
+                // Skip if nothing changed since last save
+                if (encoded === lastSavedEncodedRef.current) return;
+
+                setSaveStatus('saving');
+
+                await api.saveRO(user.username, {
+                    avatar_url: user.avatar_url || null,
+                    favorites: encoded,
+                    community_opt_in: consentChoice === 'full',
+                    favorites_count: Object.keys(state.taggedBands).length
+                });
+
+                lastSavedEncodedRef.current = encoded;
+                setSaveStatus('saved');
+
+                // Clear "saved" status after 3 seconds
+                if (savedFadeTimeoutRef.current) clearTimeout(savedFadeTimeoutRef.current);
+                savedFadeTimeoutRef.current = setTimeout(() => setSaveStatus('idle'), 3000);
+
+            } catch (err) {
+                console.error('Autosave failed:', err);
+                setSaveStatus('error');
+            }
+        }, AUTOSAVE_DELAY);
+
+        return () => {
+            if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+        };
+    }, [state.taggedBands, customEventsForSync, shouldSync, user, consentChoice]);
+
+    // ─── Resolve conflict ───────────────────────────────────────────────
+    const resolveConflict = useCallback((choice) => {
+        if (!conflictData) return;
+
+        if (choice === 'server') {
+            setState(prev => ({
+                ...prev,
+                taggedBands: conflictData.server.taggedBands
+            }));
+            // customEvents are managed by App.jsx, emit an event or callback
+        } else {
+            // 'local' — keep current state, it will auto-save to server
+            lastSavedEncodedRef.current = null; // Force a re-save
+        }
+
+        setConflictData(null);
+    }, [conflictData]);
+
+    // ─── Existing state management functions ────────────────────────────
 
     const resetState = () => {
         setState(INITIAL_STATE);
@@ -249,7 +409,14 @@ export const CheckedStateProvider = ({ children }) => {
             updateNote,
             toggleScene,
             setScenes,
-            clearAllFavorites
+            clearAllFavorites,
+            // Server sync
+            saveStatus,
+            conflictData,
+            resolveConflict,
+            consentChoice,
+            setConsentChoice,
+            setCustomEventsForSync
         }}>
             {children}
         </CheckedStateContext.Provider>

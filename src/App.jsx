@@ -4,6 +4,7 @@ import { HashRouter as Router, Route, Routes } from 'react-router-dom';
 import { DAYS } from './constants';
 import { CheckedStateProvider, useCheckedState } from './context/CheckedStateContext';
 import { useLineup } from './hooks/useLineup';
+import { useAuth } from './hooks/useAuth';
 import HeaderBar from './components/layout/HeaderBar';
 import { usePWA } from './hooks/usePWA';
 import Navigation from './components/layout/Navigation';
@@ -11,6 +12,9 @@ import DayView from './components/views/DayView';
 import WeeklyView from './components/views/WeeklyView';
 import MapView from './components/views/MapView';
 import GroupCard from './components/common/GroupCard';
+import SaveIndicator from './components/common/SaveIndicator';
+import ConsentModal from './components/modals/ConsentModal';
+import ConflictResolver from './components/modals/ConflictResolver';
 import './styles/App.css';
 
 import CustomEventModal from './components/modals/CustomEventModal';
@@ -22,7 +26,12 @@ import { parseShareData } from './utils/sharingUtils';
 
 function AppContent() {
   const { data: groups, loading, error } = useLineup();
-  const { state, setDay, setState, isGuestMode, guestRo, setGuestRo } = useCheckedState();
+  const {
+    state, setDay, setState, isGuestMode, guestRo, setGuestRo,
+    saveStatus, conflictData, resolveConflict,
+    consentChoice, setConsentChoice, setCustomEventsForSync
+  } = useCheckedState();
+  const { user, isAuthenticated } = useAuth();
   const [selectedGroup, setSelectedGroup] = useState(null);
   const { isInstallable, isInstalled, installApp, hasPrompt, platform } = usePWA();
   const [popoverPosition, setPopoverPosition] = useState(null);
@@ -46,6 +55,10 @@ function AppContent() {
   });
   const [contactToOverwrite, setContactToOverwrite] = useState(null);
 
+  // Sync customEvents to CheckedStateContext for server sync
+  useEffect(() => {
+    setCustomEventsForSync(customEvents);
+  }, [customEvents, setCustomEventsForSync]);
 
   useEffect(() => {
     localStorage.setItem('contacts', JSON.stringify(contacts));
@@ -150,6 +163,12 @@ function AppContent() {
     setCustomEvents([]);
   };
 
+  // ─── Consent handling ─────────────────────────────────────────────
+  const handleConsentChoice = (choice) => {
+    setConsentChoice(choice);
+  };
+
+  const showConsentModal = isAuthenticated && !consentChoice;
 
   const swipeHandlers = useSwipeable({
     onSwipedLeft: (eventData) => {
@@ -241,6 +260,8 @@ function AppContent() {
         installApp={installApp}
         hasPrompt={hasPrompt}
         platform={platform}
+        isAuthenticated={isAuthenticated}
+        username={user?.username}
       />
 
       {isGuestMode && (
@@ -365,13 +386,28 @@ function AppContent() {
         confirmText="Mettre à jour"
       />
 
+      {/* Server sync UI */}
+      <ConsentModal
+        isOpen={showConsentModal}
+        onChoice={handleConsentChoice}
+      />
+
+      <ConflictResolver
+        conflictData={conflictData}
+        onResolve={resolveConflict}
+      />
+
+      <SaveIndicator status={saveStatus} />
+
     </div>
   );
 }
 
 function App() {
+  const { user } = useAuth();
+
   return (
-    <CheckedStateProvider>
+    <CheckedStateProvider user={user}>
       <Router>
         <AppContent />
       </Router>
