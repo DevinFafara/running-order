@@ -185,12 +185,28 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day, customEvents = [],
         // Couples scènes principales
         let mainCouples = [["MAINSTAGE 1", "MAINSTAGE 2"], ["WARZONE", "VALLEY"], ["TEMPLE", "ALTAR"]];
 
-        // Réarrangement si certaines scènes sont masquées (logique originale)
-        if (
-            (!state.scenes["warzone"] && !state.scenes["altar"] && state.scenes["temple"] && state.scenes["valley"]) ||
-            (state.scenes["warzone"] && state.scenes["altar"] && !state.scenes["temple"] && !state.scenes["valley"])
-        ) {
-            mainCouples = [["MAINSTAGE 1", "MAINSTAGE 2"], ["WARZONE", "ALTAR"], ["TEMPLE", "VALLEY"]];
+        // Réarrangement si certaines scènes sont masquées pour n'afficher qu'une colonne
+        // au lieu de deux demi-vides. Les couples possibles dépendent du jour :
+        //
+        // Jours normaux (Jeu/Ven/Sam) : Warzone et Altar ne jouent jamais en même temps,
+        //   idem Temple et Valley → on peut fusionner [Warzone+Altar] ou [Temple+Valley].
+        //
+        // Dimanche 2026 : Warzone et Altar jouent simultanément, idem Temple et Valley.
+        //   En revanche, Altar+Valley et Temple+Warzone ne se chevauchent pas.
+        if (day === 'Dimanche') {
+            if (
+                (!state.scenes["warzone"] && !state.scenes["temple"] && state.scenes["altar"] && state.scenes["valley"]) ||
+                (state.scenes["warzone"] && state.scenes["temple"] && !state.scenes["altar"] && !state.scenes["valley"])
+            ) {
+                mainCouples = [["MAINSTAGE 1", "MAINSTAGE 2"], ["ALTAR", "VALLEY"], ["TEMPLE", "WARZONE"]];
+            }
+        } else {
+            if (
+                (!state.scenes["warzone"] && !state.scenes["altar"] && state.scenes["temple"] && state.scenes["valley"]) ||
+                (state.scenes["warzone"] && state.scenes["altar"] && !state.scenes["temple"] && !state.scenes["valley"])
+            ) {
+                mainCouples = [["MAINSTAGE 1", "MAINSTAGE 2"], ["WARZONE", "ALTAR"], ["TEMPLE", "VALLEY"]];
+            }
         }
 
         if (state.sideScenes) {
