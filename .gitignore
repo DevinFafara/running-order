@@ -37,3 +37,7 @@ Thumbs.db
 # Backend data (generated at runtime)
 backend/data/
 backend/node_modules/
+backend/public/
+
+# Forum deployment package
+ro-planner-forum.zip

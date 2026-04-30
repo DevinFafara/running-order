@@ -8,6 +8,9 @@ const PORT = process.env.PORT || 3001;
 const ADMIN_SECRET = process.env.ADMIN_SECRET || null;
 const DATA_DIR = path.join(__dirname, 'data', 'users');
 const INDEX_FILE = path.join(__dirname, 'data', 'index.json');
+const STATIC_DIR = process.env.STATIC_DIR || path.join(__dirname, 'public');
+// URL de l'instance Discourse — doit être accessible depuis le container
+const DISCOURSE_URL = process.env.DISCOURSE_URL || 'https://forum.hellfest.fr';
 
 // ─── Ensure data directories exist ──────────────────────────────────────────
 fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -25,30 +28,53 @@ if (process.env.NODE_ENV !== 'production') {
     // En production, l'API est sur le même domaine — pas besoin de CORS
 }
 
+// Servir le frontend buildé (dist/) depuis backend/public/
+if (fs.existsSync(STATIC_DIR)) {
+    app.use('/running-order', express.static(STATIC_DIR));
+}
+
 // ─── Auth Middleware ────────────────────────────────────────────────────────
-// En dev: bypass, on fait confiance au :username de la route.
-// En prod: l'admin remplacera ce middleware par la vérification du token
-// Discourse (cookie de session, header X-Discourse-User, etc.)
-function verifyAuth(req, res, next) {
+
+function parseCookies(cookieHeader) {
+    if (!cookieHeader) return {};
+    return Object.fromEntries(
+        cookieHeader.split(';').map(c => {
+            const [k, ...v] = c.trim().split('=');
+            return [k.trim(), v.join('=')];
+        })
+    );
+}
+
+async function verifyAuth(req, res, next) {
     if (process.env.NODE_ENV !== 'production') {
-        // Dev: on fait confiance au username de la route
         req.authenticatedUser = req.params.username;
         return next();
     }
 
-    // ╔══════════════════════════════════════════════════════════════════╗
-    // ║  PRODUCTION: À compléter par l'admin                          ║
-    // ║  Vérifier le cookie/token Discourse et extraire le username.   ║
-    // ║  Exemple:                                                      ║
-    // ║    const discourseUser = verifyDiscourseSession(req);          ║
-    // ║    if (!discourseUser) return res.status(401).json(...)        ║
-    // ║    if (discourseUser !== req.params.username)                  ║
-    // ║        return res.status(403).json(...)                        ║
-    // ║    req.authenticatedUser = discourseUser;                      ║
-    // ║    next();                                                     ║
-    // ╚══════════════════════════════════════════════════════════════════╝
-    req.authenticatedUser = req.params.username;
-    next();
+    const cookies = parseCookies(req.headers.cookie);
+    const sessionCookie = cookies['_t'];
+    if (!sessionCookie) {
+        return res.status(401).json({ error: 'Non authentifié' });
+    }
+
+    try {
+        const response = await fetch(`${DISCOURSE_URL}/session/current.json`, {
+            headers: { 'Cookie': `_t=${sessionCookie}` }
+        });
+        const data = await response.json();
+        const username = data?.current_user?.username;
+        if (!username) {
+            return res.status(401).json({ error: 'Non authentifié' });
+        }
+        if (username !== req.params.username) {
+            return res.status(403).json({ error: 'Interdit' });
+        }
+        req.authenticatedUser = username;
+        next();
+    } catch (err) {
+        console.error('Auth verification error:', err);
+        return res.status(500).json({ error: 'Erreur de vérification de session' });
+    }
 }
 
 // ─── Mutex for index.json writes ────────────────────────────────────────────
@@ -254,6 +280,14 @@ app.get('/api/admin/rebuild-index', async (req, res) => {
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
+
+// ─── SPA fallback ───────────────────────────────────────────────────────────
+// Toutes les routes /running-order/* non matchées par l'API servent index.html
+if (fs.existsSync(STATIC_DIR)) {
+    app.get('/running-order/*', (req, res) => {
+        res.sendFile(path.join(STATIC_DIR, 'index.html'));
+    });
+}
 
 // ─── Start ──────────────────────────────────────────────────────────────────
 app.listen(PORT, () => {

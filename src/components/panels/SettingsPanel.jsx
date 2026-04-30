@@ -205,7 +205,7 @@ const SettingsPanel = ({ isOpen, onClose, onClearCustomEvents, onViewChange }) =
                             }}>
                                 <p style={{ margin: '0 0 10px 0' }}><strong style={{ color: '#ccc' }}>Ce qui est stocké :</strong> Votre pseudo, avatar, sélection de groupes (favoris & contexte), créneaux personnalisés, et votre préférence de visibilité.</p>
                                 <p style={{ margin: '0 0 10px 0' }}><strong style={{ color: '#ccc' }}>Où :</strong> Sur le serveur du forum Hellfest (même hébergement).</p>
-                                <p style={{ margin: '0 0 10px 0' }}><strong style={{ color: '#ccc' }}>Qui y a accès :</strong> Les autres membres connectés (si vous êtes opt-in), et l'administrateur pour la maintenance.</p>
+                                <p style={{ margin: '0 0 10px 0' }}><strong style={{ color: '#ccc' }}>Qui y a accès :</strong> Les autres membres connectés (si vous l'avez accepté), et l'administrateur pour la maintenance.</p>
                                 <p style={{ margin: 0 }}><strong style={{ color: '#ccc' }}>Pas de tracking,</strong> pas de cookies tiers, pas de revente de données.</p>
                             </div>
                         )}

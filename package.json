@@ -11,7 +11,8 @@
     "preview": "vite preview",
     "sync-lineup": "node scripts/sync-lineup.js",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist"
+    "deploy": "gh-pages -d dist",
+    "build:forum": "npm run build && rm -rf backend/public && mkdir -p backend/public && cp -r dist/. backend/public/ && zip -r ro-planner-forum.zip backend/ -x 'backend/node_modules/*' -x 'backend/data/*' -x 'backend/.env*' && echo 'Package pret : ro-planner-forum.zip'"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^7.1.0",
