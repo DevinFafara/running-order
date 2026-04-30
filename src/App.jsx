@@ -30,9 +30,10 @@ function AppContent() {
     state, setDay, setState, isGuestMode, guestRo, setGuestRo,
     saveStatus, conflictData, resolveConflict,
     consentChoice, setConsentChoice, setCustomEventsForSync,
-    setContactsForSync, serverContacts
+    setContactsForSync, serverContacts,
+    user,
   } = useCheckedState();
-  const { user, isAuthenticated } = useAuth();
+  const isAuthenticated = !!user;
   const [selectedGroup, setSelectedGroup] = useState(null);
   const { isInstallable, isInstalled, installApp, hasPrompt, platform } = usePWA();
   const [popoverPosition, setPopoverPosition] = useState(null);
@@ -179,6 +180,14 @@ function AppContent() {
   // ─── Consent handling ─────────────────────────────────────────────
   const handleConsentChoice = (choice) => {
     setConsentChoice(choice);
+  };
+
+  // ─── Conflict resolution — also restores customEvents from server ──
+  const handleResolveConflict = (choice) => {
+    if (choice === 'server' && conflictData?.server?.customEvents) {
+      setCustomEvents(conflictData.server.customEvents);
+    }
+    resolveConflict(choice);
   };
 
   const showConsentModal = isAuthenticated && !consentChoice;
@@ -407,7 +416,7 @@ function AppContent() {
 
       <ConflictResolver
         conflictData={conflictData}
-        onResolve={resolveConflict}
+        onResolve={handleResolveConflict}
       />
 
       <SaveIndicator status={saveStatus} />

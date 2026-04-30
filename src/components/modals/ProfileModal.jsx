@@ -3,6 +3,10 @@ import React from 'react';
 const ProfileModal = ({ isOpen, onClose, onOpenPanel, onShare, isInstallable, isInstalled, onInstall, hasPrompt, platform, onShowPwaGuide, isAuthenticated, username }) => {
     if (!isOpen) return null;
 
+    const isForumInstance = !import.meta.env.DEV &&
+        typeof window !== 'undefined' &&
+        window.location.hostname.includes('hellfest.fr');
+
     const MENU_ITEMS = [
         { id: 'stats', label: 'Mes Stats', icon: 'fa-solid fa-chart-pie', color: '#FFD700' },
         { id: 'playlists', label: 'Playlists', icon: 'fa-solid fa-music', color: '#1DB954' },
@@ -75,6 +79,30 @@ const ProfileModal = ({ isOpen, onClose, onOpenPanel, onShare, isInstallable, is
                         <i className="fa-solid fa-user" style={{ marginRight: '6px', color: '#FFD700' }}></i>
                         {username}
                     </div>
+                )}
+
+                {!isAuthenticated && isForumInstance && (
+                    <a
+                        href="/login?return_path=/running-order/"
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '10px',
+                            padding: '12px 16px',
+                            backgroundColor: 'rgba(255, 215, 0, 0.08)',
+                            border: '1px solid rgba(255, 215, 0, 0.3)',
+                            borderRadius: '12px',
+                            color: '#FFD700',
+                            textDecoration: 'none',
+                            fontWeight: 500,
+                            fontSize: '0.9rem',
+                            marginBottom: '15px'
+                        }}
+                    >
+                        <i className="fa-solid fa-right-to-bracket"></i>
+                        Se connecter au forum
+                    </a>
                 )}
 
                 <div style={{

@@ -5,6 +5,7 @@ const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const ADMIN_SECRET = process.env.ADMIN_SECRET || null;
 const DATA_DIR = path.join(__dirname, 'data', 'users');
 const INDEX_FILE = path.join(__dirname, 'data', 'index.json');
 
@@ -214,6 +215,11 @@ app.get('/api/users', (req, res) => {
 
 // GET /api/admin/rebuild-index — Reconstruire l'index depuis les fichiers
 app.get('/api/admin/rebuild-index', async (req, res) => {
+    if (process.env.NODE_ENV === 'production') {
+        if (!ADMIN_SECRET || req.query.secret !== ADMIN_SECRET) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+    }
     try {
         const files = fs.readdirSync(DATA_DIR).filter(f => f.endsWith('.json'));
         const users = [];

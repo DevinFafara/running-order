@@ -46,6 +46,11 @@ const INITIAL_STATE = {
 
 const AUTOSAVE_DELAY = 1500; // ms
 
+const toComparable = (bands) =>
+    Object.keys(bands).sort()
+        .map(id => `${id}:${bands[id]?.interest || ''}:${bands[id]?.context || ''}`)
+        .join('|');
+
 export const CheckedStateProvider = ({ children, user }) => {
     const [state, setState] = useState(() => {
         try {
@@ -139,13 +144,10 @@ export const CheckedStateProvider = ({ children, user }) => {
                 const localTaggedBands = state.taggedBands;
                 const serverTaggedBands = decoded.taggedBands;
 
-                const localKeys = Object.keys(localTaggedBands).sort().join(',');
-                const serverKeys = Object.keys(serverTaggedBands).sort().join(',');
-
                 const localHasData = Object.keys(localTaggedBands).length > 0;
                 const serverHasData = Object.keys(serverTaggedBands).length > 0;
 
-                if (localHasData && serverHasData && localKeys !== serverKeys) {
+                if (localHasData && serverHasData && toComparable(localTaggedBands) !== toComparable(serverTaggedBands)) {
                     // Conflict: both have data but they differ
                     setConflictData({
                         server: {
@@ -404,6 +406,7 @@ export const CheckedStateProvider = ({ children, user }) => {
         <CheckedStateContext.Provider value={{
             state: displayState,
             userState: state,
+            user,
             isGuestMode: !!guestRo,
             guestRo,
             setGuestRo,

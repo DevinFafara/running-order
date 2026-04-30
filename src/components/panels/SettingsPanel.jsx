@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useCheckedState } from '../../context/CheckedStateContext';
 import { INTEREST_LEVELS, INTEREST_ORDER } from '../../constants';
-import { useAuth } from '../../hooks/useAuth';
 import { api } from '../../services/api';
 
 const SettingsPanel = ({ isOpen, onClose, onClearCustomEvents, onViewChange }) => {
-    const { state, setState, getInterestColor, setInterestColor, resetInterestColors, clearAllFavorites, consentChoice, setConsentChoice } = useCheckedState();
-    const { user, isAuthenticated } = useAuth();
+    const { state, setState, getInterestColor, setInterestColor, resetInterestColors, clearAllFavorites, consentChoice, setConsentChoice, user } = useCheckedState();
+    const isAuthenticated = !!user;
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
     const [confirmDelete, setConfirmDelete] = useState(false);
     const [confirmServerDelete, setConfirmServerDelete] = useState(false);
