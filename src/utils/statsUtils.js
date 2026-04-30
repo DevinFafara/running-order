@@ -185,13 +185,13 @@ export const calculateStats = (lineup, taggedBands) => {
 
         const completionRate = Math.round(((totalWindowMinutes - freeMinutes) / totalWindowMinutes) * 100);
 
-        console.log(`[Stats DEBUG Day] ${day}:`, {
-            totalWindow: totalWindowMinutes,
-            occupied: occupiedMinutes,
-            transitions: transitionMalus,
-            freeTime: freeMinutes,
-            rate: completionRate
-        });
+        // console.log(`[Stats DEBUG Day] ${day}:`, {
+        //     totalWindow: totalWindowMinutes,
+        //     occupied: occupiedMinutes,
+        //     transitions: transitionMalus,
+        //     freeTime: freeMinutes,
+        //     rate: completionRate
+        // });
 
         stats.days[day].completionRate = completionRate;
 
