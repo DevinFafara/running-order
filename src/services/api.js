@@ -3,7 +3,7 @@
  * All API interactions MUST go through this module.
  */
 
-const API_BASE = import.meta.env.VITE_API_URL || '/api';
+const API_BASE = import.meta.env.VITE_API_URL || '/running-order/api';
 
 /**
  * Generic response handler

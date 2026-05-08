@@ -147,8 +147,8 @@ function sanitizeUsername(username) {
 // ROUTES
 // ═══════════════════════════════════════════════════════════════════════════
 
-// GET /api/ro/:username — Lire le RO d'un utilisateur
-app.get('/api/ro/:username', (req, res) => {
+// GET /running-order/api/ro/:username — Lire le RO d'un utilisateur
+app.get('/running-order/api/ro/:username', (req, res) => {
     const username = sanitizeUsername(req.params.username);
     const filePath = path.join(DATA_DIR, `${username}.json`);
 
@@ -175,8 +175,8 @@ app.get('/api/ro/:username', (req, res) => {
     }
 });
 
-// POST /api/ro/:username — Sauvegarder le RO d'un utilisateur (auth requise)
-app.post('/api/ro/:username', verifyAuth, async (req, res) => {
+// POST /running-order/api/ro/:username — Sauvegarder le RO d'un utilisateur (auth requise)
+app.post('/running-order/api/ro/:username', verifyAuth, async (req, res) => {
     const username = sanitizeUsername(req.params.username);
 
     if (req.authenticatedUser !== username) {
@@ -205,8 +205,8 @@ app.post('/api/ro/:username', verifyAuth, async (req, res) => {
     }
 });
 
-// DELETE /api/ro/:username — Supprimer le RO d'un utilisateur (auth requise)
-app.delete('/api/ro/:username', verifyAuth, async (req, res) => {
+// DELETE /running-order/api/ro/:username — Supprimer le RO d'un utilisateur (auth requise)
+app.delete('/running-order/api/ro/:username', verifyAuth, async (req, res) => {
     const username = sanitizeUsername(req.params.username);
 
     if (req.authenticatedUser !== username) {
@@ -227,8 +227,8 @@ app.delete('/api/ro/:username', verifyAuth, async (req, res) => {
     }
 });
 
-// GET /api/users — Lister les utilisateurs opt-in (lecture de l'index)
-app.get('/api/users', (req, res) => {
+// GET /running-order/api/users — Lister les utilisateurs opt-in (lecture de l'index)
+app.get('/running-order/api/users', (req, res) => {
     try {
         const index = readIndex();
         const publicUsers = index.users.filter(u => u.community_opt_in === true);
@@ -239,8 +239,8 @@ app.get('/api/users', (req, res) => {
     }
 });
 
-// GET /api/admin/rebuild-index — Reconstruire l'index depuis les fichiers
-app.get('/api/admin/rebuild-index', async (req, res) => {
+// GET /running-order/api/admin/rebuild-index — Reconstruire l'index depuis les fichiers
+app.get('/running-order/api/admin/rebuild-index', async (req, res) => {
     if (process.env.NODE_ENV === 'production') {
         if (!ADMIN_SECRET || req.query.secret !== ADMIN_SECRET) {
             return res.status(401).json({ error: 'Unauthorized' });
@@ -277,7 +277,7 @@ app.get('/api/admin/rebuild-index', async (req, res) => {
 });
 
 // ─── Health check ───────────────────────────────────────────────────────────
-app.get('/api/health', (req, res) => {
+app.get('/running-order/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
