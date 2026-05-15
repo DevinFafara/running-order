@@ -8,6 +8,9 @@ export const STAGES = {
   HELLSTAGE: 'HELLSTAGE',
   METAL_CORNER: 'METAL_CORNER',
   PURPLE_HOUSE: 'PURPLE_HOUSE',
+  HELLCITY_STAGE: 'HELLCITY_STAGE',
+  LE_OFF1: 'LE_OFF1',
+  LE_OFF2: 'LE_OFF2',
 };
 
 // Groupements pour l'agencement
@@ -90,6 +93,30 @@ export const STAGE_CONFIG = {
     bandColor: '#d6b2e0',
     mapPosition: { left: '70.1%', top: '56.7%' }
   },
+  [STAGES.HELLCITY_STAGE]: {
+    name: 'Hellcity Brewpub',
+    icon: `${import.meta.env.BASE_URL}icons/hellcity-brewpub.png`,
+    slug: 'hellcity_stage',
+    themeColor: '#c45c00',
+    bandColor: '#e8b07a',
+    mapPosition: { left: '64.0%', top: '55.0%' }
+  },
+  [STAGES.LE_OFF1]: {
+    name: 'Le Off 1',
+    icon: `${import.meta.env.BASE_URL}icons/le_off1.png`,
+    slug: 'le_off1',
+    themeColor: '#7a1a1a',
+    bandColor: '#c47070',
+    mapPosition: { left: '50.0%', top: '70.0%' }
+  },
+  [STAGES.LE_OFF2]: {
+    name: 'Le Off 2',
+    icon: `${import.meta.env.BASE_URL}icons/le_off2.png`,
+    slug: 'le_off2',
+    themeColor: '#3a3a3a',
+    bandColor: '#8a8a8a',
+    mapPosition: { left: '53.0%', top: '70.0%' }
+  },
 };
 
 export const MAIN_STAGES = [
@@ -105,6 +132,9 @@ export const SIDE_STAGES = [
   STAGES.HELLSTAGE,
   STAGES.PURPLE_HOUSE,
   STAGES.METAL_CORNER,
+  STAGES.HELLCITY_STAGE,
+  STAGES.LE_OFF1,
+  STAGES.LE_OFF2,
 ];
 
 export const MAP_POIS = [
@@ -126,7 +156,7 @@ export const MAP_POIS = [
   { id: 'poi-entrance', name: 'Entrée principale', icon: 'fa-solid fa-right-to-bracket', mapPosition: { left: '67.2%', top: '40.7%' }, color: '#4CAF50' },
 ];
 
-export const DAYS = ['Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+export const DAYS = ['Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
 
 export const DEFAULT_COLORS = {
   color1: "#FFEC61",

@@ -19,6 +19,7 @@ const HeaderBar = ({
     isAuthenticated, username
 }) => {
     const { userState } = useCheckedState();
+    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
     const [playlistOpen, setPlaylistOpen] = useState(false);
     const [filterOpen, setFilterOpen] = useState(false);
     const [settingsOpen, setSettingsOpen] = useState(false);
@@ -30,6 +31,12 @@ const HeaderBar = ({
     const [shareOpen, setShareOpen] = useState(false);
     const [pwaGuideOpen, setPwaGuideOpen] = useState(false);
     const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+    React.useEffect(() => {
+        const handleResize = () => setWindowWidth(window.innerWidth);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     React.useEffect(() => {
         const handleOnline = () => setIsOnline(true);
@@ -71,8 +78,8 @@ const HeaderBar = ({
                                 border: '1px solid rgba(255,255,255,0.05)'
                             }}
                         />
-                        <span className="header-title" style={{ fontFamily: 'Metal Mania', letterSpacing: '1px' }}>RO Planner</span>
-                        {isAuthenticated && username && (
+                        {/* <span className="header-title" style={{ fontFamily: 'Metal Mania', letterSpacing: '1px' }}>RO Planner</span> */}
+                        {isAuthenticated && username && windowWidth >= 600 && (
                             <span
                                 title={`Connecté en tant que ${username}`}
                                 style={{

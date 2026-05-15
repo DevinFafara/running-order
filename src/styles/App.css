@@ -224,6 +224,7 @@ nav button:hover {
   height: auto;
   align-items: flex-start;
   padding-bottom: 5px;
+  margin-bottom: 25px;
 }
 
 .scene-image {
@@ -335,6 +336,40 @@ nav button:hover {
 .compact-band-tag h4 {
   font-weight: 700;
   text-transform: uppercase;
+}
+
+/* Créneaux courts (<45min) : mise en page serrée */
+.compact-band-tag.slot-short,
+.compact-band-tag.slot-very-short {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+
+.compact-band-tag.slot-short h4,
+.compact-band-tag.slot-very-short h4 {
+  margin: 0;
+  line-height: 1.1;
+}
+
+.compact-band-tag.slot-short span,
+.compact-band-tag.slot-very-short span {
+  line-height: 1.1;
+}
+
+/* Créneaux très courts (<30min) : ellipsis sur le nom, en vue compacte uniquement */
+.compact-band-tag.slot-very-short {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.compact-day .compact-band-tag.slot-very-short h4 {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
 }
 
 .selected-group {

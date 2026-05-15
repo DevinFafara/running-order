@@ -325,6 +325,8 @@ function AppContent() {
         <Navigation
           groups={groups}
           onSelectGroup={handleGroupSelect}
+          isAuthenticated={isAuthenticated}
+          username={user?.username}
         />
       )}
 

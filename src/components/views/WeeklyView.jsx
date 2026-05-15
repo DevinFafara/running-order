@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import chroma from 'chroma-js';
 import { useCheckedState } from '../../context/CheckedStateContext';
 import { useLineup } from '../../hooks/useLineup'; // Assuming this hook exists or we pass groups as prop
-import { STAGE_CONFIG, INTEREST_LEVELS, INTEREST_ORDER, CONTEXT_TAGS, CONTEXT_ORDER } from '../../constants';
+import { STAGE_CONFIG, INTEREST_LEVELS, INTEREST_ORDER, CONTEXT_TAGS, CONTEXT_ORDER, DAYS, MAIN_STAGES, SIDE_STAGES } from '../../constants';
 // Reuse timeToMinutes for layout calcs
 import TagMenu from '../common/TagMenu';
 import { PDFDownloadLink } from '@react-pdf/renderer';
@@ -28,12 +28,31 @@ const ICONS = {
 
 const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent }) => {
     const { state, getInterestColor, getBandTag, cycleInterest } = useCheckedState();
+
+    const visibleDays = state.sideScenes
+        ? DAYS
+        : DAYS.filter(d => d !== 'Mardi' && d !== 'Mercredi');
+
     const [filterMode, setFilterMode] = useState('favorites'); // 'favorites' or 'all'
     const [colorMode, setColorMode] = useState('transparent'); // 'transparent' or 'scene'
     const [selectedScenes, setSelectedScenes] = useState(() => [...Object.keys(STAGE_CONFIG), 'CUSTOM']);
     const [selectedInterests, setSelectedInterests] = useState(['must_see', 'interested', 'curious']);
     const [selectedContexts, setSelectedContexts] = useState(['with_friend', 'strategic', 'skip']);
     const [tagMenuState, setTagMenuState] = useState({ open: false, groupId: null, position: { x: 0, y: 0 } });
+    const COL_CYCLE = [6, 3, 2, 1];
+    const [colCount, setColCount] = useState(() => visibleDays.length);
+    const cycleColCount = () => setColCount(prev => {
+        const idx = COL_CYCLE.indexOf(prev);
+        return COL_CYCLE[(idx + 1) % COL_CYCLE.length];
+    });
+
+    const [stageGroupFilter, setStageGroupFilter] = useState('main'); // 'main' | 'side'
+    const toggleStageGroup = () => {
+        const next = stageGroupFilter === 'main' ? 'side' : 'main';
+        setStageGroupFilter(next);
+        const stages = next === 'main' ? MAIN_STAGES : SIDE_STAGES;
+        setSelectedScenes([...stages, 'CUSTOM']);
+    };
 
     // Handle Right Click (Context Menu)
     const handleContextMenu = (e, group) => {
@@ -121,10 +140,9 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
 
     // --- 2. LAYOUT ALGORITHM (The "Clashfinder" Logic) ---
     const dayColumns = useMemo(() => {
-        const days = ['Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
         const columns = {};
 
-        days.forEach(day => {
+        DAYS.forEach(day => {
             let dayBands = filteredGroups.filter(g => g.JOUR === day);
             if (dayBands.length === 0) dayBands = filteredGroups.filter(g => g.DAY === day);
 
@@ -207,6 +225,59 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
 
                 {/* Right: View Mode Filters */}
                 <div className="weekly-header-right">
+                    {/* TEST — contrôles temporaires */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                        {/* Switch scènes principales / annexes */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ fontSize: '0.75rem', color: '#888' }}>
+                                {stageGroupFilter === 'main' ? 'Princ.' : 'Annexes'}
+                            </span>
+                            <button
+                                onClick={toggleStageGroup}
+                                title={stageGroupFilter === 'main' ? 'Passer aux scènes annexes' : 'Passer aux scènes principales'}
+                                style={{
+                                    background: stageGroupFilter === 'main'
+                                        ? 'rgba(100,160,255,0.15)'
+                                        : 'rgba(255,180,80,0.15)',
+                                    border: `1px solid ${stageGroupFilter === 'main' ? 'rgba(100,160,255,0.4)' : 'rgba(255,180,80,0.4)'}`,
+                                    borderRadius: '20px',
+                                    color: 'white',
+                                    padding: '4px 12px',
+                                    cursor: 'pointer',
+                                    fontSize: '0.8rem',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                }}
+                            >
+                                <i className={`fa-solid ${stageGroupFilter === 'main' ? 'fa-guitar' : 'fa-tent'}`}></i>
+                                <i className="fa-solid fa-right-left" style={{ fontSize: '0.65rem', opacity: 0.6 }}></i>
+                                <i className={`fa-solid ${stageGroupFilter === 'main' ? 'fa-tent' : 'fa-guitar'}`}></i>
+                            </button>
+                        </div>
+
+                        {/* Sélecteur de colonnes */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '0.75rem', color: '#888' }}>Colonnes :</span>
+                        <button
+                            onClick={cycleColCount}
+                            style={{
+                                background: 'rgba(255,255,255,0.08)',
+                                border: '1px solid rgba(255,255,255,0.2)',
+                                borderRadius: '20px',
+                                color: 'white',
+                                padding: '4px 14px',
+                                cursor: 'pointer',
+                                fontSize: '0.9rem',
+                                fontWeight: 'bold',
+                                letterSpacing: '1px',
+                            }}
+                            title="Changer le nombre de colonnes"
+                        >
+                            {colCount}
+                        </button>
+                        </div>
+                    </div>
                     <div className="weekly-filters">
                         <button
                             className={`weekly-filter-btn ${filterMode === 'favorites' ? 'active' : ''}`}
@@ -277,8 +348,8 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
                 </div>
             </div>
 
-            <div className="weekly-grid">
-                {['Jeudi', 'Vendredi', 'Samedi', 'Dimanche'].map((day, dayIdx) => (
+            <div className="weekly-grid" style={{ gridTemplateColumns: `repeat(${colCount}, 1fr)` }}>
+                {visibleDays.map((day, dayIdx) => (
                     <div key={day} className={`weekly-day-column col-${dayIdx}`}>
                         {/* Time Ruler (every hour) - Now inside each column for responsive 2x2 alignment */}
                         <div className="weekly-time-ruler">

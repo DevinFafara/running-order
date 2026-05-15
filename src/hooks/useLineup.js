@@ -36,29 +36,11 @@ export const useLineup = () => {
 
     const loadData = useCallback(async (forceRefresh = false) => {
         try {
-            const cachedData = localStorage.getItem(CACHE_KEY);
-            const cachedTimestamp = localStorage.getItem(TIMESTAMP_KEY);
-
-            if (cachedData && cachedTimestamp && !forceRefresh) {
-                setData(JSON.parse(cachedData));
-                setLoading(false);
-            } else {
-                let url = GOOGLE_SHEETS_URL;
-                if (forceRefresh) url += `&_cb=${Date.now()}`;
-
-                try {
-                    const result = await fetchAndParseGoogleSheetsCSV(url);
-                    setData(result.data);
-                    localStorage.setItem(CACHE_KEY, JSON.stringify(result.data));
-                    localStorage.setItem(TIMESTAMP_KEY, result.timestamp);
-                } catch (fetchErr) {
-                    console.warn('Google Sheets fetch failed, falling back to local JSON', fetchErr);
-                    const response = await fetch(FALLBACK_URL);
-                    const localData = await response.json();
-                    setData(localData);
-                }
-                setLoading(false);
-            }
+            // [TEST LOCAL] — bypass Google Sheets, use local lineup.json only
+            const response = await fetch(FALLBACK_URL);
+            const localData = await response.json();
+            setData(localData);
+            setLoading(false);
         } catch (err) {
             setError(err);
             setLoading(false);
@@ -67,9 +49,10 @@ export const useLineup = () => {
 
     useEffect(() => {
         loadData().catch(console.error);
-        const intervalId = setInterval(checkForUpdates, 60000);
-        return () => clearInterval(intervalId);
-    }, [loadData, checkForUpdates]);
+        // [TEST LOCAL] — background sync disabled
+        // const intervalId = setInterval(checkForUpdates, 60000);
+        // return () => clearInterval(intervalId);
+    }, [loadData]);
 
     return {
         data,

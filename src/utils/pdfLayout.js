@@ -8,24 +8,34 @@ const SCENE_GROUPS = [
     ['MAINSTAGE 1', 'MAINSTAGE 2'],
     ['WARZONE', 'VALLEY'],
     ['ALTAR', 'TEMPLE'],
-    ['HELLSTAGE', 'METAL_CORNER'],
-    ['PURPLE_HOUSE']
+    ['HELLSTAGE', 'HELLCITY_STAGE'],
+    ['PURPLE_HOUSE', 'METAL_CORNER'],
+    ['LE_OFF1', 'LE_OFF2']
 ];
 
 const SCENE_COUPLES = {
     'MAINSTAGE 1': 'MS', 'MAINSTAGE 2': 'MS',
     'WARZONE': 'WV', 'VALLEY': 'WV',
     'ALTAR': 'AT', 'TEMPLE': 'AT',
-    'HELLSTAGE': 'HM', 'METAL_CORNER': 'HM',
-    'PURPLE_HOUSE': 'PH'
+    'HELLSTAGE': 'HC', 'HELLCITY_STAGE': 'HC',
+    'PURPLE_HOUSE': 'PM', 'METAL_CORNER': 'PM',
+    'LE_OFF1': 'LO', 'LE_OFF2': 'LO'
 };
 
-const SCENE_ORDER = ['MS', 'WV', 'AT', 'HM', 'PH'];
+const SCENE_ORDER = ['MS', 'WV', 'AT', 'HC', 'PM', 'LO'];
 
 const doTimesOverlap = (s1, e1, s2, e2) => s1 < e2 && e1 > s2;
 
 // Normalize scene names for matching
 const normalizeScene = (scene) => scene ? scene.toUpperCase().trim() : '';
+
+// Position (0=left, 1=right) de chaque scène au sein de son couple
+const SCENE_COUPLE_POSITION = {};
+SCENE_GROUPS.forEach(group => {
+    group.forEach((scene, idx) => {
+        SCENE_COUPLE_POSITION[normalizeScene(scene)] = idx;
+    });
+});
 
 export const calculateWeeklyLayout = (dayBands, pixelsPerMinute, reverse = false, mode = 'favorites', selectedScenes = []) => {
     if (!dayBands || dayBands.length === 0) return [];
@@ -36,7 +46,10 @@ export const calculateWeeklyLayout = (dayBands, pixelsPerMinute, reverse = false
     if (mode === 'all') {
         // --- STRATEGY B: DYNAMIC COLUMNS ---
         const activeSceneGroups = SCENE_GROUPS.filter(group =>
-            group.some(sceneKey => normalizedSelected.includes(normalizeScene(sceneKey)))
+            group.some(sceneKey =>
+                normalizedSelected.includes(normalizeScene(sceneKey)) &&
+                dayBands.some(b => normalizeScene(b.SCENE) === normalizeScene(sceneKey))
+            )
         );
 
         const totalActiveCols = activeSceneGroups.length;
@@ -175,7 +188,7 @@ export const calculateWeeklyLayout = (dayBands, pixelsPerMinute, reverse = false
             });
         }
 
-        return groupsToLayout.map(g => {
+        const result = groupsToLayout.map(g => {
             let posIndex = g.finalContext.indexOf(g.sceneCouple);
             if (posIndex === -1) posIndex = 0;
 
@@ -196,5 +209,25 @@ export const calculateWeeklyLayout = (dayBands, pixelsPerMinute, reverse = false
 
             return { band: g, start: g._start, end: g._end, top, height, widthPct, leftPct };
         });
+
+        // Subdivision intra-couple : si deux scènes du même couple se chevauchent,
+        // elles partagent la largeur allouée au couple (gauche / droite selon SCENE_GROUPS)
+        result.forEach(item => {
+            const hasIntraCoupleOverlap = result.some(other =>
+                other !== item &&
+                other.band.sceneCouple === item.band.sceneCouple &&
+                normalizeScene(other.band.SCENE) !== normalizeScene(item.band.SCENE) &&
+                doTimesOverlap(item.start, item.end, other.start, other.end)
+            );
+
+            if (hasIntraCoupleOverlap) {
+                const pos = SCENE_COUPLE_POSITION[normalizeScene(item.band.SCENE)] ?? 0;
+                item.widthPct = item.widthPct / 2;
+                // pos=0 → moitié gauche (offset 0), pos=1 → moitié droite (offset = demi-largeur)
+                item.leftPct = item.leftPct + pos * item.widthPct;
+            }
+        });
+
+        return result;
     }
 };

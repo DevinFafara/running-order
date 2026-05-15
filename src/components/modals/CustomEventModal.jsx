@@ -189,7 +189,7 @@ const CustomEventModal = ({ isOpen, onClose, onSave, onDelete, defaultDay, event
                                 fontSize: '1rem'
                             }}
                         >
-                            {['Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'].map(d => (
+                            {['Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'].map(d => (
                                 <option key={d} value={d}>{d}</option>
                             ))}
                         </select>

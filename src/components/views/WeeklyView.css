@@ -293,12 +293,14 @@
         gap: 15px;
     }
 
-    /* In 2-col layout, show ruler on col 0 and 2 (start of each row) */
-    .weekly-day-column.col-2 .weekly-time-ruler {
+    /* In 2-col layout, show ruler on col 0, 2, 4 (start of each row) */
+    .weekly-day-column.col-2 .weekly-time-ruler,
+    .weekly-day-column.col-4 .weekly-time-ruler {
         display: block;
     }
 
-    .weekly-day-column.col-2 {
+    .weekly-day-column.col-2,
+    .weekly-day-column.col-4 {
         padding-left: 35px;
     }
 }
@@ -475,7 +477,6 @@
 
     .weekly-grid {
         display: grid !important;
-        grid-template-columns: repeat(4, 1fr) !important;
         gap: 5px !important;
         width: 100% !important;
         margin: 0 !important;

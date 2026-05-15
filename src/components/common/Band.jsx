@@ -3,7 +3,7 @@ import chroma from 'chroma-js';
 import { useCheckedState } from '../../context/CheckedStateContext';
 import { STAGE_CONFIG, INTEREST_LEVELS, CONTEXT_TAGS } from '../../constants';
 
-const Band = ({ group, selectGroup, selectedGroupId, onTagClick, dayStartMinutes, dayEndMinutes }) => {
+const Band = ({ group, selectGroup, selectedGroupId, onTagClick, dayStartMinutes, dayEndMinutes, halfWidth = false, side = 'left' }) => {
     const { GROUPE, SCENE, DEBUT, FIN, id } = group;
     const { state, getBandTag, getInterestColor, cycleInterest } = useCheckedState();
 
@@ -64,7 +64,7 @@ const Band = ({ group, selectGroup, selectedGroupId, onTagClick, dayStartMinutes
         let startOfDayMinutes;
 
         // Scènes annexes : elles peuvent commencer plus tôt que les scènes principales
-        const isSideStage = ['HELLSTAGE', 'PURPLE_HOUSE', 'METAL_CORNER'].includes(SCENE);
+        const isSideStage = ['HELLSTAGE', 'PURPLE_HOUSE', 'METAL_CORNER', 'HELLCITY_STAGE', 'LE_OFF1', 'LE_OFF2'].includes(SCENE);
         // Si sideScenes est activé, la journée s'étend jusqu'à 04h00 (28h) pour Metal Corner
         const extendedEnd = state.sideScenes ? 28 * 60 : 26 * 60;
 
@@ -143,7 +143,10 @@ const Band = ({ group, selectGroup, selectedGroupId, onTagClick, dayStartMinutes
             style={{
                 position: 'absolute',
                 top: getTop(),
-                height: `${dureeConcert}px`,
+                height: `${dureeConcert - 1}px`,
+                ...(halfWidth
+                    ? { width: '46%', left: side === 'left' ? '2%' : '52%', marginLeft: 0, marginRight: 0 }
+                    : {}),
                 border: `0px solid ${sceneColor}`,
                 backgroundColor: chroma(sceneColor).luminance(0.6).hex(),
                 display: (!state.scenes[SCENE.toLowerCase().replace(' ', '')]) ? 'none' : 'flex',
@@ -177,15 +180,17 @@ const Band = ({ group, selectGroup, selectedGroupId, onTagClick, dayStartMinutes
                 </div>
             )}
 
-            <div className="compact-band-tag">
+            <div className={`compact-band-tag${duree < 30 ? ' slot-very-short' : duree < 45 ? ' slot-short' : ''}`}>
                 <h4 style={{
                     fontSize: `clamp(5px, ${GROUPE.length > 16 ? 'calc(0.6vw + 5px)' : 'calc(0.9vw + 8px)'}, 16px)`,
                 }}>
                     {GROUPE}
                 </h4>
-                <span style={{ fontSize: 'calc(0.5vw + 6px)' }}>
-                    {DEBUT.replace('h', ':')} - {FIN.replace('h', ':')}
-                </span>
+                {duree > 15 && (
+                    <span style={{ fontSize: 'calc(0.5vw + 6px)' }}>
+                        {DEBUT.replace('h', ':')} - {FIN.replace('h', ':')}
+                    </span>
+                )}
             </div>
         </div>
     );

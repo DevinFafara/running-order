@@ -22,8 +22,11 @@ const FilterPanel = ({ isOpen, onClose }) => {
 
     const sideScenesList = [
         { id: 'hellstage', name: 'Hellstage', color: '#239c60' },
+        { id: 'hellcity_stage', name: 'Hellcity Stage', color: '#c45c00' },
         { id: 'purple_house', name: 'Purple House', color: '#9500c6' },
-        { id: 'metal_corner', name: 'Metal Corner', color: '#9f9c78' }
+        { id: 'metal_corner', name: 'Metal Corner', color: '#9f9c78' },
+        { id: 'le_off1', name: 'Le Off 1', color: '#7a1a1a' },
+        { id: 'le_off2', name: 'Le Off 2', color: '#3a3a3a' }
     ];
 
     const isSmallScreen = windowWidth < 1200;
@@ -80,26 +83,28 @@ const FilterPanel = ({ isOpen, onClose }) => {
 
                 <div className="filter-section">
 
-                    {/* Toggle global Scènes Annexes */}
-                    <div style={{ marginBottom: '20px', paddingBottom: '15px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                        <label className="settings-option">
-                            <div className="settings-option-info">
-                                <i className="fa-solid fa-tent"></i>
-                                <div>
-                                    <span className="settings-option-title">Activer Scènes Annexes</span>
-                                    <span className="settings-option-desc">Hell Stage, Purple House, Metal Corner</span>
+                    {/* Toggle global Scènes Annexes — masqué sur mobile (accessible via bouton nav) */}
+                    {!isSmallScreen && (
+                        <div style={{ marginBottom: '20px', paddingBottom: '15px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                            <label className="settings-option">
+                                <div className="settings-option-info">
+                                    <i className="fa-solid fa-tent"></i>
+                                    <div>
+                                        <span className="settings-option-title">Activer Scènes Annexes</span>
+                                        <span className="settings-option-desc">Hellstage, Hellcity, Purple House, Metal Corner, Le Off</span>
+                                    </div>
                                 </div>
-                            </div>
-                            <div className="toggle-switch">
-                                <input
-                                    type="checkbox"
-                                    checked={state.sideScenes || false}
-                                    onChange={() => setState(prev => ({ ...prev, sideScenes: !prev.sideScenes }))}
-                                />
-                                <span className="toggle-slider"></span>
-                            </div>
-                        </label>
-                    </div>
+                                <div className="toggle-switch">
+                                    <input
+                                        type="checkbox"
+                                        checked={state.sideScenes || false}
+                                        onChange={() => setState(prev => ({ ...prev, sideScenes: !prev.sideScenes }))}
+                                    />
+                                    <span className="toggle-slider"></span>
+                                </div>
+                            </label>
+                        </div>
+                    )}
 
                     <div className="filter-section-header">
                         <h3>Scènes visibles</h3>
