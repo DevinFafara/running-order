@@ -3,7 +3,7 @@ import chroma from 'chroma-js';
 import { useCheckedState } from '../../context/CheckedStateContext';
 import { useLineup } from '../../hooks/useLineup'; // Assuming this hook exists or we pass groups as prop
 import { STAGE_CONFIG, INTEREST_LEVELS, INTEREST_ORDER, CONTEXT_TAGS, CONTEXT_ORDER, DAYS, MAIN_STAGES, SIDE_STAGES } from '../../constants';
-// Reuse timeToMinutes for layout calcs
+import { timeToMinutes } from '../../utils/statsUtils';
 import TagMenu from '../common/TagMenu';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import WeeklyPDF from './WeeklyPDF';
@@ -29,9 +29,7 @@ const ICONS = {
 const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent }) => {
     const { state, getInterestColor, getBandTag, cycleInterest } = useCheckedState();
 
-    const visibleDays = state.sideScenes
-        ? DAYS
-        : DAYS.filter(d => d !== 'Mardi' && d !== 'Mercredi');
+    const visibleDays = DAYS; // WeeklyView affiche toujours tous les jours, indépendamment du toggle DayView
 
     const [filterMode, setFilterMode] = useState('favorites'); // 'favorites' or 'all'
     const [colorMode, setColorMode] = useState('transparent'); // 'transparent' or 'scene'
@@ -39,20 +37,34 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
     const [selectedInterests, setSelectedInterests] = useState(['must_see', 'interested', 'curious']);
     const [selectedContexts, setSelectedContexts] = useState(['with_friend', 'strategic', 'skip']);
     const [tagMenuState, setTagMenuState] = useState({ open: false, groupId: null, position: { x: 0, y: 0 } });
+    const getDefaultColCount = (width) => {
+        if (width > 1600) return 6;
+        if (width > 1200) return 3;
+        if (width > 800) return 2;
+        return 1;
+    };
     const COL_CYCLE = [6, 3, 2, 1];
-    const [colCount, setColCount] = useState(() => visibleDays.length);
+    const [colCount, setColCount] = useState(() => getDefaultColCount(window.innerWidth));
     const cycleColCount = () => setColCount(prev => {
         const idx = COL_CYCLE.indexOf(prev);
         return COL_CYCLE[(idx + 1) % COL_CYCLE.length];
     });
 
-    const [stageGroupFilter, setStageGroupFilter] = useState('main'); // 'main' | 'side'
-    const toggleStageGroup = () => {
-        const next = stageGroupFilter === 'main' ? 'side' : 'main';
-        setStageGroupFilter(next);
-        const stages = next === 'main' ? MAIN_STAGES : SIDE_STAGES;
-        setSelectedScenes([...stages, 'CUSTOM']);
-    };
+    React.useEffect(() => {
+        const handleResize = () => setColCount(getDefaultColCount(window.innerWidth));
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    // Jours ayant potentiellement les 2 types de scènes
+    const DAYS_WITH_BOTH = ['Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+    const [daySceneMode, setDaySceneMode] = useState(
+        () => Object.fromEntries(DAYS_WITH_BOTH.map(d => [d, 'main']))
+    );
+    const toggleDaySceneMode = (day) => setDaySceneMode(prev => ({
+        ...prev,
+        [day]: prev[day] === 'main' ? 'side' : 'main'
+    }));
 
     // Handle Right Click (Context Menu)
     const handleContextMenu = (e, group) => {
@@ -138,7 +150,36 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
         return selection;
     }, [groups, filterMode, state.taggedBands, selectedScenes, selectedInterests, selectedContexts, getBandTag]);
 
-    // --- 2. LAYOUT ALGORITHM (The "Clashfinder" Logic) ---
+    // --- 2a. ANALYSE FAVORIS — détecte si un jour a des favoris des 2 types ET si c'est critique ---
+    const dayFavoritesAnalysis = useMemo(() => {
+        if (filterMode !== 'favorites') return {};
+        const result = {};
+        DAYS_WITH_BOTH.forEach(day => {
+            const dayBands = filteredGroups.filter(g => g.DAY === day || g.JOUR === day);
+            const hasMain = dayBands.some(g => MAIN_STAGES.includes(g.SCENE));
+            const hasSide = dayBands.some(g => SIDE_STAGES.includes(g.SCENE));
+            if (!hasMain || !hasSide) { result[day] = { showSwitch: false }; return; }
+
+            // Calcule le max de groupes simultanés sur ce jour
+            let maxSim = 0;
+            dayBands.forEach(b => {
+                const s = timeToMinutes(b.DEBUT);
+                const rawE = timeToMinutes(b.FIN);
+                const e = rawE < s ? rawE + 1440 : rawE;
+                const count = dayBands.filter(o => {
+                    const os = timeToMinutes(o.DEBUT);
+                    const ore = timeToMinutes(o.FIN);
+                    const oe = ore < os ? ore + 1440 : ore;
+                    return s < oe && e > os;
+                }).length;
+                if (count > maxSim) maxSim = count;
+            });
+            result[day] = { showSwitch: maxSim > 3 };
+        });
+        return result;
+    }, [filteredGroups, filterMode]);
+
+    // --- 2b. LAYOUT ALGORITHM (The "Clashfinder" Logic) ---
     const dayColumns = useMemo(() => {
         const columns = {};
 
@@ -146,11 +187,23 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
             let dayBands = filteredGroups.filter(g => g.JOUR === day);
             if (dayBands.length === 0) dayBands = filteredGroups.filter(g => g.DAY === day);
 
+            // Filtrage par type de scène selon le mode actif pour ce jour
+            const needsFilter = DAYS_WITH_BOTH.includes(day) && (
+                filterMode === 'all' ||
+                (filterMode === 'favorites' && dayFavoritesAnalysis[day]?.showSwitch)
+            );
+            if (needsFilter) {
+                const mode = daySceneMode[day] || 'main';
+                dayBands = dayBands.filter(g =>
+                    mode === 'main' ? MAIN_STAGES.includes(g.SCENE) : SIDE_STAGES.includes(g.SCENE)
+                );
+            }
+
             columns[day] = calculateWeeklyLayout(dayBands, PIXELS_PER_MINUTE, state.reverse, filterMode, selectedScenes);
         });
 
         return columns;
-    }, [filteredGroups, filterMode, state.reverse, selectedScenes]);
+    }, [filteredGroups, filterMode, state.reverse, selectedScenes, daySceneMode, dayFavoritesAnalysis]);
 
     return (
         <div className="weekly-view">
@@ -225,39 +278,8 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
 
                 {/* Right: View Mode Filters */}
                 <div className="weekly-header-right">
-                    {/* TEST — contrôles temporaires */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                        {/* Switch scènes principales / annexes */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span style={{ fontSize: '0.75rem', color: '#888' }}>
-                                {stageGroupFilter === 'main' ? 'Princ.' : 'Annexes'}
-                            </span>
-                            <button
-                                onClick={toggleStageGroup}
-                                title={stageGroupFilter === 'main' ? 'Passer aux scènes annexes' : 'Passer aux scènes principales'}
-                                style={{
-                                    background: stageGroupFilter === 'main'
-                                        ? 'rgba(100,160,255,0.15)'
-                                        : 'rgba(255,180,80,0.15)',
-                                    border: `1px solid ${stageGroupFilter === 'main' ? 'rgba(100,160,255,0.4)' : 'rgba(255,180,80,0.4)'}`,
-                                    borderRadius: '20px',
-                                    color: 'white',
-                                    padding: '4px 12px',
-                                    cursor: 'pointer',
-                                    fontSize: '0.8rem',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '6px',
-                                }}
-                            >
-                                <i className={`fa-solid ${stageGroupFilter === 'main' ? 'fa-guitar' : 'fa-tent'}`}></i>
-                                <i className="fa-solid fa-right-left" style={{ fontSize: '0.65rem', opacity: 0.6 }}></i>
-                                <i className={`fa-solid ${stageGroupFilter === 'main' ? 'fa-tent' : 'fa-guitar'}`}></i>
-                            </button>
-                        </div>
-
-                        {/* Sélecteur de colonnes */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {/* TEST — sélecteur de colonnes */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <span style={{ fontSize: '0.75rem', color: '#888' }}>Colonnes :</span>
                         <button
                             onClick={cycleColCount}
@@ -276,7 +298,6 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
                         >
                             {colCount}
                         </button>
-                        </div>
                     </div>
                     <div className="weekly-filters">
                         <button
@@ -348,11 +369,26 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
                 </div>
             </div>
 
-            <div className="weekly-grid" style={{ gridTemplateColumns: `repeat(${colCount}, 1fr)` }}>
-                {visibleDays.map((day, dayIdx) => (
-                    <div key={day} className={`weekly-day-column col-${dayIdx}`}>
-                        {/* Time Ruler (every hour) - Now inside each column for responsive 2x2 alignment */}
-                        <div className="weekly-time-ruler">
+            {(() => {
+                const displayedDays = visibleDays.filter(day =>
+                    filterMode !== 'favorites' || (dayColumns[day] && dayColumns[day].length > 0)
+                );
+                const effectiveCols = Math.max(1, Math.min(colCount, displayedDays.length));
+                return (
+                <div className="weekly-grid" style={{
+                    gridTemplateColumns: `repeat(${effectiveCols}, minmax(0, 500px))`,
+                    justifyContent: 'center'
+                }}>
+                {displayedDays.map((day, dayIdx) => {
+                    const isFirstInRow = dayIdx % effectiveCols === 0;
+                    return (
+                    <div
+                        key={day}
+                        className={`weekly-day-column col-${dayIdx}`}
+                        style={{ paddingLeft: isFirstInRow ? '35px' : undefined }}
+                    >
+                        {/* Time Ruler — affiché uniquement en début de rangée */}
+                        <div className="weekly-time-ruler" style={{ display: isFirstInRow ? 'block' : 'none' }}>
                             {Array.from({ length: 18 }).map((_, i) => {
                                 const h = START_HOUR + i;
                                 const label = h >= 24 ? `${h - 24}h` : `${h}h`;
@@ -378,7 +414,35 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
                                 );
                             })}
                         </div>
-                        <div className="weekly-day-header">{day}</div>
+                        <div className="weekly-day-header">
+                            <span>{day}</span>
+                            {DAYS_WITH_BOTH.includes(day) && (
+                                filterMode === 'all' ||
+                                (filterMode === 'favorites' && dayFavoritesAnalysis[day]?.showSwitch)
+                            ) && (
+                                <button
+                                    onClick={() => toggleDaySceneMode(day)}
+                                    title={daySceneMode[day] === 'main' ? 'Voir scènes annexes' : 'Voir scènes principales'}
+                                    style={{
+                                        background: 'rgba(255,255,255,0.1)',
+                                        border: '1px solid rgba(255,255,255,0.2)',
+                                        borderRadius: '12px',
+                                        color: 'white',
+                                        padding: '2px 8px',
+                                        cursor: 'pointer',
+                                        fontSize: '0.65rem',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '4px',
+                                        marginLeft: '6px',
+                                    }}
+                                >
+                                    <i className={`fa-solid ${daySceneMode[day] === 'main' ? 'fa-guitar' : 'fa-tent'}`} style={{ fontSize: '0.6rem' }}></i>
+                                    <i className="fa-solid fa-right-left" style={{ fontSize: '0.5rem', opacity: 0.6 }}></i>
+                                    <i className={`fa-solid ${daySceneMode[day] === 'main' ? 'fa-tent' : 'fa-guitar'}`} style={{ fontSize: '0.6rem' }}></i>
+                                </button>
+                            )}
+                        </div>
                         <div className="weekly-day-content">
                             {dayColumns[day].map((item, idx) => {
                                 const stageColor = STAGE_CONFIG[item.band.SCENE]?.themeColor || '#555';
@@ -395,7 +459,7 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
                                     <div
                                         id={`group-${item.band.id}`}
                                         key={item.band.id}
-                                        className="weekly-band-card"
+                                        className={`weekly-band-card${item.height <= 20 ? ' wb-very-short' : item.height <= 27 ? ' wb-short' : ''}`}
                                         style={{
                                             top: item.top,
                                             height: item.height,
@@ -507,8 +571,11 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
                             })}
                         </div>
                     </div>
-                ))}
-            </div>
+                );
+                })}
+                </div>
+                );
+            })()}
 
             {tagMenuState.open && (
                 <TagMenu

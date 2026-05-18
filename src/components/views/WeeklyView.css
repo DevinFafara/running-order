@@ -327,6 +327,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
     font-weight: bold;
     background: rgba(255, 255, 255, 0.05);
     border-bottom: 1px solid #333;
@@ -334,8 +335,12 @@
     font-family: 'Metal Mania', 'cursive';
     font-size: 1.2rem;
     letter-spacing: 2px;
-    /* Keep header fixed size */
     z-index: 10;
+}
+
+.weekly-day-header button {
+    position: absolute;
+    right: 8px;
 }
 
 .weekly-day-content {
@@ -397,6 +402,42 @@
     justify-content: center;
     /* Centered info too */
     gap: 4px;
+}
+
+/* Créneaux courts (≤ 30min) */
+.weekly-band-card.wb-short {
+    padding: 0 2px;
+}
+
+.weekly-band-card.wb-short .weekly-band-name {
+    margin-bottom: 0;
+    font-size: 0.55rem;
+    line-height: 1;
+}
+
+.weekly-band-card.wb-short .weekly-band-info {
+    font-size: 0.48rem;
+    line-height: 1;
+}
+
+/* Créneaux très courts (≤ 22min, hauteur min) */
+.weekly-band-card.wb-very-short {
+    padding: 0 2px;
+}
+
+.weekly-band-card.wb-very-short .weekly-band-name {
+    margin-bottom: 0;
+    font-size: 0.5rem;
+    line-height: 1;
+}
+
+.weekly-band-card.wb-very-short .weekly-band-info {
+    display: none;
+}
+
+.weekly-band-card.wb-very-short .weekly-band-tag-indicator {
+    top: 1px;
+    right: 1px;
 }
 
 .weekly-band-tag-indicator {
