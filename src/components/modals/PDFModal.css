@@ -1,0 +1,168 @@
+/* PDFModal.css */
+
+.pdf-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+}
+
+.pdf-modal {
+    background: #1e1e1e;
+    border: 1px solid #333;
+    border-radius: 12px;
+    padding: 28px 32px;
+    width: 480px;
+    max-width: 95vw;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+.pdf-modal-close {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    background: transparent;
+    border: none;
+    color: #666;
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: color 0.2s, background 0.2s;
+}
+
+.pdf-modal-close:hover {
+    color: white;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.pdf-modal-title {
+    margin: 0 0 22px 0;
+    font-size: 1.15rem;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.pdf-modal-title i {
+    color: #e74c3c;
+    font-size: 1.2rem;
+}
+
+.pdf-modal-options {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.pdf-option-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 14px 16px;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.2s, border-color 0.2s, box-shadow 0.2s;
+    width: 100%;
+    color: white;
+}
+
+.pdf-option-card:hover:not(.disabled) {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: #555;
+}
+
+.pdf-option-card.selected {
+    background: rgba(231, 76, 60, 0.12);
+    border-color: #e74c3c;
+    box-shadow: 0 0 0 1px rgba(231, 76, 60, 0.3);
+}
+
+.pdf-option-card.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.pdf-option-icon {
+    font-size: 1.3rem;
+    color: #e74c3c;
+    flex-shrink: 0;
+    width: 22px;
+    text-align: center;
+}
+
+.pdf-option-card.disabled .pdf-option-icon {
+    color: #666;
+}
+
+.pdf-option-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.pdf-option-title {
+    font-size: 0.95rem;
+    font-weight: bold;
+    color: white;
+    margin-bottom: 3px;
+}
+
+.pdf-option-desc {
+    font-size: 0.78rem;
+    color: #999;
+    line-height: 1.4;
+}
+
+.pdf-option-warning {
+    font-size: 0.73rem;
+    color: #f39c12;
+    margin-top: 5px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.pdf-option-warning i {
+    font-size: 0.7rem;
+}
+
+.pdf-option-check {
+    color: #e74c3c;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.pdf-modal-download {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.pdf-download-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #e74c3c;
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: bold;
+    text-decoration: none;
+    transition: background 0.2s;
+}
+
+.pdf-download-btn:hover {
+    background: #c0392b;
+}

@@ -35,6 +35,12 @@ const PRINT_COLUMNS = {
     mardi: [
         { scenes: ['LE_OFF1', 'LE_OFF2'], label: 'Le Off 1 & Le Off 2' },
     ],
+    // L'Essentiel  →  3 couples principaux uniquement
+    essential: [
+        { scenes: ['MAINSTAGE 1', 'MAINSTAGE 2'], label: 'Mainstage 1\nMainstage 2' },
+        { scenes: ['WARZONE', 'VALLEY'],           label: 'Warzone\nValley' },
+        { scenes: ['ALTAR', 'TEMPLE'],             label: 'Altar\nTemple' },
+    ],
 };
 
 // Page 1 : Mercredi – Jeudi – Vendredi
@@ -52,6 +58,14 @@ const PAGE_CONFIGS = [
     ],
 ];
 
+// L'Essentiel : 1 page, 4 jours principaux, 3 couples mainstage
+const ESSENTIAL_PAGE_CONFIG = [
+    { day: 'Jeudi',    type: 'essential', flex: 1 },
+    { day: 'Vendredi', type: 'essential', flex: 1 },
+    { day: 'Samedi',   type: 'essential', flex: 1 },
+    { day: 'Dimanche', type: 'essential', flex: 1 },
+];
+
 // ─── Layout algorithm for fixed print columns ────────────────────────────────
 const positionBandsForPrint = (dayBands, columns, reverse) => {
     const numCols = columns.length;
@@ -63,7 +77,7 @@ const positionBandsForPrint = (dayBands, columns, reverse) => {
 
         // Une scène/couple n'occupe jamais plus de 50% de la largeur de la journée
         const effectiveWidthPct = Math.min(colWidthPct, 50);
-        const colShift = (colWidthPct - effectiveWidthPct) / 2; // centrage dans l'espace alloué
+        const colShift = (colWidthPct - effectiveWidthPct) / 2;
 
         const colBands = dayBands.filter(b =>
             col.scenes.some(s => normalizeScene(s) === normalizeScene(b.SCENE))
@@ -267,10 +281,8 @@ const DayTimeRuler = ({ reverse }) => (
 
 // ─── Helpers mode favoris ────────────────────────────────────────────────────
 const ALL_DAYS_ORDER = ['Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
-const MIN_UNIT_MM = 30;   // largeur minimale par unité de clash
-const PAGE_WIDTH_MM = 287; // A4 paysage - marges
 
-const computeMaxSim = (dayBands) => {
+export const computeMaxSim = (dayBands) => {
     if (dayBands.length === 0) return 0;
     let maxSim = 1;
     dayBands.forEach(b => {
@@ -321,8 +333,6 @@ const MardiLegend = () => (
 
 // ─── Colonne journée mode Favoris (layout dynamique Strategy A) ──────────────
 const FavDayColumn = ({ day, bands, flex, isLast, colorMode, taggedBands, reverse, customEvents, selectedScenes }) => {
-    // Strategy A pour le positionnement horizontal uniquement
-    // On recalcule ensuite top/height avec les métriques PDF correctes (min 8 au lieu de 20)
     const rawItems = calculateWeeklyLayout(bands, PIXELS_PER_MINUTE_PDF, reverse, 'favorites', []);
     const layoutItems = rawItems.map(item => {
         const duration = item.end - item.start;
@@ -418,22 +428,17 @@ const FavDayColumn = ({ day, bands, flex, isLast, colorMode, taggedBands, revers
 };
 
 // ─── Day Column ──────────────────────────────────────────────────────────────
-const DayColumn = ({ day, type, flex, isLast, groups, filterMode, colorMode, taggedBands, reverse, customEvents, selectedScenes }) => {
+const DayColumn = ({ day, type, flex, isLast, groups, colorMode, taggedBands, reverse, customEvents, selectedScenes }) => {
     const columns = PRINT_COLUMNS[type];
     const numCols = columns.length;
 
-    let dayBands = groups.filter(g =>
+    const dayBands = groups.filter(g =>
         (g.JOUR === day || g.DAY === day) &&
         columns.some(col => col.scenes.some(s => normalizeScene(s) === normalizeScene(g.SCENE)))
     );
 
-    if (filterMode === 'favorites') {
-        dayBands = dayBands.filter(g => taggedBands[g.id]);
-    }
-
     const layoutItems = positionBandsForPrint(dayBands, columns, reverse);
 
-    // Custom events
     const dayCustom = (customEvents || []).filter(e =>
         e.day === day && selectedScenes.includes('CUSTOM')
     );
@@ -442,11 +447,9 @@ const DayColumn = ({ day, type, flex, isLast, groups, filterMode, colorMode, tag
         <View style={[styles.dayColumn, { flex }, isLast && { borderRightWidth: 0 }]}>
             <Text style={styles.dayHeader}>{day.toUpperCase()}</Text>
 
-            {/* Row : ruler à gauche + (colHeaderRow + grille) à droite */}
             <View style={{ flex: 1, flexDirection: 'row' }}>
             <DayTimeRuler reverse={reverse} />
             <View style={{ flex: 1, flexDirection: 'column' }}>
-            {/* Sous-entêtes de colonnes — alignés sur gridContent, hors ruler */}
             <View style={styles.colHeaderRow}>
                 {columns.map((col, i) => (
                     <Text
@@ -458,7 +461,6 @@ const DayColumn = ({ day, type, flex, isLast, groups, filterMode, colorMode, tag
                 ))}
             </View>
             <View style={styles.gridContent}>
-                {/* Séparateurs de colonnes */}
                 {columns.slice(1).map((_, i) => (
                     <View
                         key={i}
@@ -466,7 +468,6 @@ const DayColumn = ({ day, type, flex, isLast, groups, filterMode, colorMode, tag
                     />
                 ))}
 
-                {/* Cartes groupes */}
                 {layoutItems.map((item, idx) => {
                     const stageColor = STAGE_CONFIG[item.band.SCENE]?.themeColor || '#555555';
                     const cardBg = colorMode === 'scene' ? stageColor : '#f9f9f9';
@@ -516,7 +517,6 @@ const DayColumn = ({ day, type, flex, isLast, groups, filterMode, colorMode, tag
                     );
                 })}
 
-                {/* Custom events */}
                 {dayCustom.map((event, cidx) => {
                     const [sh, sm] = event.startTime.split(':').map(Number);
                     const [eh, em] = event.endTime.split(':').map(Number);
@@ -558,25 +558,26 @@ const DayColumn = ({ day, type, flex, isLast, groups, filterMode, colorMode, tag
                     );
                 })}
 
-                {/* Légende scènes pour Mardi */}
                 {type === 'mardi' && <MardiLegend />}
             </View>
-            </View>{/* fin col colHeaderRow + gridContent */}
-            </View>{/* fin row ruler + contenu */}
+            </View>
+            </View>
         </View>
     );
 };
 
 // ─── Main component ──────────────────────────────────────────────────────────
-const WeeklyPDF = ({ groups, customEvents, selectedScenes, filterMode, colorMode, taggedBands, reverse }) => {
-    // ── Mode Favoris : layout dynamique ──────────────────────────────────────
-    if (filterMode === 'favorites') {
+// pdfMode: 'full' | 'essential' | 'favorites'
+const WeeklyPDF = ({ groups, customEvents, selectedScenes, colorMode, taggedBands, reverse, pdfMode = 'full' }) => {
+
+    // ── Mode Favoris : 1 page, largeur égale par journée ────────────────────
+    if (pdfMode === 'favorites') {
         const dayData = ALL_DAYS_ORDER.map(day => {
             let dayBands = groups.filter(g =>
                 (g.JOUR === day || g.DAY === day) && selectedScenes.includes(g.SCENE)
             );
             dayBands = dayBands.filter(g => taggedBands[g.id]);
-            return { day, bands: dayBands, rawSim: Math.max(1, computeMaxSim(dayBands)) };
+            return { day, bands: dayBands };
         }).filter(d => d.bands.length > 0);
 
         if (dayData.length === 0) {
@@ -591,53 +592,52 @@ const WeeklyPDF = ({ groups, customEvents, selectedScenes, filterMode, colorMode
             );
         }
 
-        // Plafonne le ratio max à 3× le jour le plus petit
-        const minSim = Math.min(...dayData.map(d => d.rawSim));
-        const cappedData = dayData.map(d => ({ ...d, flex: Math.min(d.rawSim, minSim * 3) }));
-        const totalUnits = cappedData.reduce((sum, d) => sum + d.flex, 0);
-        const needsTwoPages = totalUnits * MIN_UNIT_MM > PAGE_WIDTH_MM && cappedData.length > 1;
-
-        let pages;
-        if (!needsTwoPages) {
-            pages = [cappedData];
-        } else {
-            // Split optimal : minimise l'écart d'unités entre les deux pages
-            let bestSplit = 1;
-            let bestDiff = Infinity;
-            let cumulative = 0;
-            for (let i = 0; i < cappedData.length - 1; i++) {
-                cumulative += cappedData[i].flex;
-                const diff = Math.abs(2 * cumulative - totalUnits);
-                if (diff < bestDiff) { bestDiff = diff; bestSplit = i + 1; }
-            }
-            pages = [cappedData.slice(0, bestSplit), cappedData.slice(bestSplit)];
-        }
-
         return (
             <Document title="Hellfest 2026 - Mes Favoris">
-                {pages.map((pageDays, pageIdx) => (
-                    <Page key={pageIdx} size="A4" orientation="landscape" style={styles.page}>
-                        {pageDays.map((dayInfo, idx) => (
-                            <FavDayColumn
-                                key={dayInfo.day}
-                                day={dayInfo.day}
-                                bands={dayInfo.bands}
-                                flex={dayInfo.flex}
-                                isLast={idx === pageDays.length - 1}
-                                colorMode={colorMode}
-                                taggedBands={taggedBands}
-                                reverse={reverse}
-                                customEvents={customEvents}
-                                selectedScenes={selectedScenes}
-                            />
-                        ))}
-                    </Page>
-                ))}
+                <Page size="A4" orientation="landscape" style={styles.page}>
+                    {dayData.map((dayInfo, idx) => (
+                        <FavDayColumn
+                            key={dayInfo.day}
+                            day={dayInfo.day}
+                            bands={dayInfo.bands}
+                            flex={1}
+                            isLast={idx === dayData.length - 1}
+                            colorMode={colorMode}
+                            taggedBands={taggedBands}
+                            reverse={reverse}
+                            customEvents={customEvents}
+                            selectedScenes={selectedScenes}
+                        />
+                    ))}
+                </Page>
             </Document>
         );
     }
 
-    // ── Mode Tout le monde : layout fixe 2 pages ──────────────────────────────
+    // ── Mode L'Essentiel : 1 page, 4 jours principaux, mainstages seulement ──
+    if (pdfMode === 'essential') {
+        return (
+            <Document title="Hellfest 2026 - L'Essentiel">
+                <Page size="A4" orientation="landscape" style={styles.page}>
+                    {ESSENTIAL_PAGE_CONFIG.map((dayConfig, idx) => (
+                        <DayColumn
+                            key={dayConfig.day}
+                            {...dayConfig}
+                            isLast={idx === ESSENTIAL_PAGE_CONFIG.length - 1}
+                            groups={groups}
+                            colorMode={colorMode}
+                            taggedBands={taggedBands}
+                            reverse={reverse}
+                            customEvents={customEvents}
+                            selectedScenes={selectedScenes}
+                        />
+                    ))}
+                </Page>
+            </Document>
+        );
+    }
+
+    // ── Mode RO Complet : 2 pages, tous les jours, toutes les scènes ─────────
     return (
         <Document title="Hellfest 2026 - Running Order">
             {PAGE_CONFIGS.map((pageLayout, pageIdx) => (
@@ -648,7 +648,6 @@ const WeeklyPDF = ({ groups, customEvents, selectedScenes, filterMode, colorMode
                             {...dayConfig}
                             isLast={idx === pageLayout.length - 1}
                             groups={groups}
-                            filterMode={filterMode}
                             colorMode={colorMode}
                             taggedBands={taggedBands}
                             reverse={reverse}

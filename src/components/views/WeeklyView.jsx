@@ -5,9 +5,8 @@ import { useLineup } from '../../hooks/useLineup'; // Assuming this hook exists 
 import { STAGE_CONFIG, INTEREST_LEVELS, INTEREST_ORDER, CONTEXT_TAGS, CONTEXT_ORDER, DAYS, MAIN_STAGES, SIDE_STAGES } from '../../constants';
 import { timeToMinutes } from '../../utils/statsUtils';
 import TagMenu from '../common/TagMenu';
-import { PDFDownloadLink } from '@react-pdf/renderer';
-import WeeklyPDF from './WeeklyPDF';
 import { calculateWeeklyLayout } from '../../utils/pdfLayout';
+import PDFModal from '../modals/PDFModal';
 import './WeeklyView.css';
 
 const START_HOUR = 10; // Start at 10:00
@@ -32,11 +31,12 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
     const visibleDays = DAYS; // WeeklyView affiche toujours tous les jours, indépendamment du toggle DayView
 
     const [filterMode, setFilterMode] = useState('favorites'); // 'favorites' or 'all'
-    const [colorMode, setColorMode] = useState('transparent'); // 'transparent' or 'scene'
+    const [colorMode, setColorMode] = useState('scene'); // 'transparent' or 'scene'
     const [selectedScenes, setSelectedScenes] = useState(() => [...Object.keys(STAGE_CONFIG), 'CUSTOM']);
     const [selectedInterests, setSelectedInterests] = useState(['must_see', 'interested', 'curious']);
     const [selectedContexts, setSelectedContexts] = useState(['with_friend', 'strategic', 'skip']);
     const [tagMenuState, setTagMenuState] = useState({ open: false, groupId: null, position: { x: 0, y: 0 } });
+    const [showPdfModal, setShowPdfModal] = useState(false);
     const getDefaultColCount = (width) => {
         if (width > 1600) return 6;
         if (width > 1200) return 3;
@@ -212,29 +212,13 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
                 <div className="weekly-header-left">
                     <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                         <h2>Résumé Semaine</h2>
-                        <PDFDownloadLink
-                            document={
-                                <WeeklyPDF
-                                    groups={groups}
-                                    customEvents={customEvents}
-                                    selectedScenes={selectedScenes}
-                                    filterMode={filterMode}
-                                    colorMode={colorMode}
-                                    taggedBands={state.taggedBands}
-                                    reverse={state.reverse}
-                                />
-                            }
-                            fileName={`Hellfest2026_RunningOrder_${filterMode}.pdf`}
+                        <button
                             className="export-pdf-btn"
-                            onClick={() => {}} // Analytics removed
+                            onClick={() => setShowPdfModal(true)}
                         >
-                            {({ blob, url, loading, error }) => (
-                                <>
-                                    <i className="fa-solid fa-file-pdf"></i>
-                                    <span>{loading ? '...' : 'PDF'}</span>
-                                </>
-                            )}
-                        </PDFDownloadLink>
+                            <i className="fa-solid fa-file-pdf"></i>
+                            <span>PDF</span>
+                        </button>
                     </div>
                 </div>
 
@@ -582,6 +566,18 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
                     groupId={tagMenuState.groupId}
                     position={tagMenuState.position}
                     onClose={closeTagMenu}
+                />
+            )}
+
+            {showPdfModal && (
+                <PDFModal
+                    onClose={() => setShowPdfModal(false)}
+                    groups={groups}
+                    customEvents={customEvents}
+                    selectedScenes={selectedScenes}
+                    colorMode={colorMode}
+                    taggedBands={state.taggedBands}
+                    reverse={state.reverse}
                 />
             )}
         </div>
