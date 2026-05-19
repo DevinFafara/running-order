@@ -1,17 +1,50 @@
 import React, { useState } from 'react';
 import ImportModal from '../modals/ImportModal';
+import { parseShareData } from '../../utils/sharingUtils';
 
-const ContactsPanel = ({ isOpen, onClose, contacts, onDeleteContact, onCheckContact }) => {
+const ContactsPanel = ({ isOpen, onClose, contacts, onDeleteContact, onCheckContact, onSaveContact }) => {
     const [selectedContactData, setSelectedContactData] = useState(null);
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+    const [urlInput, setUrlInput] = useState('');
+    const [urlError, setUrlError] = useState('');
+    const [isNewContact, setIsNewContact] = useState(false);
 
     if (!isOpen) return null;
 
     const handleCheck = (contact) => {
-        // We need to re-inflate date from contact.
-        // The ImportModal expects 'data' object.
-        // We stored { username, bands: {}, customEvents: [] } in contacts.
+        setIsNewContact(false);
         setSelectedContactData(contact.data);
+        setIsImportModalOpen(true);
+    };
+
+    const handleAddFromUrl = () => {
+        setUrlError('');
+        const trimmed = urlInput.trim();
+        if (!trimmed) return;
+
+        let token = null;
+        try {
+            const url = new URL(trimmed);
+            token = url.searchParams.get('share');
+        } catch {
+            // Not a valid URL — maybe they pasted just the token
+            token = trimmed;
+        }
+
+        if (!token) {
+            setUrlError('Lien invalide. Assure-toi de coller l\'URL complète.');
+            return;
+        }
+
+        const data = parseShareData(token);
+        if (!data) {
+            setUrlError('Impossible de lire ce lien. Il est peut-être expiré ou corrompu.');
+            return;
+        }
+
+        setUrlInput('');
+        setIsNewContact(true);
+        setSelectedContactData(data);
         setIsImportModalOpen(true);
     };
 
@@ -68,6 +101,50 @@ const ContactsPanel = ({ isOpen, onClose, contacts, onDeleteContact, onCheckCont
                 >
                     <i className="fa-solid fa-xmark"></i>
                 </button>
+
+                <div style={{ marginBottom: '16px' }}>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                        <input
+                            type="text"
+                            value={urlInput}
+                            onChange={e => { setUrlInput(e.target.value); setUrlError(''); }}
+                            onKeyDown={e => e.key === 'Enter' && handleAddFromUrl()}
+                            placeholder="Colle l'URL de partage ici…"
+                            style={{
+                                flex: 1,
+                                backgroundColor: '#2a2a2a',
+                                border: `1px solid ${urlError ? '#ff6b6b' : '#444'}`,
+                                borderRadius: '8px',
+                                padding: '8px 10px',
+                                color: '#fff',
+                                fontSize: '0.85rem',
+                                outline: 'none'
+                            }}
+                        />
+                        <button
+                            onClick={handleAddFromUrl}
+                            title="Ajouter"
+                            style={{
+                                background: '#FFD700',
+                                border: 'none',
+                                borderRadius: '8px',
+                                padding: '0 14px',
+                                cursor: 'pointer',
+                                fontWeight: 'bold',
+                                color: '#000',
+                                fontSize: '0.9rem',
+                                flexShrink: 0
+                            }}
+                        >
+                            <i className="fa-solid fa-plus"></i>
+                        </button>
+                    </div>
+                    {urlError && (
+                        <p style={{ color: '#ff6b6b', fontSize: '0.75rem', margin: '6px 0 0', paddingLeft: '2px' }}>
+                            {urlError}
+                        </p>
+                    )}
+                </div>
 
                 <div style={{ flex: 1, overflowY: 'auto', paddingRight: '5px' }}>
                     {contacts.length === 0 ? (
@@ -155,18 +232,21 @@ const ContactsPanel = ({ isOpen, onClose, contacts, onDeleteContact, onCheckCont
                             setSelectedContactData(null);
                         }}
                         data={selectedContactData}
-                        // onMerge removed as requested previously
                         onReplace={(data) => {
                             onCheckContact(data, 'replace');
                             setIsImportModalOpen(false);
                         }}
-                        onSave={() => { }}
+                        onSave={(data) => {
+                            onSaveContact(data);
+                            setIsImportModalOpen(false);
+                            setSelectedContactData(null);
+                        }}
                         onView={(data) => {
                             onCheckContact(data, 'view');
                             setIsImportModalOpen(false);
                             onClose();
                         }}
-                        isContactView={true}
+                        isContactView={!isNewContact}
                     />
                 )}
             </div>

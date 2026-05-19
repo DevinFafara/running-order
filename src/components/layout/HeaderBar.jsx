@@ -11,9 +11,9 @@ import { useCheckedState } from '../../context/CheckedStateContext';
 import StatsPanel from '../panels/StatsPanel';
 import PWAInstallModal from '../modals/PWAInstallModal';
 
-const HeaderBar = ({ 
-    viewMode, onViewChange, onInteraction, onAddCustomEvent, 
-    customEvents, contacts, onDeleteContact, onCheckContact, 
+const HeaderBar = ({
+    viewMode, onViewChange, onInteraction, onAddCustomEvent,
+    customEvents, contacts, onSaveContact, onDeleteContact, onCheckContact,
     isGuestMode, guestName, onExitGuestMode, onClearCustomEvents,
     isInstallable, isInstalled, installApp, hasPrompt, platform,
     isAuthenticated, username
@@ -239,6 +239,7 @@ const HeaderBar = ({
                 contacts={contacts}
                 onDeleteContact={onDeleteContact}
                 onCheckContact={onCheckContact}
+                onSaveContact={onSaveContact}
             />
 
             {statsOpen && (
