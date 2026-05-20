@@ -43,12 +43,7 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
         if (width > 800) return 2;
         return 1;
     };
-    const COL_CYCLE = [6, 3, 2, 1];
     const [colCount, setColCount] = useState(() => getDefaultColCount(window.innerWidth));
-    const cycleColCount = () => setColCount(prev => {
-        const idx = COL_CYCLE.indexOf(prev);
-        return COL_CYCLE[(idx + 1) % COL_CYCLE.length];
-    });
 
     React.useEffect(() => {
         const handleResize = () => setColCount(getDefaultColCount(window.innerWidth));
@@ -262,27 +257,6 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
 
                 {/* Right: View Mode Filters */}
                 <div className="weekly-header-right">
-                    {/* TEST — sélecteur de colonnes */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ fontSize: '0.75rem', color: '#888' }}>Colonnes :</span>
-                        <button
-                            onClick={cycleColCount}
-                            style={{
-                                background: 'rgba(255,255,255,0.08)',
-                                border: '1px solid rgba(255,255,255,0.2)',
-                                borderRadius: '20px',
-                                color: 'white',
-                                padding: '4px 14px',
-                                cursor: 'pointer',
-                                fontSize: '0.9rem',
-                                fontWeight: 'bold',
-                                letterSpacing: '1px',
-                            }}
-                            title="Changer le nombre de colonnes"
-                        >
-                            {colCount}
-                        </button>
-                    </div>
                     <div className="weekly-filters">
                         <button
                             className={`weekly-filter-btn ${filterMode === 'favorites' ? 'active' : ''}`}

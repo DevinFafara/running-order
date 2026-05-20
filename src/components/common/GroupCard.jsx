@@ -321,7 +321,22 @@ const GroupCard = ({ group, position, onClose, onPositionChange }) => {
                             </div>
                         )}
 
-                        {/* REMOVED INFO HEADER ROW AS REQUESTED */}
+                        {(group.SCENE || group.DEBUT) && (
+                            <div className="info-row" style={{ justifyContent: 'space-between' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <i className="fa-solid fa-tent" style={{ color: sceneColor, fontSize: '0.95em' }}></i>
+                                    <span style={{ fontSize: '0.9em' }}>
+                                        {STAGE_CONFIG[group.SCENE]?.name || group.SCENE}
+                                    </span>
+                                </div>
+                                {group.DEBUT && group.FIN && (
+                                    <span style={{ color: '#ccc', fontSize: '0.9em', whiteSpace: 'nowrap' }}>
+                                        <i className="fa-regular fa-clock" style={{ marginRight: '5px', color: '#888', fontSize: '0.85em' }}></i>
+                                        {group.DEBUT.replace('h', ':')} – {group.FIN.replace('h', ':')}
+                                    </span>
+                                )}
+                            </div>
+                        )}
 
                         {group.STYLE && (
                             <div className="info-row">

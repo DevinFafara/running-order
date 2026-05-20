@@ -41,7 +41,7 @@ const ImportModal = ({ isOpen, onClose, data, onReplace, onSave, onView, isConta
                 <div style={{ fontSize: '3rem', marginBottom: '-10px' }}>📥</div>
 
                 <h2 style={{ margin: 0, color: '#fff', fontSize: '1.8rem' }}>
-                    RO de <span style={{ color: '#FFD700' }}>{data.username}</span>
+                    Running Order de <span style={{ color: '#FFD700' }}>{data.username}</span>
                 </h2>
 
                 <button

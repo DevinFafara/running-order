@@ -6,11 +6,20 @@ import { decodeROFromServer } from '../../utils/sharingUtils';
  * CommunityPanel — Lists opt-in community members.
  * Clicking a user loads their RO in guest mode.
  */
-const CommunityPanel = ({ isOpen, onClose, onViewUserRO, currentUsername }) => {
+const CommunityPanel = ({ isOpen, onClose, onViewUserRO, onSaveContact, currentUsername }) => {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-    const [loadingUser, setLoadingUser] = useState(null); // username being loaded
+    const [loadingUser, setLoadingUser] = useState(null);
+    const [addingUser, setAddingUser] = useState(null);
+    const [addedUsers, setAddedUsers] = useState([]);
+    const [favorites, setFavorites] = useState(() => {
+        try {
+            return JSON.parse(localStorage.getItem('communityFavorites')) || [];
+        } catch {
+            return [];
+        }
+    });
 
     useEffect(() => {
         if (!isOpen) return;
@@ -33,6 +42,10 @@ const CommunityPanel = ({ isOpen, onClose, onViewUserRO, currentUsername }) => {
 
         fetchUsers();
     }, [isOpen, currentUsername]);
+
+    useEffect(() => {
+        localStorage.setItem('communityFavorites', JSON.stringify(favorites));
+    }, [favorites]);
 
     const handleUserClick = async (username) => {
         setLoadingUser(username);
@@ -58,6 +71,38 @@ const CommunityPanel = ({ isOpen, onClose, onViewUserRO, currentUsername }) => {
         }
     };
 
+    const handleAddContact = async (username, e) => {
+        e.stopPropagation();
+        setAddingUser(username);
+        try {
+            const userData = await api.getRO(username);
+            if (userData && userData.favorites) {
+                const decoded = decodeROFromServer(userData.favorites);
+                if (decoded) {
+                    onSaveContact({
+                        username: userData.username,
+                        bands: decoded.taggedBands,
+                        customEvents: decoded.customEvents,
+                        bandCount: Object.keys(decoded.taggedBands).length,
+                        eventCount: decoded.customEvents.length
+                    });
+                    setAddedUsers(prev => [...prev, username]);
+                }
+            }
+        } catch (err) {
+            console.error(`Failed to add contact ${username}:`, err);
+        } finally {
+            setAddingUser(null);
+        }
+    };
+
+    const toggleFavorite = (username, e) => {
+        e.stopPropagation();
+        setFavorites(prev =>
+            prev.includes(username) ? prev.filter(u => u !== username) : [...prev, username]
+        );
+    };
+
     const formatDate = (dateStr) => {
         if (!dateStr) return '';
         try {
@@ -77,6 +122,14 @@ const CommunityPanel = ({ isOpen, onClose, onViewUserRO, currentUsername }) => {
     };
 
     if (!isOpen) return null;
+
+    const sortedUsers = [...users].sort((a, b) => {
+        const aFav = favorites.includes(a.username);
+        const bFav = favorites.includes(b.username);
+        if (aFav && !bFav) return -1;
+        if (!aFav && bFav) return 1;
+        return 0;
+    });
 
     return (
         <div style={{
@@ -157,11 +210,10 @@ const CommunityPanel = ({ isOpen, onClose, onViewUserRO, currentUsername }) => {
 
                     {!loading && !error && users.length > 0 && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                            {users.map(user => (
-                                <button
+                            {sortedUsers.map(user => (
+                                <div
                                     key={user.username}
-                                    onClick={() => handleUserClick(user.username)}
-                                    disabled={loadingUser === user.username}
+                                    onClick={() => !loadingUser && handleUserClick(user.username)}
                                     style={{
                                         backgroundColor: '#2a2a2a',
                                         borderRadius: '10px',
@@ -172,8 +224,6 @@ const CommunityPanel = ({ isOpen, onClose, onViewUserRO, currentUsername }) => {
                                         gap: '12px',
                                         cursor: loadingUser === user.username ? 'wait' : 'pointer',
                                         transition: '0.2s',
-                                        width: '100%',
-                                        textAlign: 'left',
                                         color: '#fff',
                                         opacity: loadingUser === user.username ? 0.6 : 1
                                     }}
@@ -219,15 +269,65 @@ const CommunityPanel = ({ isOpen, onClose, onViewUserRO, currentUsername }) => {
                                         </div>
                                     </div>
 
-                                    {/* Arrow */}
-                                    <div style={{ color: '#555', fontSize: '0.9rem' }}>
-                                        {loadingUser === user.username ? (
-                                            <i className="fa-solid fa-spinner fa-spin"></i>
-                                        ) : (
-                                            <i className="fa-solid fa-chevron-right"></i>
+                                    {/* Actions */}
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                                        {/* Favorite */}
+                                        <button
+                                            onClick={(e) => toggleFavorite(user.username, e)}
+                                            title={favorites.includes(user.username) ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                                            style={{
+                                                background: 'transparent',
+                                                border: 'none',
+                                                padding: '2px 4px',
+                                                cursor: 'pointer',
+                                                flexShrink: 0,
+                                                fontSize: '1rem',
+                                                lineHeight: 1,
+                                                color: favorites.includes(user.username) ? '#FFD700' : '#444'
+                                            }}
+                                        >
+                                            <i className={favorites.includes(user.username) ? 'fa-solid fa-star' : 'fa-regular fa-star'}></i>
+                                        </button>
+
+                                        {/* Add to contacts */}
+                                        {onSaveContact && (
+                                            <button
+                                                onClick={(e) => handleAddContact(user.username, e)}
+                                                disabled={addingUser === user.username || addedUsers.includes(user.username)}
+                                                title={addedUsers.includes(user.username) ? 'Déjà ajouté' : 'Ajouter à mes contacts'}
+                                                style={{
+                                                    background: addedUsers.includes(user.username) ? 'rgba(76,175,80,0.2)' : 'rgba(255,215,0,0.15)',
+                                                    border: `1px solid ${addedUsers.includes(user.username) ? '#4CAF50' : '#FFD700'}`,
+                                                    borderRadius: '6px',
+                                                    width: '28px',
+                                                    height: '28px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    cursor: addedUsers.includes(user.username) ? 'default' : 'pointer',
+                                                    flexShrink: 0
+                                                }}
+                                            >
+                                                {addingUser === user.username ? (
+                                                    <i className="fa-solid fa-spinner fa-spin" style={{ color: '#FFD700', fontSize: '0.75rem' }}></i>
+                                                ) : addedUsers.includes(user.username) ? (
+                                                    <i className="fa-solid fa-check" style={{ color: '#4CAF50', fontSize: '0.75rem' }}></i>
+                                                ) : (
+                                                    <i className="fa-solid fa-user-plus" style={{ color: '#FFD700', fontSize: '0.75rem' }}></i>
+                                                )}
+                                            </button>
                                         )}
+
+                                        {/* View arrow */}
+                                        <div style={{ color: '#555', fontSize: '0.9rem', width: '16px', textAlign: 'center' }}>
+                                            {loadingUser === user.username ? (
+                                                <i className="fa-solid fa-spinner fa-spin"></i>
+                                            ) : (
+                                                <i className="fa-solid fa-chevron-right"></i>
+                                            )}
+                                        </div>
                                     </div>
-                                </button>
+                                </div>
                             ))}
                         </div>
                     )}

@@ -271,6 +271,7 @@ const HeaderBar = ({
                     onCheckContact(data, 'view');
                     setCommunityOpen(false);
                 }}
+                onSaveContact={onSaveContact}
                 currentUsername={username}
             />
 
