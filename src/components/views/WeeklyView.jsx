@@ -151,25 +151,26 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
         const result = {};
         DAYS_WITH_BOTH.forEach(day => {
             const dayBands = filteredGroups.filter(g => g.DAY === day || g.JOUR === day);
-            const hasMain = dayBands.some(g => MAIN_STAGES.includes(g.SCENE));
-            const hasSide = dayBands.some(g => SIDE_STAGES.includes(g.SCENE));
-            if (!hasMain || !hasSide) { result[day] = { showSwitch: false }; return; }
+            const sideBands = dayBands.filter(g => SIDE_STAGES.includes(g.SCENE));
+            if (sideBands.length === 0) { result[day] = { showSwitch: false }; return; }
 
-            // Calcule le max de groupes simultanés sur ce jour
-            let maxSim = 0;
-            dayBands.forEach(b => {
+            // Le switch n'est nécessaire que si un groupe annexe clashe avec 2+ autres favoris simultanément.
+            // Dans ce cas le clashfinder ne peut plus le caser proprement en demi-largeur.
+            let maxSideClash = 0;
+            sideBands.forEach(b => {
                 const s = timeToMinutes(b.DEBUT);
                 const rawE = timeToMinutes(b.FIN);
                 const e = rawE < s ? rawE + 1440 : rawE;
-                const count = dayBands.filter(o => {
+                const clashCount = dayBands.filter(o => {
+                    if (o === b) return false;
                     const os = timeToMinutes(o.DEBUT);
                     const ore = timeToMinutes(o.FIN);
                     const oe = ore < os ? ore + 1440 : ore;
                     return s < oe && e > os;
                 }).length;
-                if (count > maxSim) maxSim = count;
+                if (clashCount > maxSideClash) maxSideClash = clashCount;
             });
-            result[day] = { showSwitch: maxSim > 3 };
+            result[day] = { showSwitch: maxSideClash > 1 };
         });
         return result;
     }, [filteredGroups, filterMode]);
