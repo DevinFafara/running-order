@@ -182,12 +182,14 @@ const Band = ({ group, selectGroup, selectedGroupId, onTagClick, dayStartMinutes
 
             <div className={`compact-band-tag${duree < 30 ? ' slot-very-short' : duree < 45 ? ' slot-short' : ''}`}>
                 <h4 style={{
-                    fontSize: `clamp(5px, ${GROUPE.length > 16 ? 'calc(0.6vw + 5px)' : 'calc(0.9vw + 8px)'}, 16px)`,
+                    fontSize: duree < 30
+                        ? `clamp(5px, ${GROUPE.length > 16 ? 'calc(0.45vw + 4px)' : 'calc(0.55vw + 4px)'}, 11px)`
+                        : `clamp(5px, ${GROUPE.length > 16 ? 'calc(0.6vw + 5px)' : 'calc(0.9vw + 8px)'}, 16px)`,
                 }}>
                     {GROUPE}
                 </h4>
                 {duree > 15 && (
-                    <span style={{ fontSize: 'calc(0.5vw + 6px)' }}>
+                    <span style={{ fontSize: duree < 30 ? 'calc(0.4vw + 4px)' : 'calc(0.5vw + 6px)' }}>
                         {DEBUT.replace('h', ':')} - {FIN.replace('h', ':')}
                     </span>
                 )}

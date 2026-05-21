@@ -344,18 +344,19 @@ nav button:hover {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1px;
+  justify-content: center;
+  gap: 0;
 }
 
 .compact-band-tag.slot-short h4,
 .compact-band-tag.slot-very-short h4 {
   margin: 0;
-  line-height: 1.1;
+  line-height: 1;
 }
 
 .compact-band-tag.slot-short span,
 .compact-band-tag.slot-very-short span {
-  line-height: 1.1;
+  line-height: 1;
 }
 
 /* Créneaux très courts (<30min) : ellipsis sur le nom, en vue compacte uniquement */
