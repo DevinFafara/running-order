@@ -221,7 +221,8 @@ export const CheckedStateProvider = ({ children, user }) => {
                     favorites: encoded,
                     contacts: encodeContacts(contactsForSync),
                     community_opt_in: consentChoice === 'full',
-                    favorites_count: Object.keys(state.taggedBands).length
+                    favorites_count: Object.keys(state.taggedBands).length,
+                    current_favorites_count: Object.keys(state.taggedBands).filter(id => Number(id) >= 26000).length
                 });
 
                 lastSavedEncodedRef.current = encoded;

@@ -116,6 +116,7 @@ function updateIndexEntry(userData) {
             avatar_url: userData.avatar_url || null,
             community_opt_in: userData.community_opt_in || false,
             favorites_count: userData.favorites_count || 0,
+            current_favorites_count: userData.current_favorites_count ?? null,
             updated_at: userData.updated_at
         };
 
@@ -192,6 +193,7 @@ app.post('/running-order/api/ro/:username', verifyAuth, async (req, res) => {
         contacts: req.body.contacts || [],
         community_opt_in: req.body.community_opt_in ?? false,
         favorites_count: req.body.favorites_count ?? 0,
+        current_favorites_count: req.body.current_favorites_count ?? null,
         updated_at: new Date().toISOString()
     };
 

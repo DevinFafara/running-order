@@ -260,7 +260,7 @@ const CommunityPanel = ({ isOpen, onClose, onViewUserRO, onSaveContact, currentU
                                             {user.username}
                                         </div>
                                         <div style={{ fontSize: '0.75rem', color: '#888', display: 'flex', gap: '10px' }}>
-                                            <span>{user.favorites_count || 0} groupes</span>
+                                            <span>{user.current_favorites_count ?? user.favorites_count ?? 0} groupes</span>
                                             {user.updated_at && (
                                                 <span style={{ opacity: 0.8 }}>
                                                     · {formatDate(user.updated_at)}
