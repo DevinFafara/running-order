@@ -3,12 +3,14 @@ import { PDFDownloadLink } from '@react-pdf/renderer';
 import WeeklyPDF from '../views/WeeklyPDF';
 import { computeMaxSim } from '../views/WeeklyPDF';
 import { timeToMinutes } from '../../utils/statsUtils';
+import { useCheckedState } from '../../context/CheckedStateContext';
 import './PDFModal.css';
 
 const ALL_DAYS_ORDER = ['Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
 
 const PDFModal = ({ onClose, groups, customEvents, selectedScenes, colorMode, taggedBands, reverse }) => {
     const [selectedMode, setSelectedMode] = useState(null);
+    const { state } = useCheckedState();
 
     const favBands = groups.filter(g => taggedBands[g.id]);
     const hasFavorites = favBands.length > 0;
@@ -103,6 +105,7 @@ const PDFModal = ({ onClose, groups, customEvents, selectedScenes, colorMode, ta
                                     taggedBands={taggedBands}
                                     reverse={reverse}
                                     pdfMode={selectedMode}
+                                    interestColors={state.interestColors}
                                 />
                             }
                             fileName={selectedOption.fileName}

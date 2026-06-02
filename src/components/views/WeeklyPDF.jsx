@@ -359,8 +359,8 @@ const FavDayColumn = ({ day, bands, flex, isLast, colorMode, taggedBands, revers
                         const isShort = item.height < 8;
                         const isCompact = item.height < 16;
                         const textColor = colorMode === 'scene' ? '#ffffff' : '#000000';
-                        const interestColor = tagInfo?.interest && INTEREST_LEVELS[tagInfo.interest]?.defaultColor
-                            ? INTEREST_LEVELS[tagInfo.interest].defaultColor
+                        const interestColor = tagInfo?.interest
+                            ? (interestColors[tagInfo.interest] ?? INTEREST_LEVELS[tagInfo.interest]?.defaultColor ?? '#d4af37')
                             : '#d4af37';
                         return (
                             <View
@@ -568,7 +568,7 @@ const DayColumn = ({ day, type, flex, isLast, groups, colorMode, taggedBands, re
 
 // ─── Main component ──────────────────────────────────────────────────────────
 // pdfMode: 'full' | 'essential' | 'favorites'
-const WeeklyPDF = ({ groups, customEvents, selectedScenes, colorMode, taggedBands, reverse, pdfMode = 'full' }) => {
+const WeeklyPDF = ({ groups, customEvents, selectedScenes, colorMode, taggedBands, reverse, pdfMode = 'full', interestColors = {} }) => {
 
     // ── Mode Favoris : 1 page, largeur égale par journée ────────────────────
     if (pdfMode === 'favorites') {
