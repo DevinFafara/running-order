@@ -332,7 +332,7 @@ const MardiLegend = () => (
 );
 
 // ─── Colonne journée mode Favoris (layout dynamique Strategy A) ──────────────
-const FavDayColumn = ({ day, bands, flex, isLast, colorMode, taggedBands, reverse, customEvents, selectedScenes }) => {
+const FavDayColumn = ({ day, bands, flex, isLast, colorMode, taggedBands, reverse, customEvents, selectedScenes, interestColors = {} }) => {
     const rawItems = calculateWeeklyLayout(bands, PIXELS_PER_MINUTE_PDF, reverse, 'favorites', []);
     const layoutItems = rawItems.map(item => {
         const duration = item.end - item.start;
@@ -428,7 +428,7 @@ const FavDayColumn = ({ day, bands, flex, isLast, colorMode, taggedBands, revers
 };
 
 // ─── Day Column ──────────────────────────────────────────────────────────────
-const DayColumn = ({ day, type, flex, isLast, groups, colorMode, taggedBands, reverse, customEvents, selectedScenes }) => {
+const DayColumn = ({ day, type, flex, isLast, groups, colorMode, taggedBands, reverse, customEvents, selectedScenes, interestColors = {} }) => {
     const columns = PRINT_COLUMNS[type];
     const numCols = columns.length;
 
@@ -476,8 +476,8 @@ const DayColumn = ({ day, type, flex, isLast, groups, colorMode, taggedBands, re
                     const isShort = item.height < 8;
                     const isCompact = item.height < 16;
                     const textColor = colorMode === 'scene' ? '#ffffff' : '#000000';
-                    const interestColor = tagInfo?.interest && INTEREST_LEVELS[tagInfo.interest]?.defaultColor
-                        ? INTEREST_LEVELS[tagInfo.interest].defaultColor
+                    const interestColor = tagInfo?.interest
+                        ? (interestColors[tagInfo.interest] ?? INTEREST_LEVELS[tagInfo.interest]?.defaultColor ?? '#d4af37')
                         : '#d4af37';
 
                     return (
@@ -607,6 +607,7 @@ const WeeklyPDF = ({ groups, customEvents, selectedScenes, colorMode, taggedBand
                             reverse={reverse}
                             customEvents={customEvents}
                             selectedScenes={selectedScenes}
+                            interestColors={interestColors}
                         />
                     ))}
                 </Page>
@@ -630,6 +631,7 @@ const WeeklyPDF = ({ groups, customEvents, selectedScenes, colorMode, taggedBand
                             reverse={reverse}
                             customEvents={customEvents}
                             selectedScenes={selectedScenes}
+                            interestColors={interestColors}
                         />
                     ))}
                 </Page>
@@ -653,6 +655,7 @@ const WeeklyPDF = ({ groups, customEvents, selectedScenes, colorMode, taggedBand
                             reverse={reverse}
                             customEvents={customEvents}
                             selectedScenes={selectedScenes}
+                            interestColors={interestColors}
                         />
                     ))}
                 </Page>
