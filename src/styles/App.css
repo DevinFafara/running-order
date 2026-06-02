@@ -61,7 +61,7 @@ body {
 }
 
 .content {
-  overflow-x: hidden;
+  overflow-x: clip;
   scrollbar-width: none;
 }
 
@@ -168,6 +168,7 @@ nav button:hover {
   width: 100%;
   width: 100%;
   gap: 2px;
+  overscroll-behavior-x: contain;
 }
 
 /* === SCENE COLUMN === */

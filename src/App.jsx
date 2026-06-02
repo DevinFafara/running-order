@@ -214,7 +214,8 @@ function AppContent() {
       }
     },
     preventScrollOnSwipe: false,
-    trackMouse: false
+    trackMouse: false,
+    touchEventOptions: { passive: true }
   });
 
   const handleCardPositionChange = (newPos) => {
