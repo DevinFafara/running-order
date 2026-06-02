@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://DevinFafara.github.io/running-order/sitemap.xml
