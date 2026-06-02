@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useCheckedState } from '../../context/CheckedStateContext';
 import { STAGE_CONFIG, SIDE_STAGES } from '../../constants';
 import Band from '../common/Band';
@@ -47,7 +47,7 @@ const HourTag = ({ hour }) => (
     </div>
 );
 
-const CustomEventOverlay = ({ event, onEdit, columnCount, windowWidth, dayStartMinutes, dayEndMinutes }) => {
+const CustomEventOverlay = ({ event, onEdit, columnCount, windowWidth, dayStartMinutes, dayEndMinutes, headerHeight = 100 }) => {
     const { state } = useCheckedState();
 
     // 1. Parse times
@@ -77,10 +77,7 @@ const CustomEventOverlay = ({ event, onEdit, columnCount, windowWidth, dayStartM
         }
     };
 
-    // Offset due to Scene Header (~85px) + Margin (10px) + 5px calibration
-    // Must match CSS .compact-scene-couple-header min-height + .scene-bands margin-top
-    const HEADER_OFFSET = 100;
-    const top = getTop() + HEADER_OFFSET;
+    const top = getTop() + headerHeight;
 
     const colWidth = 300 + (windowWidth * 0.02);
     const calculatedWidth = columnCount * colWidth;
@@ -191,6 +188,17 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day, customEvents = [],
     const { state, setState } = useCheckedState();
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
     const [tagMenuState, setTagMenuState] = useState({ open: false, groupId: null, position: { x: 0, y: 0 } });
+    const [headerHeight, setHeaderHeight] = useState(125);
+    const observerRef = useRef(null);
+    const headerRefCallback = useCallback((node) => {
+        if (observerRef.current) { observerRef.current.disconnect(); observerRef.current = null; }
+        if (!node) return;
+        // +25 = margin-bottom of .compact-scene-couple-header, +10 = margin-top of .scene-bands (must match CSS)
+        setHeaderHeight(node.offsetHeight + 35);
+        const ro = new ResizeObserver(() => setHeaderHeight(node.offsetHeight + 35));
+        ro.observe(node);
+        observerRef.current = ro;
+    }, []);
 
     useEffect(() => {
         const handleResize = () => setWindowWidth(window.innerWidth);
@@ -470,7 +478,7 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day, customEvents = [],
                             }}
                         >
                             {/* HEADER : image + titre */}
-                            <div className="compact-scene-couple-header" style={{ display: 'block', width: '100%', textAlign: 'center' }}>
+                            <div className="compact-scene-couple-header" ref={index === 0 ? headerRefCallback : null} style={{ display: 'block', width: '100%', textAlign: 'center' }}>
                                 <SceneHeader config={config} sceneName={sceneName} isSideStage={SIDE_STAGES.includes(sceneName)} />
                             </div>
 
@@ -516,6 +524,7 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day, customEvents = [],
                         windowWidth={windowWidth}
                         dayStartMinutes={dayStartMinutes}
                         dayEndMinutes={dayEndMinutes}
+                        headerHeight={headerHeight}
                     />
                 ))}
             </div>
@@ -568,7 +577,7 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day, customEvents = [],
                 return (
                     <div key={index} className="scene-column compact-scene-column" style={bgStyle}>
                         {/* HEADER */}
-                        <div className="compact-scene-couple-header">
+                        <div className="compact-scene-couple-header" ref={index === 0 ? headerRefCallback : null}>
                             {showS1 && (
                                 <div className="header-half" style={{ width: showS2 ? '50%' : '100%' }}>
                                     <SceneHeader config={config1} sceneName={scene1} isSideStage={SIDE_STAGES.includes(scene1)} />
@@ -639,6 +648,7 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day, customEvents = [],
                     windowWidth={windowWidth}
                     dayStartMinutes={dayStartMinutes}
                     dayEndMinutes={dayEndMinutes}
+                    headerHeight={headerHeight}
                 />
             ))}
         </div>

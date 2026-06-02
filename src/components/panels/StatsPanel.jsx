@@ -89,7 +89,7 @@ const StatsPanel = ({ onClose, customEvents = [] }) => {
 
                     const shareTitle = `🤘 Mon Profil Hellfest`;
                     const appUrl = window.location.origin + import.meta.env.BASE_URL;
-                    const shareText = `Voici mon programme pour l'édition 2025 ! 🔥\n\n🤘 Groupes prévus : ${stats.totalBands}\n🏆 Grade : ${stats.rank}\n\nPrépare ton pèlerinage ici :\n${appUrl}\n\n#Hellfest #HellfestRunningOrder`;
+                    const shareText = `Voici mon programme pour l'édition 2026 ! 🔥\n\n🤘 Groupes prévus : ${stats.totalBands}\n🏆 Grade : ${stats.rank}\n\nPrépare ton pèlerinage ici :\n${appUrl}\n\n#Hellfest #HellfestRunningOrder`;
 
                     if (navigator.canShare({ files: [file] })) {
                         await navigator.share({
