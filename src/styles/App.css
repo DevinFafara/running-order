@@ -176,9 +176,13 @@ nav button:hover {
   justify-content: center;
   margin: 0 auto;
   width: 100%;
-  width: 100%;
   gap: 2px;
   overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+
+.compact-day::-webkit-scrollbar {
+  display: none;
 }
 
 /* === SCENE COLUMN === */
