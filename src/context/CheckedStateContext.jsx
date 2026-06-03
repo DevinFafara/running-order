@@ -235,6 +235,8 @@ export const CheckedStateProvider = ({ children, user }) => {
             } catch (err) {
                 console.error('Autosave failed:', err);
                 setSaveStatus('error');
+                if (savedFadeTimeoutRef.current) clearTimeout(savedFadeTimeoutRef.current);
+                savedFadeTimeoutRef.current = setTimeout(() => setSaveStatus('idle'), 8000);
             }
         }, AUTOSAVE_DELAY);
 
