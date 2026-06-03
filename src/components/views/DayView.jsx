@@ -460,10 +460,8 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day, customEvents = [],
             ? `${(60 - dayStartMinutes % 60) % 60}px`
             : `${dayEndMinutes % 60}px`;
 
-        const needsHScroll = visibleScenes.length * 300 > windowWidth;
-
         return (
-            <div className="compact-day extended-view" style={{ position: 'relative', gap: `${columnGap}px`, overflowX: needsHScroll ? 'auto' : 'visible', overscrollBehaviorX: 'contain', touchAction: needsHScroll ? 'auto' : 'pan-y' }}>
+            <div className="compact-day extended-view" style={{ position: 'relative', gap: `${columnGap}px`, overflowX: 'visible', touchAction: 'pan-y' }}>
                 {visibleScenes.map((sceneName, index) => {
                     const sceneGroups = groups.filter(g => g.SCENE === sceneName);
                     const config = STAGE_CONFIG[sceneName];
@@ -546,10 +544,8 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day, customEvents = [],
         return isSceneVisible(s1) || (s2 && isSceneVisible(s2));
     });
 
-    const needsHScroll = visibleCouples.length * 300 > windowWidth;
-
     return (
-        <div className="compact-day" style={{ position: 'relative', overflowX: needsHScroll ? 'auto' : 'visible', overscrollBehaviorX: 'contain', touchAction: needsHScroll ? 'auto' : 'pan-y' }}>
+        <div className="compact-day" style={{ position: 'relative', overflowX: 'visible', touchAction: 'pan-y' }}>
             {visibleCouples.map((sceneCouple, index) => {
                 const scene1 = sceneCouple[0];
                 const scene2 = sceneCouple[1];
