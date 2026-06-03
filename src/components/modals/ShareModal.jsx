@@ -58,7 +58,7 @@ const ShareModal = ({ isOpen, onClose, taggedBands, customEvents }) => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 1100,
+            zIndex: 1300,
             backdropFilter: 'blur(5px)',
             animation: 'fadeIn 0.2s'
         }} onClick={onClose}>

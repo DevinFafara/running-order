@@ -257,7 +257,7 @@ function AppContent() {
     }
   };
 
-  if (loading) return <div className="loading">Chargement du Hellfest... 🤘</div>;
+  if (loading) return <div className="loading">Chargement du de l'application <br></br>Hellfest Running Order Planner... 🤘</div>;
   if (error) return <div className="error">Erreur : {error.message}</div>;
 
   const currentDayGroups = groups.filter(group => group.DAY === state.day);
@@ -347,7 +347,11 @@ function AppContent() {
             ) : viewMode === 'map' ? (
               <MapView
                 groups={groups}
-                onGroupSelect={(g) => handleGroupSelect(g, { clientX: window.innerWidth / 2 - 175, clientY: window.innerHeight / 2 - 200 })}
+                onGroupSelect={(g) => {
+                    const grid = document.querySelector('.map-stage-grid');
+                    const gridTop = grid ? grid.getBoundingClientRect().top : window.innerHeight * 0.6;
+                    handleGroupSelect(g, { clientX: window.innerWidth / 2 - 175, clientY: gridTop - 400 });
+                }}
               />
             ) : (
               <WeeklyView

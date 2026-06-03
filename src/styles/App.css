@@ -126,6 +126,16 @@ header {
   transform: none;
 }
 
+.toolbar-btn--mobile-only {
+  display: none;
+}
+
+@media screen and (max-width: 600px) {
+  .toolbar-btn--mobile-only {
+    display: flex;
+  }
+}
+
 /* === NAVIGATION === */
 nav {
   display: flex;
@@ -763,6 +773,13 @@ nav button:hover {
     padding-bottom: env(safe-area-inset-bottom);
   }
 
+  /* Sur MapView : GroupCard ancré au bord supérieur de la grid, ne couvre ni la grid ni le header */
+  .App.view-map .group-card {
+    bottom: var(--map-grid-height, 200px) !important;
+    max-height: calc(100vh - var(--map-top-area, 120px) - var(--map-grid-height, 200px)) !important;
+    border-radius: 12px !important;
+  }
+
   /* Remove expanded class logic as manual drag replaces it */
 
   .drag-handle,
@@ -872,7 +889,7 @@ nav button:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 300;
+  z-index: 1300;
   animation: fade-in 0.2s ease;
 }
 
