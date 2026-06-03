@@ -889,7 +889,7 @@ nav button:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 300;
+  z-index: 1300;
   animation: fade-in 0.2s ease;
 }
 

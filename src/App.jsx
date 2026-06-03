@@ -257,7 +257,7 @@ function AppContent() {
     }
   };
 
-  if (loading) return <div className="loading">Chargement du Hellfest... 🤘</div>;
+  if (loading) return <div className="loading">Chargement du de l'application <br></br>Hellfest Running Order Planner... 🤘</div>;
   if (error) return <div className="error">Erreur : {error.message}</div>;
 
   const currentDayGroups = groups.filter(group => group.DAY === state.day);
