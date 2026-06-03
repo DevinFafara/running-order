@@ -246,7 +246,14 @@ function AppContent() {
         setTimeout(() => {
           const element = document.getElementById(`group-${group.id}`);
           if (element) {
-            element.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            const cardHeight = parseFloat(
+              getComputedStyle(document.documentElement).getPropertyValue('--group-card-height')
+            ) || 420;
+            const visibleHeight = window.innerHeight - cardHeight;
+            const rect = element.getBoundingClientRect();
+            const elementCenterInDoc = rect.top + window.scrollY + rect.height / 2;
+            const targetScrollY = elementCenterInDoc - visibleHeight / 2;
+            window.scrollTo({ top: Math.max(0, targetScrollY), behavior: 'smooth' });
           }
         }, 350);
       }
