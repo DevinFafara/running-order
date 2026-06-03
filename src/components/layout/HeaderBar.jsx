@@ -183,10 +183,8 @@ const HeaderBar = ({
                         <i className={`fa-solid ${viewMode === 'week' ? 'fa-calendar-day' : 'fa-calendar-week'}`}></i>
                     </button>
 
-                    {/* Map icon hidden from toolbar for production testing — moved to Settings */}
-                    {/* 
                     <button
-                        className={`toolbar-btn ${viewMode === 'map' ? 'active' : ''}`}
+                        className={`toolbar-btn toolbar-btn--mobile-only ${viewMode === 'map' ? 'active' : ''}`}
                         title="Carte du site"
                         onClick={() => {
                             if (onInteraction) onInteraction();
@@ -195,7 +193,6 @@ const HeaderBar = ({
                     >
                         <i className="fa-solid fa-map-location-dot"></i>
                     </button>
-*/}
 
                     <button
                         className={`toolbar-btn ${profileOpen ? 'active' : ''}`}

@@ -54,7 +54,7 @@ const StageMarker = ({ stageKey, stageData, onSelect, counterTransform }) => {
             <div
                 className="stage-marker__inner"
                 style={{
-                    transform: `${counterTransform} translate(${isLeftAligned ? 'calc(-100% + 21px)' : '-21px'}, -21px)`
+                    transform: `${counterTransform} translate(${isLeftAligned ? 'calc(-100% + 17px)' : '-17px'}, -17px)`
                 }}
             >
                 <div className="stage-marker__wrap">
@@ -85,34 +85,6 @@ const StageMarker = ({ stageKey, stageData, onSelect, counterTransform }) => {
                         )}
                     </div>
 
-                    {/* Info chip */}
-                    <div className={`stage-marker__chip stage-marker__chip--${status}`}>
-                        <div className="stage-marker__chip-header">
-                            <span className="stage-marker__chip-stage" style={{ color }}>
-                                {config.name}
-                            </span>
-                            {isPlaying && displayGroup && (
-                                <span className="stage-marker__chip-badge stage-marker__chip-badge--live">● LIVE</span>
-                            )}
-                            {isNext && displayGroup && (
-                                <span className="stage-marker__chip-badge stage-marker__chip-badge--next">Prochain</span>
-                            )}
-                        </div>
-
-                        {displayGroup ? (
-                            <div className="stage-marker__chip-content">
-                                <span className="stage-marker__chip-band">{displayGroup.GROUPE}</span>
-                                <span className="stage-marker__chip-time">
-                                    {status === 'playing'
-                                        ? `${displayGroup.DEBUT?.replace('h', ':')}—${displayGroup.FIN?.replace('h', ':')}`
-                                        : displayGroup.DEBUT?.replace('h', ':')
-                                    }
-                                </span>
-                            </div>
-                        ) : (
-                            <span className="stage-marker__chip-idle">Inactif</span>
-                        )}
-                    </div>
                 </div>
             </div>
         </div>

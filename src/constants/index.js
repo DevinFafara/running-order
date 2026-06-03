@@ -75,7 +75,7 @@ export const STAGE_CONFIG = {
     slug: 'hellstage',
     themeColor: '#239c60',
     bandColor: '#a0d8b7',
-    mapPosition: { left: '60.0%', top: '48.7%' }
+    mapPosition: { left: '58.0%', top: '48.7%' }
   },
   [STAGES.METAL_CORNER]: {
     name: 'Metal Corner',
@@ -99,7 +99,7 @@ export const STAGE_CONFIG = {
     slug: 'hellcity_stage',
     themeColor: '#c45c00',
     bandColor: '#e8b07a',
-    mapPosition: { left: '64.0%', top: '55.0%' }
+    mapPosition: { left: '68.0%', top: '46.0%' }
   },
   [STAGES.LE_OFF1]: {
     name: 'Le Off 1',
@@ -107,7 +107,7 @@ export const STAGE_CONFIG = {
     slug: 'le_off1',
     themeColor: '#7a1a1a',
     bandColor: '#c47070',
-    mapPosition: { left: '50.0%', top: '70.0%' }
+    mapPosition: { left: '88.0%', top: '62.0%' }
   },
   [STAGES.LE_OFF2]: {
     name: 'Le Off 2',
@@ -115,7 +115,7 @@ export const STAGE_CONFIG = {
     slug: 'le_off2',
     themeColor: '#3a3a3a',
     bandColor: '#8a8a8a',
-    mapPosition: { left: '53.0%', top: '70.0%' }
+    mapPosition: { left: '88.0%', top: '70.0%' }
   },
 };
 

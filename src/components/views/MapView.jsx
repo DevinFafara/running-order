@@ -1,40 +1,73 @@
 import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
-import { STAGES, DAYS, MAP_POIS } from '../../constants';
+import { STAGES, DAYS, MAP_POIS, INTEREST_LEVELS, CONTEXT_TAGS } from '../../constants';
+import { useCheckedState } from '../../context/CheckedStateContext';
 import { useCurrentBands } from '../../hooks/useCurrentBands';
 import StageMarker from '../map/StageMarker';
 import '../../styles/MapView.css';
 
 const ALL_STAGE_KEYS = Object.keys(STAGES);
 
-const MIN_ZOOM = 0.20;
-const MAX_ZOOM = 1.0;
+// Mercredi soir (avant Jeudi 01:00) : scènes secondaires + Off
+const PRE_PAIRS = [
+    ['HELLSTAGE', 'HELLCITY_STAGE'],
+    ['METAL_CORNER', 'PURPLE_HOUSE'],
+    ['LE_OFF1', 'LE_OFF2'],
+];
+
+// À partir de Jeudi 01:00 : toutes les scènes sauf les Off
+const MAIN_PAIRS = [
+    ['MAINSTAGE_1', 'MAINSTAGE_2'],
+    ['WARZONE', 'VALLEY'],
+    ['ALTAR', 'TEMPLE'],
+    ['HELLSTAGE', 'HELLCITY_STAGE'],
+    ['METAL_CORNER', 'PURPLE_HOUSE'],
+];
+
+const MIN_ZOOM = 0.10;
+const MAX_ZOOM = 0.50;
 const ZOOM_STEP = 0.25;
 const ZOOM_WHEEL_STEP = 0.08;
 
-// Hellfest 2026 dates: Mercredi 17 → Dimanche 21 juin 2026
-const FESTIVAL_DATES = [
-    new Date(2026, 5, 17), // Mercredi (month is 0-indexed)
-    new Date(2026, 5, 18), // Jeudi
-    new Date(2026, 5, 19), // Vendredi
-    new Date(2026, 5, 20), // Samedi
-    new Date(2026, 5, 21), // Dimanche
+// Mapping date locale → nom du jour festival (tel que stocké dans les données)
+const FESTIVAL_DAY_MAP = {
+    '2026-06-16': 'Mardi',
+    '2026-06-17': 'Mercredi',
+    '2026-06-18': 'Jeudi',
+    '2026-06-19': 'Vendredi',
+    '2026-06-20': 'Samedi',
+    '2026-06-21': 'Dimanche',
+};
+
+// Options du sélecteur de simulation (inclut Lundi pour tester le post-minuit Dimanche)
+const SIM_DATE_OPTIONS = [
+    { value: '2026-06-16', label: 'Mar 16/06' },
+    { value: '2026-06-17', label: 'Mer 17/06' },
+    { value: '2026-06-18', label: 'Jeu 18/06' },
+    { value: '2026-06-19', label: 'Ven 19/06' },
+    { value: '2026-06-20', label: 'Sam 20/06' },
+    { value: '2026-06-21', label: 'Dim 21/06' },
+    { value: '2026-06-22', label: 'Lun 22/06' },
 ];
 
-/**
- * Returns the festival day index (0–4) if we are currently during the Hellfest,
- * or null if we are outside the festival period.
- * Handles post-midnight: before 6am counts as the previous day's festival day.
- */
-function getAutoFestivalDayIndex() {
-    const now = new Date();
-    const h = now.getHours();
-    // If before 6am, consider it still the previous calendar day
-    const adjustedDate = new Date(now);
-    if (h < 6) adjustedDate.setDate(adjustedDate.getDate() - 1);
+function localDateKey(date) {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
 
-    const dateStr = adjustedDate.toDateString();
-    const idx = FESTIVAL_DATES.findIndex(d => d.toDateString() === dateStr);
-    return idx >= 0 ? idx : null;
+// Retourne le nom du jour festival pour une date donnée (gère la convention post-minuit)
+function getDayName(date) {
+    const h = date.getHours();
+    const adjusted = new Date(date);
+    if (h < 6) adjusted.setDate(adjusted.getDate() - 1);
+    return FESTIVAL_DAY_MAP[localDateKey(adjusted)] ?? null;
+}
+
+// Retourne 'thanks' (00h30–01h00 le Lundi) ou 'done' (après 01h00 le Lundi), sinon null
+function getFestivalEndState(date) {
+    if (date.getFullYear() !== 2026 || date.getMonth() !== 5 || date.getDate() !== 22) return null;
+    const minutes = date.getHours() * 60 + date.getMinutes();
+    if (minutes >= 60) return 'done';
+    if (minutes >= 30) return 'thanks';
+    return null;
 }
 
 function clampPan(px, py, zoom, containerW, containerH, imgW, imgH) {
@@ -43,40 +76,176 @@ function clampPan(px, py, zoom, containerW, containerH, imgW, imgH) {
     const overflowX = Math.max(0, scaledW - containerW);
     const overflowY = Math.max(0, scaledH - containerH);
     const margin = 40;
+    const upMargin = 400;
     return {
         x: Math.min(overflowX / 2 + margin, Math.max(-(overflowX / 2 + margin), px)),
-        y: Math.min(overflowY / 2 + margin, Math.max(-(overflowY / 2 + margin), py)),
+        y: Math.min(overflowY / 2 + margin, Math.max(-(overflowY / 2 + upMargin), py)),
     };
 }
+
+const StageGridItem = ({ stageKey, stageData, isLeft, onSelect }) => {
+    const { playing, next, status, config } = stageData;
+    const { getBandTag, getInterestColor } = useCheckedState();
+    if (!config) return null;
+
+    const color = config.themeColor;
+    const displayGroup = playing || next;
+    const isPlaying = status === 'playing';
+    const isNext = status === 'next';
+
+    const handleClick = (e) => {
+        e.stopPropagation();
+        if (displayGroup && onSelect) onSelect(displayGroup);
+    };
+
+    const getGroupTags = () => {
+        if (!displayGroup) return null;
+        const tag = getBandTag(displayGroup.id);
+        if (!tag) return null;
+        const interest = INTEREST_LEVELS[tag.interest];
+        const context = CONTEXT_TAGS[tag.context];
+        return {
+            stars: interest ? interest.stars : 0,
+            interestColor: tag.interest ? getInterestColor(tag.interest) : null,
+            contextIcon: context ? context.icon : null,
+        };
+    };
+
+    const tags = getGroupTags();
+    const side = isLeft ? 'left' : 'right';
+
+    return (
+        <div
+            className={`map-grid-item stage-marker--${status} stage-marker--${side}`}
+            onClick={handleClick}
+        >
+            <div className="stage-marker__wrap">
+                <div className="stage-marker__dot" style={{ backgroundColor: color }}>
+                    {/* TODO(feature/map-view): re-enable pulse ring before closing feature */}
+                    {/* {isPlaying && <div className="stage-marker__pulse" style={{ borderColor: color }} />} */}
+                    <img src={config.icon} alt={config.name} className="stage-marker__icon" />
+                    {tags && (
+                        <div className="stage-marker__badges">
+                            {tags.stars > 0 && (
+                                <div className="stage-marker__badge stage-marker__badge--interest" style={{ color: tags.interestColor }}>★</div>
+                            )}
+                            {tags.contextIcon && (
+                                <div className="stage-marker__badge stage-marker__badge--context">{tags.contextIcon}</div>
+                            )}
+                        </div>
+                    )}
+                </div>
+                <div className={`stage-marker__chip stage-marker__chip--${status}`}>
+                    {displayGroup ? (
+                        <>
+                            <div className="stage-marker__chip-header">
+                                {isPlaying && <span className="stage-marker__chip-badge stage-marker__chip-badge--live">● LIVE</span>}
+                                {isNext && <span className="stage-marker__chip-badge stage-marker__chip-badge--next">Prochain</span>}
+                                <span className="stage-marker__chip-time">
+                                    {isPlaying
+                                        ? `${displayGroup.DEBUT?.replace('h', ':')}—${displayGroup.FIN?.replace('h', ':')}`
+                                        : displayGroup.DEBUT?.replace('h', ':')}
+                                </span>
+                            </div>
+                            <span className="stage-marker__chip-band" style={{ color }}>{displayGroup.GROUPE}</span>
+                        </>
+                    ) : (
+                        <span className="stage-marker__chip-idle">Inactif</span>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const FestivalEndMessage = ({ state }) => (
+    <div className="map-festival-end">
+        {state === 'thanks' ? (
+            <span>🎆🎉 Merci d'avoir utilisé cette application — see you soon ! 🎉🎆</span>
+        ) : (
+            <span>L'édition Hellfest 2026 est terminée 🥲 — RDV en 2027 !</span>
+        )}
+    </div>
+);
+
+const StageGridPanel = ({ stageStatus, onGroupSelect, isPrePhase }) => {
+    if (!stageStatus || Object.keys(stageStatus).length === 0) return null;
+
+    const pairs = isPrePhase ? PRE_PAIRS : MAIN_PAIRS;
+
+    return (
+        <div className="map-stage-grid">
+            {pairs.map(([leftKey, rightKey]) => (
+                <div key={`${leftKey}-${rightKey}`} className="map-stage-grid__row">
+                    {stageStatus[leftKey] && (
+                        <StageGridItem stageKey={leftKey} stageData={stageStatus[leftKey]} isLeft={true} onSelect={onGroupSelect} />
+                    )}
+                    {stageStatus[rightKey] && (
+                        <StageGridItem stageKey={rightKey} stageData={stageStatus[rightKey]} isLeft={false} onSelect={onGroupSelect} />
+                    )}
+                </div>
+            ))}
+        </div>
+    );
+};
 
 const MapView = ({ groups, onGroupSelect }) => {
     const [editMode, setEditMode] = useState(false);
     const [copiedCoords, setCopiedCoords] = useState(null);
     const [activePoiId, setActivePoiId] = useState(null);
 
-    // Day simulation — null means "neutral" (no festival day active)
-    // Auto-detects if we're actually during the Hellfest
-    const [simDayIndex, setSimDayIndex] = useState(() => getAutoFestivalDayIndex());
-    const isPreviewActive = simDayIndex !== null;
-    const isFestivalLive = getAutoFestivalDayIndex() !== null;
+    // Simulation — null = heure réelle
+    const [simDate, setSimDate] = useState(null); // ex: '2026-06-21'
+    const [simHour, setSimHour] = useState(15);
 
-    // Filter groups by selected day, or empty array if no day selected
+    // Timestamp simulé complet (identique à ce que new Date() retournerait pendant le festival)
+    const effectiveDate = useMemo(() => {
+        if (!simDate) return null;
+        const [y, m, d] = simDate.split('-').map(Number);
+        return new Date(y, m - 1, d, simHour, 0, 0);
+    }, [simDate, simHour]);
+
+    // Même logique pour simulation et temps réel
+    const isFestivalLive = getDayName(new Date()) !== null;
+    const isSimMode = effectiveDate !== null;
+    const isPreviewActive = isSimMode || isFestivalLive;
+
+    const activeDayName = useMemo(() => {
+        if (isSimMode) return getDayName(effectiveDate);
+        if (isFestivalLive) return getDayName(new Date());
+        return null;
+    }, [isSimMode, isFestivalLive, effectiveDate]);
+
     const dayGroups = useMemo(
-        () => simDayIndex !== null ? groups.filter(g => g.DAY === DAYS[simDayIndex]) : [],
-        [groups, simDayIndex]
+        () => activeDayName ? groups.filter(g => g.DAY === activeDayName) : [],
+        [groups, activeDayName]
     );
 
-    // When in preview mode (not during live festival), don't use real time
-    // During live festival, use real time (simMinutes = null lets useCurrentBands use real clock)
-    const simMinutes = isPreviewActive && !isFestivalLive ? 15 * 60 : null; // default to 15h for preview
-    const stageStatus = useCurrentBands(dayGroups, isPreviewActive && !isFestivalLive ? simMinutes : null);
+    // null = useCurrentBands utilise l'horloge réelle
+    const simMinutes = useMemo(() => {
+        if (!isSimMode) return null;
+        const h = effectiveDate.getHours();
+        return h * 60 + (h < 6 ? 24 * 60 : 0);
+    }, [isSimMode, effectiveDate]);
 
-    // Format simulated time for display
-    const simTimeLabel = simMinutes !== null
-        ? `${String(Math.floor((simMinutes % (24 * 60)) / 60 + (simMinutes >= 24 * 60 ? 0 : 0))).padStart(2, '0')}h${String(simMinutes % 60).padStart(2, '0')}`
+    const stageStatus = useCurrentBands(dayGroups, simMinutes);
+
+    const simTimeLabel = isSimMode
+        ? `${String(simHour).padStart(2, '0')}h00`
         : null;
 
-    const [view, setView] = useState({ zoom: 0.20, x: 0, y: 0 });
+    // Avant Jeudi 01h00 → scènes secondaires + Off ; après → toutes scènes sauf Off
+    const isPrePhase = useMemo(() => {
+        const ref = effectiveDate ?? new Date();
+        return ref < new Date(2026, 5, 18, 1, 0, 0);
+    }, [effectiveDate]);
+
+    // Message de fin de festival (Lundi 22/06 : 00h30–01h00 → remerciements, 01h00+ → terminé)
+    const festivalEndState = useMemo(() => {
+        return getFestivalEndState(effectiveDate ?? new Date());
+    }, [effectiveDate]);
+
+    const [view, setView] = useState({ zoom: MIN_ZOOM, x: 0, y: 0 });
     const [initialCentered, setInitialCentered] = useState(false);
 
     const isDragging = useRef(false);
@@ -109,10 +278,10 @@ const MapView = ({ groups, onGroupSelect }) => {
         const doCenter = () => {
             const { w: cW, h: cH } = getContainerSize();
             const { w: iW, h: iH } = getImgSize();
-            const zoom = 0.20;
-            // Target point: far left side of the map (Mainstage area)
-            const targetX = iW * 0.05;
-            const targetY = iH * 0.40;
+            const zoom = MIN_ZOOM;
+            // Target point: far left side of the map (Mainstage area), upper half
+            const targetX = iW * 0.42;
+            const targetY = iH * 1.4;
             const px = -(targetX * zoom - cW / 2);
             const py = -(targetY * zoom - cH / 2);
             const clamped = clampPan(px, py, zoom, cW, cH, iW, iH);
@@ -127,6 +296,48 @@ const MapView = ({ groups, onGroupSelect }) => {
             return () => img.removeEventListener('load', doCenter);
         }
     }, [initialCentered]);
+
+    // Mesure la zone supérieure pour limiter la hauteur max du GroupCard
+    useEffect(() => {
+        const measure = () => {
+            const header = document.querySelector('.map-view__header');
+            const clock = document.querySelector('.map-view__clock-area');
+            const appNav = 50;
+            const h = appNav + (header?.offsetHeight ?? 0) + (clock?.offsetHeight ?? 0);
+            document.documentElement.style.setProperty('--map-top-area', `${h}px`);
+        };
+        measure();
+        const obs = new ResizeObserver(measure);
+        ['.map-view__header', '.map-view__clock-area'].forEach(sel => {
+            const el = document.querySelector(sel);
+            if (el) obs.observe(el);
+        });
+        return () => { obs.disconnect(); document.documentElement.style.removeProperty('--map-top-area'); };
+    }, []);
+
+    // Mesure la hauteur de la grid pour ancrer le GroupCard à son bord supérieur
+    useEffect(() => {
+        let obs;
+        const attach = () => {
+            const grid = document.querySelector('.map-stage-grid');
+            if (!grid) return;
+            const update = () => document.documentElement.style.setProperty('--map-grid-height', `${grid.offsetHeight}px`);
+            update();
+            obs = new ResizeObserver(update);
+            obs.observe(grid);
+        };
+        const t = setTimeout(attach, 0);
+        return () => { clearTimeout(t); obs?.disconnect(); };
+    }, [isPrePhase, festivalEndState]);
+
+    useEffect(() => () => document.documentElement.style.removeProperty('--map-grid-height'), []);
+
+    // Synchronise les pulse rings : tous les markers partagent le même offset de phase
+    useEffect(() => {
+        const DURATION = 1500; // ms, doit correspondre à l'animation CSS
+        const offset = -(Date.now() % DURATION) / 1000;
+        document.documentElement.style.setProperty('--pulse-sync', `${offset.toFixed(3)}s`);
+    }, []);
 
     // ── Zoom ──────────────────────────────────────────────────────────────────
     const changeZoom = useCallback((delta, focalX = null, focalY = null) => {
@@ -265,29 +476,37 @@ const MapView = ({ groups, onGroupSelect }) => {
                     <span className="map-legend-item"><span className="map-legend-dot map-legend-dot--playing" /> En cours</span>
                     <span className="map-legend-item"><span className="map-legend-dot map-legend-dot--next" /> Prochain</span>
                     <span className="map-legend-item"><span className="map-legend-dot map-legend-dot--idle" /> Inactif</span>
-                </div>
-
-                <div className="map-view__controls">
-                    {/* Zoom */}
                     <div className="map-zoom-btns">
                         <button className="map-zoom-btn" onClick={() => changeZoom(-ZOOM_STEP)} disabled={view.zoom <= MIN_ZOOM} title="Zoom arrière"><i className="fa-solid fa-minus" /></button>
                         <span className="map-zoom-level">{Math.round(view.zoom * 100)}%</span>
                         <button className="map-zoom-btn" onClick={() => changeZoom(ZOOM_STEP)} disabled={view.zoom >= MAX_ZOOM} title="Zoom avant"><i className="fa-solid fa-plus" /></button>
                     </div>
-
-
-
-                    {/* Edit mode: only visible on localhost */}
-                    {(window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && (
-                        <button
-                            className={`map-edit-btn ${editMode ? 'map-edit-btn--active' : ''}`}
-                            onClick={() => { setEditMode(v => !v); setCopiedCoords(null); }}
-                        >
-                            <i className={`fa-solid ${editMode ? 'fa-xmark' : 'fa-crosshairs'}`} />
-                            <span>{editMode ? 'Quitter' : 'Éditer'}</span>
-                        </button>
-                    )}
                 </div>
+            </div>
+
+            <div className="map-view__clock-area">
+                <select
+                    className={`map-sim-select ${isSimMode ? 'map-sim-select--active' : ''}`}
+                    value={simDate ?? ''}
+                    onChange={e => setSimDate(e.target.value || null)}
+                >
+                    <option value="">Heure réelle</option>
+                    {SIM_DATE_OPTIONS.map(opt => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                </select>
+                {isSimMode && (
+                    <select
+                        className="map-sim-select map-sim-select--active"
+                        value={simHour}
+                        onChange={e => setSimHour(Number(e.target.value))}
+                    >
+                        {Array.from({ length: 24 }, (_, i) => (
+                            <option key={i} value={i}>{String(i).padStart(2, '0')}h00</option>
+                        ))}
+                    </select>
+                )}
+                <LiveClock isPreviewActive={isPreviewActive} isFestivalLive={isFestivalLive} simDay={isSimMode ? activeDayName : null} simTimeLabel={simTimeLabel} />
             </div>
 
             {/* Edit mode banner */}
@@ -329,14 +548,14 @@ const MapView = ({ groups, onGroupSelect }) => {
                                 key={stageKey}
                                 stageKey={stageKey}
                                 stageData={data}
-                                onSelect={editMode ? undefined : onGroupSelect}
+                                onSelect={undefined}
                                 counterTransform={counterTransform}
                             />
                         );
                     })}
 
-                    {/* POI Markers */}
-                    {MAP_POIS.map((poi) => (
+                    {/* POI Markers — visibles seulement au-dessus de 20% de zoom */}
+                    {view.zoom > 0.20 && MAP_POIS.map((poi) => (
                         <POIMarker
                             key={poi.id}
                             poi={poi}
@@ -352,28 +571,10 @@ const MapView = ({ groups, onGroupSelect }) => {
                 </div>
             </div>
 
-            <div className="map-view__clock-area">
-                <button
-                    className={`map-preview-btn ${isPreviewActive && !isFestivalLive ? 'map-preview-btn--active' : ''}`}
-                    onClick={() => {
-                        if (!isPreviewActive) {
-                            // Start preview at first day (Mercredi)
-                            setSimDayIndex(0);
-                        } else if (simDayIndex < DAYS.length - 1) {
-                            // Cycle to next day
-                            setSimDayIndex(simDayIndex + 1);
-                        } else {
-                            // After last day, turn off preview
-                            setSimDayIndex(isFestivalLive ? getAutoFestivalDayIndex() : null);
-                        }
-                    }}
-                    title={isPreviewActive ? `Aperçu: ${DAYS[simDayIndex]} ${simTimeLabel || ''} (clic = jour suivant)` : 'Aperçu programme'}
-                >
-                    <i className={`fa-solid ${isPreviewActive && !isFestivalLive ? 'fa-eye' : 'fa-calendar-day'}`} />
-                    {isPreviewActive && !isFestivalLive ? `${DAYS[simDayIndex]} ${simTimeLabel}` : 'Aperçu'}
-                </button>
-                <LiveClock isPreviewActive={isPreviewActive} isFestivalLive={isFestivalLive} simDay={simDayIndex !== null ? DAYS[simDayIndex] : null} simTimeLabel={simTimeLabel} />
-            </div>
+            {festivalEndState
+                ? <FestivalEndMessage state={festivalEndState} />
+                : <StageGridPanel stageStatus={stageStatus} onGroupSelect={onGroupSelect} isPrePhase={isPrePhase} />
+            }
         </div>
     );
 };
