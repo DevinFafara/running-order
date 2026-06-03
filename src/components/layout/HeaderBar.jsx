@@ -183,18 +183,18 @@ const HeaderBar = ({
                         <i className={`fa-solid ${viewMode === 'week' ? 'fa-calendar-day' : 'fa-calendar-week'}`}></i>
                     </button>
 
-                    {/* Map icon — disabled pending mobile display fixes
-                    <button
-                        className={`toolbar-btn toolbar-btn--mobile-only ${viewMode === 'map' ? 'active' : ''}`}
-                        title="Carte du site"
-                        onClick={() => {
-                            if (onInteraction) onInteraction();
-                            onViewChange(viewMode === 'map' ? 'day' : 'map');
-                        }}
-                    >
-                        <i className="fa-solid fa-map-location-dot"></i>
-                    </button>
-                    */}
+                    {new Date() >= new Date(2026, 5, 16) && (
+                        <button
+                            className={`toolbar-btn toolbar-btn--mobile-only ${viewMode === 'map' ? 'active' : ''}`}
+                            title="Carte du site"
+                            onClick={() => {
+                                if (onInteraction) onInteraction();
+                                onViewChange(viewMode === 'map' ? 'day' : 'map');
+                            }}
+                        >
+                            <i className="fa-solid fa-map-location-dot"></i>
+                        </button>
+                    )}
 
                     <button
                         className={`toolbar-btn ${profileOpen ? 'active' : ''}`}
