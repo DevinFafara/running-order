@@ -238,13 +238,55 @@ async function sendPush(endpoint, keys, payload) {
 // ─── Broadcast notifications éditoriales ────────────────────────────────────
 // scheduledAt en heure locale Paris (UTC+2 en été)
 const BROADCAST_NOTIFICATIONS = [
-    { id: 'j14', scheduledAt: '2026-06-04T17:00:00+02:00', title: '🤘 J-14 — Plus que 2 semaines !', body: 'Le Hellfest approche. Prépare ton planning sur le RO Planner.' },
-    { id: 'j7',  scheduledAt: '2026-06-11T18:00:00+02:00', title: '🔥 J-7 — La semaine prochaine c\'est le Hellfest !', body: 'Finalise tes favoris avant de partir.' },
-    { id: 'dep', scheduledAt: '2026-06-17T14:00:00+02:00', title: '🚗 Vous partez aujourd\'hui ?', body: 'Bonne route et profitez bien !' },
-    { id: 'd1',  scheduledAt: '2026-06-18T09:00:00+02:00', title: '🎸 C\'est parti — Jour 1 !', body: 'Le Hellfest commence aujourd\'hui. À tout à l\'heure dans la fosse.' },
-    { id: 'd2',  scheduledAt: '2026-06-19T09:00:00+02:00', title: '🤘 Jour 2 — Vendredi !', body: 'Bonne journée au Hellfest !' },
-    { id: 'd3',  scheduledAt: '2026-06-20T09:00:00+02:00', title: '🔥 Jour 3 — Samedi !', body: 'Avant-dernière journée. Profitez-en !' },
-    { id: 'd4',  scheduledAt: '2026-06-21T09:00:00+02:00', title: '😢 Dernier jour…', body: 'Profitez de chaque concert. À l\'année prochaine !' },
+    // Avant le festival
+    { 
+        id: 'j-14',
+        scheduledAt: '2026-06-04T21:00:00+02:00', 
+        title: '🤘 J-14 — Plus que 2 semaines !',
+        body: 'Le Hellfest approche. Fini de préparer ton Running Order ?' 
+    },
+    { 
+        id: 'j-7',
+        scheduledAt: '2026-06-11T18:00:00+02:00',
+        title: '🔥 J-7 — Plus qu\'une semaine à tenir',
+        body: 'Les bagages sont prêts ? N\'oublie pas la crème solaire 😎' 
+    },
+    { 
+        id: 'j-1',
+        scheduledAt: '2026-06-17T10:00:00+02:00',
+        title: '🚗 J-1 — En voiture Simone',
+        body: 'Prudence sur la route. Clisson peut attendre, on a besoin de toi en un seul morceau.'
+    },
+    { 
+        id: 'd1',
+        scheduledAt: '2026-06-18T12:00:00+02:00',
+        title: '🎸 Jour 1 — Début des hostilités', 
+        body: 'C\'est parti pour 4 jours, 10 scènes, + de 200 groupes. Et on n\'oublie pas les bouchons d\'oreilles'
+    },
+    {
+        id: 'd2',
+        scheduledAt: '2026-06-19T10:00:00+02:00',
+        title: '🍔 Jour 2 — Conseil stratégique',
+        body: 'Mange avant 11h ou après 15h. Les files d\'attente du food court aux heures des repas, c\'est comme un mosh pit, mais en moins fun.'
+    },
+    { 
+        id: 'd3',
+        scheduledAt: '2026-06-20T10:00:00+02:00', 
+        title: '💧 Rappel hydratation — Jour 3', 
+        body: 'Buvez de l\'eau. Pas que de la bière. (Bon ok, les deux. Mais de l\'eau quand même)' 
+    },
+    { 
+        id: 'd4',
+        scheduledAt: '2026-06-21T10:00:00+02:00',
+        title: '🔥 Dernier jour — On donne tout',
+        body: 'Aujourd\'hui ça se termine. Économise pas ton énergie — t\'auras toute l\'année pour récupérer.'
+    },
+    { 
+        id: 'end',
+        scheduledAt: '2026-06-22T12:00:00+02:00',
+        title: '🥲 C\'est déjà fini',
+        body: 'Merci d\'avoir utilisé cette application. See you in 2027 🤘'
+    },
 ];
 
 // ─── Scheduler (toutes les 30s) ─────────────────────────────────────────────
