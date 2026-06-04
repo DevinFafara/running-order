@@ -13,6 +13,7 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,json}'],
         maximumFileSizeToCacheInBytes: 3000000,
+        importScripts: ['/running-order/push-handler.js'],
         // On s'assure que lineup.json est bien mis en cache
         runtimeCaching: [
           {

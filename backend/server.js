@@ -2,20 +2,36 @@ const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
+
+// web-push est optionnel — si non installé ou clés VAPID absentes, le push est simplement désactivé
+let webPush = null;
+try { webPush = require('web-push'); } catch (e) { /* non installé */ }
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 const ADMIN_SECRET = process.env.ADMIN_SECRET || null;
 const DATA_DIR = path.join(__dirname, 'data', 'users');
 const INDEX_FILE = path.join(__dirname, 'data', 'index.json');
+const SUBS_DIR = path.join(__dirname, 'data', 'subscriptions');
 const STATIC_DIR = process.env.STATIC_DIR || path.join(__dirname, 'public');
 // URL de l'instance Discourse — doit être accessible depuis le container
 const DISCOURSE_URL = process.env.DISCOURSE_URL || 'https://forum.hellfest.fr';
+
+// ─── Push notifications (VAPID) ─────────────────────────────────────────────
+const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || null;
+const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || null;
+const VAPID_SUBJECT = process.env.VAPID_SUBJECT || 'https://forum.hellfest.fr';
+const pushEnabled = !!(webPush && VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY);
 
 // ─── Ensure data directories exist ──────────────────────────────────────────
 fs.mkdirSync(DATA_DIR, { recursive: true });
 if (!fs.existsSync(INDEX_FILE)) {
     fs.writeFileSync(INDEX_FILE, JSON.stringify({ users: [] }, null, 2));
+}
+if (pushEnabled) {
+    fs.mkdirSync(SUBS_DIR, { recursive: true });
+    webPush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 }
 
 // ─── Middleware ──────────────────────────────────────────────────────────────
@@ -142,6 +158,145 @@ function removeIndexEntry(username) {
 function sanitizeUsername(username) {
     // Only allow alphanumeric, underscores, hyphens, dots
     return username.replace(/[^a-zA-Z0-9_\-\.]/g, '');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PUSH NOTIFICATIONS
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ─── Subscription file helpers ──────────────────────────────────────────────
+function endpointHash(endpoint) {
+    return crypto.createHash('sha256').update(endpoint).digest('hex').substring(0, 16);
+}
+
+function getSubPath(endpoint) {
+    return path.join(SUBS_DIR, `${endpointHash(endpoint)}.json`);
+}
+
+function writeSubscription(data) {
+    atomicWriteFile(getSubPath(data.endpoint), JSON.stringify(data, null, 2));
+}
+
+function deleteSubscription(endpoint) {
+    const filePath = getSubPath(endpoint);
+    try { if (fs.existsSync(filePath)) fs.unlinkSync(filePath); } catch (e) {}
+}
+
+// ─── In-memory alarm queue ──────────────────────────────────────────────────
+// Each entry: { endpoint, keys, bandName, scene, debut, label, notifyAt (ms) }
+let alarmQueue = [];
+const sentBroadcasts = new Set();
+
+function buildAlarmQueue() {
+    if (!pushEnabled) return;
+    alarmQueue = [];
+    const now = Date.now();
+    try {
+        const files = fs.readdirSync(SUBS_DIR).filter(f => f.endsWith('.json'));
+        for (const file of files) {
+            try {
+                const sub = JSON.parse(fs.readFileSync(path.join(SUBS_DIR, file), 'utf-8'));
+                if (!sub.endpoint || !sub.keys || !Array.isArray(sub.alarms)) continue;
+                for (const alarm of sub.alarms) {
+                    const notifyAt = new Date(alarm.notifyAt).getTime();
+                    if (notifyAt > now) {
+                        alarmQueue.push({
+                            endpoint: sub.endpoint,
+                            keys: sub.keys,
+                            bandName: alarm.bandName,
+                            scene: alarm.scene,
+                            debut: alarm.debut,
+                            label: alarm.label,
+                            notifyAt,
+                        });
+                    }
+                }
+            } catch (e) { /* fichier corrompu, on ignore */ }
+        }
+        alarmQueue.sort((a, b) => a.notifyAt - b.notifyAt);
+        console.log(`   Push queue: ${alarmQueue.length} alarmes chargées`);
+    } catch (e) {
+        console.error('Erreur construction queue:', e);
+    }
+}
+
+// ─── Push sender ────────────────────────────────────────────────────────────
+async function sendPush(endpoint, keys, payload) {
+    try {
+        await webPush.sendNotification({ endpoint, keys }, JSON.stringify(payload));
+        return true;
+    } catch (err) {
+        if (err.statusCode === 410 || err.statusCode === 404) {
+            // Subscription révoquée par le navigateur
+            deleteSubscription(endpoint);
+            alarmQueue = alarmQueue.filter(a => a.endpoint !== endpoint);
+        }
+        return false;
+    }
+}
+
+// ─── Broadcast notifications éditoriales ────────────────────────────────────
+// scheduledAt en heure locale Paris (UTC+2 en été)
+const BROADCAST_NOTIFICATIONS = [
+    { id: 'j14', scheduledAt: '2026-06-04T17:00:00+02:00', title: '🤘 J-14 — Plus que 2 semaines !', body: 'Le Hellfest approche. Prépare ton planning sur le RO Planner.' },
+    { id: 'j7',  scheduledAt: '2026-06-11T18:00:00+02:00', title: '🔥 J-7 — La semaine prochaine c\'est le Hellfest !', body: 'Finalise tes favoris avant de partir.' },
+    { id: 'dep', scheduledAt: '2026-06-17T14:00:00+02:00', title: '🚗 Vous partez aujourd\'hui ?', body: 'Bonne route et profitez bien !' },
+    { id: 'd1',  scheduledAt: '2026-06-18T09:00:00+02:00', title: '🎸 C\'est parti — Jour 1 !', body: 'Le Hellfest commence aujourd\'hui. À tout à l\'heure dans la fosse.' },
+    { id: 'd2',  scheduledAt: '2026-06-19T09:00:00+02:00', title: '🤘 Jour 2 — Vendredi !', body: 'Bonne journée au Hellfest !' },
+    { id: 'd3',  scheduledAt: '2026-06-20T09:00:00+02:00', title: '🔥 Jour 3 — Samedi !', body: 'Avant-dernière journée. Profitez-en !' },
+    { id: 'd4',  scheduledAt: '2026-06-21T09:00:00+02:00', title: '😢 Dernier jour…', body: 'Profitez de chaque concert. À l\'année prochaine !' },
+];
+
+// ─── Scheduler (toutes les 30s) ─────────────────────────────────────────────
+if (pushEnabled) {
+    buildAlarmQueue();
+
+    setInterval(async () => {
+        const now = Date.now();
+        const BUFFER = 5000; // 5s de tolérance
+
+        // Alarmes individuelles
+        const due = alarmQueue.filter(a => a.notifyAt <= now + BUFFER);
+        for (const alarm of due) {
+            const minutes = alarm.label === '15min' ? '15' : '5';
+            await sendPush(alarm.endpoint, alarm.keys, {
+                title: `🎸 ${alarm.bandName} dans ${minutes} min`,
+                body: `${alarm.scene} — ${alarm.debut}`,
+                icon: '/running-order/icons/icon-192x192.png',
+                badge: '/running-order/icons/icon-72x72.png',
+                tag: `band-${endpointHash(alarm.endpoint)}-${alarm.label}-${alarm.bandName}`,
+                url: '/running-order/',
+            });
+        }
+        alarmQueue = alarmQueue.filter(a => a.notifyAt > now + BUFFER);
+
+        // Broadcasts éditoriaux
+        for (const bc of BROADCAST_NOTIFICATIONS) {
+            if (sentBroadcasts.has(bc.id)) continue;
+            const bcTime = new Date(bc.scheduledAt).getTime();
+            if (bcTime <= now + BUFFER && bcTime > now - 35000) {
+                sentBroadcasts.add(bc.id);
+                try {
+                    const files = fs.readdirSync(SUBS_DIR).filter(f => f.endsWith('.json'));
+                    for (const file of files) {
+                        try {
+                            const sub = JSON.parse(fs.readFileSync(path.join(SUBS_DIR, file), 'utf-8'));
+                            if (sub.endpoint && sub.keys) {
+                                await sendPush(sub.endpoint, sub.keys, {
+                                    title: bc.title,
+                                    body: bc.body,
+                                    icon: '/running-order/icons/icon-192x192.png',
+                                    badge: '/running-order/icons/icon-72x72.png',
+                                    tag: `broadcast-${bc.id}`,
+                                    url: '/running-order/',
+                                });
+                            }
+                        } catch (e) {}
+                    }
+                } catch (e) {}
+            }
+        }
+    }, 30000);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -278,6 +433,73 @@ app.get('/running-order/api/admin/rebuild-index', async (req, res) => {
     }
 });
 
+// ─── Push routes ────────────────────────────────────────────────────────────
+
+// GET /running-order/api/push/vapid-public-key
+app.get('/running-order/api/push/vapid-public-key', (req, res) => {
+    if (!pushEnabled) return res.status(503).json({ error: 'Push non configuré' });
+    res.json({ publicKey: VAPID_PUBLIC_KEY });
+});
+
+// POST /running-order/api/push/subscribe
+app.post('/running-order/api/push/subscribe', (req, res) => {
+    if (!pushEnabled) return res.status(503).json({ error: 'Push non configuré' });
+
+    const { subscription, alarms, settings } = req.body;
+    if (!subscription?.endpoint || !subscription?.keys) {
+        return res.status(400).json({ error: 'Subscription invalide' });
+    }
+
+    const data = {
+        endpoint: subscription.endpoint,
+        keys: subscription.keys,
+        alarms: Array.isArray(alarms) ? alarms : [],
+        settings: settings || { notify5min: true, notify15min: true },
+        updated_at: new Date().toISOString(),
+    };
+
+    try {
+        writeSubscription(data);
+    } catch (err) {
+        console.error('Erreur écriture subscription:', err);
+        return res.status(500).json({ error: 'Erreur serveur' });
+    }
+
+    // Mettre à jour la queue en mémoire
+    const now = Date.now();
+    alarmQueue = alarmQueue.filter(a => a.endpoint !== data.endpoint);
+    for (const alarm of data.alarms) {
+        const notifyAt = new Date(alarm.notifyAt).getTime();
+        if (notifyAt > now) {
+            alarmQueue.push({
+                endpoint: data.endpoint,
+                keys: data.keys,
+                bandName: alarm.bandName,
+                scene: alarm.scene,
+                debut: alarm.debut,
+                label: alarm.label,
+                notifyAt,
+            });
+        }
+    }
+    alarmQueue.sort((a, b) => a.notifyAt - b.notifyAt);
+
+    res.json({ success: true, alarmCount: data.alarms.length });
+});
+
+// DELETE /running-order/api/push/unsubscribe
+app.delete('/running-order/api/push/unsubscribe', (req, res) => {
+    if (!pushEnabled) return res.status(503).json({ error: 'Push non configuré' });
+
+    const { endpoint } = req.body;
+    if (!endpoint) return res.status(400).json({ error: 'endpoint manquant' });
+
+    deleteSubscription(endpoint);
+    alarmQueue = alarmQueue.filter(a => a.endpoint !== endpoint);
+
+    res.json({ success: true });
+});
+
 // ─── Health check ───────────────────────────────────────────────────────────
 app.get('/running-order/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -296,4 +518,5 @@ app.listen(PORT, () => {
     console.log(`🤘 RO Planner API running on port ${PORT}`);
     console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`);
     console.log(`   Data dir: ${DATA_DIR}`);
+    console.log(`   Push notifications: ${pushEnabled ? 'activées' : 'désactivées (VAPID keys manquantes)'}`);
 });

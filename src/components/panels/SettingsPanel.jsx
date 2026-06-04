@@ -3,7 +3,7 @@ import { useCheckedState } from '../../context/CheckedStateContext';
 import { INTEREST_LEVELS, INTEREST_ORDER } from '../../constants';
 import { api } from '../../services/api';
 
-const SettingsPanel = ({ isOpen, onClose, onClearCustomEvents, onViewChange }) => {
+const SettingsPanel = ({ isOpen, onClose, onClearCustomEvents, onViewChange, notif }) => {
     const { state, setState, getInterestColor, setInterestColor, resetInterestColors, clearAllFavorites, consentChoice, setConsentChoice, user } = useCheckedState();
     const isAuthenticated = !!user;
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
@@ -126,6 +126,100 @@ const SettingsPanel = ({ isOpen, onClose, onClearCustomEvents, onViewChange }) =
 
 
                 </div>
+
+                {/* Section Notifications */}
+                {notif && (
+                    <div className="settings-section">
+                        <h3>
+                            <i className="fa-solid fa-bell" style={{ marginRight: '8px', color: '#FF6B35' }}></i>
+                            Notifications
+                        </h3>
+
+                        {notif.isIOSBrowser ? (
+                            <p className="settings-section-desc" style={{ color: '#aaa', lineHeight: '1.5' }}>
+                                <i className="fa-solid fa-circle-info" style={{ marginRight: '6px', color: '#2196F3' }}></i>
+                                Non disponible en navigation iOS. Installez l'app sur votre écran d'accueil (Safari → Partager → Sur l'écran d'accueil) pour activer les notifications.
+                            </p>
+                        ) : !notif.isSupported ? (
+                            <p className="settings-section-desc" style={{ color: '#aaa' }}>
+                                <i className="fa-solid fa-circle-info" style={{ marginRight: '6px', color: '#888' }}></i>
+                                Non disponible sur ce navigateur.
+                            </p>
+                        ) : (
+                            <>
+                                <p className="settings-section-desc">
+                                    Soyez alerté avant le début des concerts de vos favoris.
+                                </p>
+
+                                <label className="settings-option" style={{ cursor: notif.permission === 'denied' ? 'not-allowed' : 'pointer' }}>
+                                    <div className="settings-option-info">
+                                        <i className="fa-solid fa-bell" style={{ color: notif.enabled ? '#FF6B35' : '#666' }}></i>
+                                        <div>
+                                            <span className="settings-option-title">Activer les notifications</span>
+                                            {notif.permission === 'denied' && (
+                                                <span className="settings-option-desc" style={{ color: '#ff6b6b' }}>
+                                                    Permission refusée — modifiez les réglages du navigateur
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="toggle-switch">
+                                        <input
+                                            type="checkbox"
+                                            checked={notif.enabled}
+                                            disabled={notif.permission === 'denied'}
+                                            onChange={() => notif.enabled ? notif.disable() : notif.enable()}
+                                        />
+                                        <span className="toggle-slider"></span>
+                                    </div>
+                                </label>
+
+                                {notif.enabled && (
+                                    <>
+                                        <label className="settings-option">
+                                            <div className="settings-option-info">
+                                                <i className="fa-solid fa-clock" style={{ color: '#888', fontSize: '0.9rem' }}></i>
+                                                <div>
+                                                    <span className="settings-option-title">15 min avant</span>
+                                                </div>
+                                            </div>
+                                            <div className="toggle-switch">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={notif.notify15min}
+                                                    onChange={(e) => notif.setNotify15min(e.target.checked)}
+                                                />
+                                                <span className="toggle-slider"></span>
+                                            </div>
+                                        </label>
+
+                                        <label className="settings-option">
+                                            <div className="settings-option-info">
+                                                <i className="fa-solid fa-clock" style={{ color: '#888', fontSize: '0.9rem' }}></i>
+                                                <div>
+                                                    <span className="settings-option-title">5 min avant</span>
+                                                </div>
+                                            </div>
+                                            <div className="toggle-switch">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={notif.notify5min}
+                                                    onChange={(e) => notif.setNotify5min(e.target.checked)}
+                                                />
+                                                <span className="toggle-slider"></span>
+                                            </div>
+                                        </label>
+
+                                        <p className="settings-section-desc" style={{ color: '#4CAF50', marginTop: '8px' }}>
+                                            <i className="fa-solid fa-circle-check" style={{ marginRight: '6px' }}></i>
+                                            Notifications actives — {Object.keys(state.taggedBands).length} groupe{Object.keys(state.taggedBands).length !== 1 ? 's' : ''} suivi{Object.keys(state.taggedBands).length !== 1 ? 's' : ''}
+                                        </p>
+                                    </>
+                                )}
+                            </>
+                        )}
+                    </div>
+                )}
 
                 {/* Section Compte & Données (uniquement si connecté) */}
                 {isAuthenticated && consentChoice && consentChoice !== 'local_only' && (

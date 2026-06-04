@@ -58,4 +58,36 @@ export const api = {
     getUsers: () =>
         fetch(`${API_BASE}/users`)
             .then(handleResponse),
+
+    /**
+     * Get VAPID public key for push subscription
+     * @returns {Promise<Object>} { publicKey: string }
+     */
+    getPushVapidKey: () =>
+        fetch(`${API_BASE}/push/vapid-public-key`)
+            .then(handleResponse),
+
+    /**
+     * Register or update a push subscription with its alarms
+     * @param {Object} subscription - { endpoint, keys }
+     * @param {Array} alarms - list of alarm objects
+     * @param {Object} settings - { notify5min, notify15min }
+     */
+    subscribePush: (subscription, alarms, settings) =>
+        fetch(`${API_BASE}/push/subscribe`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ subscription, alarms, settings }),
+        }).then(handleResponse),
+
+    /**
+     * Remove a push subscription
+     * @param {string} endpoint
+     */
+    unsubscribePush: (endpoint) =>
+        fetch(`${API_BASE}/push/unsubscribe`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ endpoint }),
+        }).then(handleResponse),
 };

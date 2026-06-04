@@ -23,6 +23,7 @@ import ConfirmationModal from './components/modals/ConfirmationModal';
 import ContactsPanel from './components/panels/ContactsPanel';
 
 import { parseShareData } from './utils/sharingUtils';
+import { useNotifications } from './hooks/useNotifications';
 
 function AppContent() {
   const { data: groups, loading, error } = useLineup();
@@ -34,6 +35,7 @@ function AppContent() {
     user,
   } = useCheckedState();
   const isAuthenticated = !!user;
+  const notif = useNotifications();
   const [selectedGroup, setSelectedGroup] = useState(null);
   const { isInstallable, isInstalled, installApp, hasPrompt, platform } = usePWA();
   const [popoverPosition, setPopoverPosition] = useState(null);
@@ -61,6 +63,18 @@ function AppContent() {
   useEffect(() => {
     setCustomEventsForSync(customEvents);
   }, [customEvents, setCustomEventsForSync]);
+
+  // Maintenir les refs de useNotifications à jour
+  useEffect(() => {
+    notif.updateData(state.taggedBands, groups || []);
+  }, [state.taggedBands, groups]);
+
+  // Synchroniser les alarmes push quand les favoris changent (même délai que l'autosave)
+  useEffect(() => {
+    if (!notif.enabled) return;
+    const timer = setTimeout(() => notif.syncAlarms(), 1500);
+    return () => clearTimeout(timer);
+  }, [state.taggedBands, notif.enabled]);
 
   // Sync contacts to CheckedStateContext for server sync
   useEffect(() => {
@@ -292,6 +306,7 @@ function AppContent() {
         platform={platform}
         isAuthenticated={isAuthenticated}
         username={user?.username}
+        notif={notif}
       />
 
       {isGuestMode && (
