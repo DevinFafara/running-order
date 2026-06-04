@@ -11,13 +11,16 @@ self.addEventListener('push', (event) => {
         data = { title: 'RO Planner', body: event.data.text() };
     }
 
+    // URL absolue construite depuis le scope du SW pour que l'icône soit
+    // accessible depuis les serveurs Apple/Google (nécessaire pour l'affichage)
+    const base = self.registration.scope; // ex: https://forum.hellfest.fr/running-order/
     event.waitUntil(
         self.registration.showNotification(data.title || 'RO Planner', {
             body: data.body || '',
-            icon: '/running-order/icons/icon-192x192.png',
-            badge: '/running-order/icons/icon-72x72.png',
+            icon: base + 'icons/icon-192x192.png',
+            badge: base + 'icons/icon-72x72.png',
             tag: data.tag || 'ro-planner',
-            data: { url: data.url || '/running-order/' },
+            data: { url: data.url || base },
             requireInteraction: false,
             vibrate: [200, 100, 200],
         })
