@@ -383,14 +383,20 @@ app.post('/running-order/api/ro/:username', verifyAuth, async (req, res) => {
 
     const filePath = path.join(DATA_DIR, `${username}.json`);
 
+    // Lire les données existantes pour éviter d'écraser les champs absents du body
+    let existingData = {};
+    if (fs.existsSync(filePath)) {
+        try { existingData = JSON.parse(fs.readFileSync(filePath, 'utf-8')); } catch (e) {}
+    }
+
     const userData = {
         username,
-        avatar_url: req.body.avatar_url || null,
-        favorites: req.body.favorites || '',
-        contacts: req.body.contacts || [],
-        community_opt_in: req.body.community_opt_in ?? false,
-        favorites_count: req.body.favorites_count ?? 0,
-        current_favorites_count: req.body.current_favorites_count ?? null,
+        avatar_url:              req.body.avatar_url              ?? existingData.avatar_url              ?? null,
+        favorites:               req.body.favorites               || existingData.favorites               || '',
+        contacts:                req.body.contacts                || existingData.contacts                || [],
+        community_opt_in:        req.body.community_opt_in        ?? existingData.community_opt_in        ?? false,
+        favorites_count:         req.body.favorites_count         ?? existingData.favorites_count         ?? 0,
+        current_favorites_count: req.body.current_favorites_count ?? existingData.current_favorites_count ?? null,
         updated_at: new Date().toISOString()
     };
 
