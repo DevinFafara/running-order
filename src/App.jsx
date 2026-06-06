@@ -24,9 +24,11 @@ import ContactsPanel from './components/panels/ContactsPanel';
 
 import { parseShareData } from './utils/sharingUtils';
 import { useNotifications } from './hooks/useNotifications';
+import { useGroups } from './hooks/useGroups';
+import GroupsPanel from './components/panels/GroupsPanel';
 
 function AppContent() {
-  const { data: groups, loading, error } = useLineup();
+  const { data: lineupGroups, loading, error } = useLineup();
   const {
     state, setDay, setState, isGuestMode, guestRo, setGuestRo,
     saveStatus, conflictData, resolveConflict,
@@ -36,10 +38,12 @@ function AppContent() {
   } = useCheckedState();
   const isAuthenticated = !!user;
   const notif = useNotifications();
+  const groups = useGroups(user?.username);
   const [selectedGroup, setSelectedGroup] = useState(null);
   const { isInstallable, isInstalled, installApp, hasPrompt, platform } = usePWA();
   const [popoverPosition, setPopoverPosition] = useState(null);
   const [viewMode, setViewMode] = useState('day');
+  const [groupsOpen, setGroupsOpen] = useState(false);
 
 
   const [customEvents, setCustomEvents] = useState(() => {
@@ -66,8 +70,8 @@ function AppContent() {
 
   // Maintenir les refs de useNotifications à jour
   useEffect(() => {
-    notif.updateData(state.taggedBands, groups || []);
-  }, [state.taggedBands, groups]);
+    notif.updateData(state.taggedBands, lineupGroups || []);
+  }, [state.taggedBands, lineupGroups]);
 
   // Synchroniser les alarmes push quand les favoris changent (même délai que l'autosave)
   useEffect(() => {
@@ -281,7 +285,7 @@ function AppContent() {
   if (loading) return <div className="loading">Chargement du de l'application <br></br>Hellfest Running Order Planner... 🤘</div>;
   if (error) return <div className="error">Erreur : {error.message}</div>;
 
-  const currentDayGroups = groups.filter(group => group.DAY === state.day);
+  const currentDayGroups = lineupGroups.filter(group => group.DAY === state.day);
 
   return (
     <div className={`App ${selectedGroup ? 'group-selected' : ''} view-${viewMode}`}>
@@ -307,6 +311,7 @@ function AppContent() {
         isAuthenticated={isAuthenticated}
         username={user?.username}
         notif={notif}
+        onOpenGroups={() => setGroupsOpen(true)}
       />
 
       {isGuestMode && (
@@ -346,7 +351,7 @@ function AppContent() {
 
       {viewMode === 'day' && (
         <Navigation
-          groups={groups}
+          groups={lineupGroups}
           onSelectGroup={handleGroupSelect}
           isAuthenticated={isAuthenticated}
           username={user?.username}
@@ -368,16 +373,19 @@ function AppContent() {
               />
             ) : viewMode === 'map' ? (
               <MapView
-                groups={groups}
+                groups={lineupGroups}
                 onGroupSelect={(g) => {
                     const grid = document.querySelector('.map-stage-grid');
                     const gridTop = grid ? grid.getBoundingClientRect().top : window.innerHeight * 0.6;
                     handleGroupSelect(g, { clientX: window.innerWidth / 2 - 175, clientY: gridTop - 400 });
                 }}
+                groupMembers={groups.activeGroupData?.members || []}
+                myMemberId={groups.memberId}
+                onSetPosition={groups.myGroups.length > 0 ? groups.updatePosition : null}
               />
             ) : (
               <WeeklyView
-                groups={groups}
+                groups={lineupGroups}
                 onGroupClick={(g) => handleGroupSelect(g, { clientX: window.innerWidth / 2 - 200, clientY: window.innerHeight / 2 - 200 })}
                 customEvents={isGuestMode ? (guestRo.customEvents || []) : customEvents}
                 onEditCustomEvent={isGuestMode ? () => { } : handleEditCustomEvent}
@@ -446,6 +454,24 @@ function AppContent() {
       <ConflictResolver
         conflictData={conflictData}
         onResolve={handleResolveConflict}
+      />
+
+      <GroupsPanel
+        isOpen={groupsOpen}
+        onClose={() => setGroupsOpen(false)}
+        myGroups={groups.myGroups}
+        activeGroupCode={groups.activeGroupCode}
+        setActiveGroupCode={groups.setActiveGroupCode}
+        activeGroupData={groups.activeGroupData}
+        memberId={groups.memberId}
+        loading={groups.loading}
+        error={groups.error}
+        setError={groups.setError}
+        createGroup={groups.createGroup}
+        joinGroup={groups.joinGroup}
+        leaveGroup={groups.leaveGroup}
+        deleteGroup={groups.deleteGroup}
+        onShowOnMap={() => setViewMode('map')}
       />
 
       <SaveIndicator status={saveStatus} />

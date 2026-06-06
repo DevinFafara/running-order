@@ -1,6 +1,6 @@
 import React from 'react';
 
-const ProfileModal = ({ isOpen, onClose, onOpenPanel, onShare, isInstallable, isInstalled, onInstall, hasPrompt, platform, onShowPwaGuide, isAuthenticated, username }) => {
+const ProfileModal = ({ isOpen, onClose, onOpenPanel, onShare, isInstallable, isInstalled, onInstall, hasPrompt, platform, onShowPwaGuide, isAuthenticated, username, onOpenGroups }) => {
     if (!isOpen) return null;
 
     const isForumInstance = !import.meta.env.DEV &&
@@ -11,6 +11,7 @@ const ProfileModal = ({ isOpen, onClose, onOpenPanel, onShare, isInstallable, is
         { id: 'stats', label: 'Mes Stats', icon: 'fa-solid fa-chart-pie', color: '#FFD700' },
         { id: 'playlists', label: 'Playlists', icon: 'fa-solid fa-music', color: '#1DB954' },
         { id: 'contacts', label: 'Mes Contacts', icon: 'fa-solid fa-address-book', color: '#2196F3' },
+        { id: 'groups', label: 'Groupes', icon: 'fa-solid fa-user-group', color: '#dc2829' },
         ...(isAuthenticated ? [{ id: 'community', label: 'Communauté', icon: 'fa-solid fa-users', color: '#FF6B35' }] : []),
         { id: 'share', label: 'Partager', icon: 'fa-solid fa-share-nodes', color: '#9C27B0' },
         { id: 'install', label: isInstalled ? 'Installée' : 'Installer', icon: 'fa-solid fa-download', color: isInstalled ? '#555' : '#00b894', disabled: isInstalled },
@@ -128,6 +129,8 @@ const ProfileModal = ({ isOpen, onClose, onOpenPanel, onShare, isInstallable, is
                                 onClose();
                                 if (item.id === 'share') {
                                     onShare();
+                                } else if (item.id === 'groups') {
+                                    onOpenGroups();
                                 } else {
                                     onOpenPanel(item.id);
                                 }

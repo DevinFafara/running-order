@@ -189,7 +189,36 @@ const StageGridPanel = ({ stageStatus, onGroupSelect, isPrePhase }) => {
     );
 };
 
-const MapView = ({ groups, onGroupSelect }) => {
+const MemberMarker = ({ member, isMe, counterTransform }) => {
+    if (!member.position) return null;
+    const age = member.position_updated_at
+        ? Date.now() - new Date(member.position_updated_at).getTime()
+        : null;
+    if (age !== null && age > 7200000) return null;
+
+    const ringColor = age === null ? '#555' : age > 1800000 ? '#e6a817' : '#4caf50';
+    const initials = member.pseudo.slice(0, 2).toUpperCase();
+
+    return (
+        <div className="member-marker" style={{ left: member.position.x, top: member.position.y }}>
+            <div className="member-marker__inner" style={{ transform: `${counterTransform} translate(-15px, -15px)` }}>
+                <div
+                    className={`member-marker__dot${isMe ? ' member-marker__dot--me' : ''}`}
+                    style={{
+                        backgroundColor: isMe ? '#1565C0' : '#2a2a2a',
+                        border: `2px solid ${isMe ? '#4fc3f7' : ringColor}`,
+                        boxShadow: isMe ? '0 0 8px rgba(79,195,247,0.4)' : 'none',
+                    }}
+                >
+                    {isMe ? <i className="fa-solid fa-location-dot" style={{ fontSize: '0.9rem' }} /> : initials}
+                </div>
+                <div className="member-marker__label">{member.pseudo}</div>
+            </div>
+        </div>
+    );
+};
+
+const MapView = ({ groups, onGroupSelect, groupMembers = [], myMemberId = null, onSetPosition = null }) => {
     const [editMode, setEditMode] = useState(false);
     const [copiedCoords, setCopiedCoords] = useState(null);
     const [activePoiId, setActivePoiId] = useState(null);
@@ -244,6 +273,8 @@ const MapView = ({ groups, onGroupSelect }) => {
     const festivalEndState = useMemo(() => {
         return getFestivalEndState(effectiveDate ?? new Date());
     }, [effectiveDate]);
+
+    const [positionMode, setPositionMode] = useState(false);
 
     const [view, setView] = useState({ zoom: MIN_ZOOM, x: 0, y: 0 });
     const [initialCentered, setInitialCentered] = useState(false);
@@ -389,7 +420,7 @@ const MapView = ({ groups, onGroupSelect }) => {
 
     // ── Mouse pan ─────────────────────────────────────────────────────────────
     const onMouseDown = useCallback((e) => {
-        if (editMode || e.button !== 0) return;
+        if (positionMode || editMode || e.button !== 0) return;
         isDragging.current = true;
         dragStart.current = { x: e.clientX, y: e.clientY };
         panStart.current = { x: view.x, y: view.y };
@@ -415,7 +446,7 @@ const MapView = ({ groups, onGroupSelect }) => {
 
     // ── Touch pan + pinch zoom + twist ────────────────────────────────────────
     const onTouchStart = useCallback((e) => {
-        if (editMode) return;
+        if (positionMode || editMode) return;
         if (e.touches.length === 1) {
             isDragging.current = true;
             dragStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
@@ -453,16 +484,23 @@ const MapView = ({ groups, onGroupSelect }) => {
 
     // ── Edit mode click ───────────────────────────────────────────────────────
     const handleMapClick = useCallback((e) => {
-        if (activePoiId) setActivePoiId(null);
-        if (!editMode) return;
         const inner = innerRef.current;
         if (!inner) return;
         const rect = inner.getBoundingClientRect();
         const x = ((e.clientX - rect.left) / rect.width * 100).toFixed(1);
         const y = ((e.clientY - rect.top) / rect.height * 100).toFixed(1);
+
+        if (positionMode && onSetPosition) {
+            onSetPosition({ x: `${x}%`, y: `${y}%` });
+            setPositionMode(false);
+            return;
+        }
+
+        if (activePoiId) setActivePoiId(null);
+        if (!editMode) return;
         setCopiedCoords({ left: `${x}%`, top: `${y}%` });
         navigator.clipboard.writeText(`mapPosition: { left: '${x}%', top: '${y}%' }`).catch(() => { });
-    }, [editMode]);
+    }, [positionMode, onSetPosition, activePoiId, editMode]);
 
     const counterTransform = `scale(${1 / view.zoom})`;
     // Suppression du bouton de réinitialisation via resetView non utilisé dans le header désormais
@@ -481,8 +519,25 @@ const MapView = ({ groups, onGroupSelect }) => {
                         <span className="map-zoom-level">{Math.round(view.zoom * 100)}%</span>
                         <button className="map-zoom-btn" onClick={() => changeZoom(ZOOM_STEP)} disabled={view.zoom >= MAX_ZOOM} title="Zoom avant"><i className="fa-solid fa-plus" /></button>
                     </div>
+                    {onSetPosition && (
+                        <button
+                            className={`map-position-btn${positionMode ? ' map-position-btn--active' : ''}`}
+                            onClick={() => setPositionMode(p => !p)}
+                            title="Définir ma position"
+                        >
+                            <i className="fa-solid fa-location-dot" />
+                            <span>Ma position</span>
+                        </button>
+                    )}
                 </div>
             </div>
+
+            {positionMode && (
+                <div className="map-position-banner">
+                    <span><i className="fa-solid fa-hand-pointer" style={{ marginRight: 6 }} />Appuie sur la carte pour te localiser</span>
+                    <button onClick={() => setPositionMode(false)} style={{ background: 'none', border: 'none', color: '#90caf9', cursor: 'pointer', fontSize: '0.85rem', padding: 0 }}>Annuler</button>
+                </div>
+            )}
 
             <div className="map-view__clock-area">
                 <select
@@ -525,7 +580,7 @@ const MapView = ({ groups, onGroupSelect }) => {
 
             {/* Map viewport */}
             <div
-                className={`map-view__container ${editMode ? 'map-view__container--edit' : 'map-view__container--pan'}`}
+                className={`map-view__container ${positionMode ? 'map-view__container--position' : editMode ? 'map-view__container--edit' : 'map-view__container--pan'}`}
                 ref={containerRef}
                 onMouseDown={onMouseDown}
                 onTouchStart={onTouchStart}
@@ -553,6 +608,16 @@ const MapView = ({ groups, onGroupSelect }) => {
                             />
                         );
                     })}
+
+                    {/* Member markers */}
+                    {groupMembers.map(m => (
+                        <MemberMarker
+                            key={m.member_id}
+                            member={m}
+                            isMe={m.member_id === myMemberId}
+                            counterTransform={counterTransform}
+                        />
+                    ))}
 
                     {/* POI Markers — visibles seulement au-dessus de 20% de zoom */}
                     {view.zoom > 0.20 && MAP_POIS.map((poi) => (

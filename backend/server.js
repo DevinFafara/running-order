@@ -15,6 +15,8 @@ const DATA_DIR = path.join(__dirname, 'data', 'users');
 const INDEX_FILE = path.join(__dirname, 'data', 'index.json');
 const SUBS_DIR = path.join(__dirname, 'data', 'subscriptions');
 const STATIC_DIR = process.env.STATIC_DIR || path.join(__dirname, 'public');
+const ANON_DIR = path.join(__dirname, 'data', 'anon');
+const GROUPS_DIR = path.join(__dirname, 'data', 'groups');
 // URL de l'instance Discourse — doit être accessible depuis le container
 const DISCOURSE_URL = process.env.DISCOURSE_URL || 'https://forum.hellfest.fr';
 
@@ -26,6 +28,8 @@ const pushEnabled = !!(webPush && VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY);
 
 // ─── Ensure data directories exist ──────────────────────────────────────────
 fs.mkdirSync(DATA_DIR, { recursive: true });
+fs.mkdirSync(ANON_DIR, { recursive: true });
+fs.mkdirSync(GROUPS_DIR, { recursive: true });
 if (!fs.existsSync(INDEX_FILE)) {
     fs.writeFileSync(INDEX_FILE, JSON.stringify({ users: [] }, null, 2));
 }
@@ -110,6 +114,55 @@ function atomicWriteFile(filePath, data) {
     const tmpPath = filePath + '.tmp';
     fs.writeFileSync(tmpPath, data, 'utf-8');
     fs.renameSync(tmpPath, filePath);
+}
+
+// ─── File lock (per-path mutex) ─────────────────────────────────────────────
+const fileLocks = new Map();
+
+function withFileLock(filePath, fn) {
+    const prev = fileLocks.get(filePath) || Promise.resolve();
+    let resolve, reject;
+    const gate = new Promise((res, rej) => { resolve = res; reject = rej; });
+    fileLocks.set(filePath, gate);
+    return prev.then(() => {
+        try { const r = fn(); resolve(); return r; }
+        catch (err) { reject(err); throw err; }
+    }).catch(err => { reject(err); throw err; });
+}
+
+// ─── Group code generator ────────────────────────────────────────────────────
+const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+
+function generateGroupCode() {
+    let code = '';
+    for (let i = 0; i < 4; i++) code += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
+    code += '-';
+    for (let i = 0; i < 4; i++) code += Math.floor(Math.random() * 10);
+    return code;
+}
+
+// ─── In-memory rate limiter (group creation) ─────────────────────────────────
+const rateLimitMap = new Map();
+
+function checkRateLimit(ip, max = 5, windowMs = 3600000) {
+    const now = Date.now();
+    const entry = rateLimitMap.get(ip);
+    if (!entry || now > entry.resetAt) {
+        rateLimitMap.set(ip, { count: 1, resetAt: now + windowMs });
+        return true;
+    }
+    if (entry.count >= max) return false;
+    entry.count++;
+    return true;
+}
+
+// ─── Input sanitizers ────────────────────────────────────────────────────────
+function sanitizeCode(raw) {
+    return String(raw || '').toUpperCase().replace(/[^A-Z0-9-]/g, '').slice(0, 9);
+}
+
+function sanitizeMemberId(raw) {
+    return String(raw || '').replace(/[^a-zA-Z0-9-]/g, '').slice(0, 36);
 }
 
 // ─── Index helpers ──────────────────────────────────────────────────────────
@@ -546,6 +599,184 @@ app.delete('/running-order/api/push/unsubscribe', (req, res) => {
     alarmQueue = alarmQueue.filter(a => a.endpoint !== endpoint);
 
     res.json({ success: true });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// GROUPS
+// ═══════════════════════════════════════════════════════════════════════════
+
+// POST /running-order/api/groups — Créer un groupe
+app.post('/running-order/api/groups', (req, res) => {
+    const ip = req.ip || req.socket?.remoteAddress || 'unknown';
+    if (!checkRateLimit(ip)) {
+        return res.status(429).json({ error: 'Trop de groupes créés. Réessaie dans une heure.' });
+    }
+    const { name, member_id, pseudo, username } = req.body;
+    if (!name || !member_id || !pseudo) {
+        return res.status(400).json({ error: 'Champs name, member_id et pseudo requis' });
+    }
+    const sanitizedName = String(name).trim().slice(0, 50);
+    const sanitizedPseudo = String(pseudo).trim().slice(0, 30);
+    const sanitizedMemberId = sanitizeMemberId(member_id);
+    if (!sanitizedName || !sanitizedPseudo || !sanitizedMemberId) {
+        return res.status(400).json({ error: 'Données invalides' });
+    }
+    let code, attempts = 0;
+    do { code = generateGroupCode(); attempts++; }
+    while (fs.existsSync(path.join(GROUPS_DIR, `${code}.json`)) && attempts < 10);
+
+    const group = {
+        code,
+        name: sanitizedName,
+        created_by: sanitizedMemberId,
+        created_at: new Date().toISOString(),
+        members: [{ member_id: sanitizedMemberId, pseudo: sanitizedPseudo, username: username || null }],
+    };
+    try {
+        atomicWriteFile(path.join(GROUPS_DIR, `${code}.json`), JSON.stringify(group, null, 2));
+        res.json({ success: true, code, name: sanitizedName });
+    } catch (err) {
+        console.error('Error creating group:', err);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
+});
+
+// GET /running-order/api/groups/:code — Lire un groupe (membres + positions jointurées)
+app.get('/running-order/api/groups/:code', (req, res) => {
+    const code = sanitizeCode(req.params.code);
+    const filePath = path.join(GROUPS_DIR, `${code}.json`);
+    if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Groupe introuvable' });
+    try {
+        const group = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+        const members = group.members.map(m => {
+            const anonPath = path.join(ANON_DIR, `${m.member_id}.json`);
+            let position = null, position_updated_at = null;
+            if (fs.existsSync(anonPath)) {
+                try {
+                    const anon = JSON.parse(fs.readFileSync(anonPath, 'utf-8'));
+                    position = anon.position || null;
+                    position_updated_at = anon.position_updated_at || null;
+                } catch {}
+            }
+            return { ...m, position, position_updated_at };
+        });
+        res.json({ ...group, members });
+    } catch (err) {
+        console.error('Error reading group:', err);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
+});
+
+// POST /running-order/api/groups/:code/join — Rejoindre un groupe
+app.post('/running-order/api/groups/:code/join', async (req, res) => {
+    const code = sanitizeCode(req.params.code);
+    const { member_id, pseudo, username } = req.body;
+    if (!member_id || !pseudo) return res.status(400).json({ error: 'Champs member_id et pseudo requis' });
+    const sanitizedMemberId = sanitizeMemberId(member_id);
+    const sanitizedPseudo = String(pseudo).trim().slice(0, 30);
+    const filePath = path.join(GROUPS_DIR, `${code}.json`);
+    if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Groupe introuvable' });
+    let groupName;
+    try {
+        await withFileLock(filePath, () => {
+            const group = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+            groupName = group.name;
+            if (group.members.some(m => m.member_id === sanitizedMemberId)) return;
+            if (group.members.length >= 40) {
+                const err = new Error('Ce groupe est complet (40 membres max)');
+                err.status = 400;
+                throw err;
+            }
+            group.members.push({ member_id: sanitizedMemberId, pseudo: sanitizedPseudo, username: username || null });
+            atomicWriteFile(filePath, JSON.stringify(group, null, 2));
+        });
+        res.json({ success: true, name: groupName });
+    } catch (err) {
+        res.status(err.status || 500).json({ error: err.message || 'Erreur serveur' });
+    }
+});
+
+// DELETE /running-order/api/groups/:code — Supprimer un groupe (créateur uniquement)
+app.delete('/running-order/api/groups/:code', (req, res) => {
+    const code = sanitizeCode(req.params.code);
+    const { member_id } = req.body;
+    if (!member_id) return res.status(400).json({ error: 'member_id requis' });
+    const filePath = path.join(GROUPS_DIR, `${code}.json`);
+    if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Groupe introuvable' });
+    try {
+        const group = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+        if (group.created_by !== sanitizeMemberId(member_id)) {
+            return res.status(403).json({ error: 'Seul le créateur peut supprimer le groupe' });
+        }
+        fs.unlinkSync(filePath);
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Error deleting group:', err);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
+});
+
+// DELETE /running-order/api/groups/:code/leave — Quitter un groupe
+app.delete('/running-order/api/groups/:code/leave', async (req, res) => {
+    const code = sanitizeCode(req.params.code);
+    const { member_id } = req.body;
+    if (!member_id) return res.status(400).json({ error: 'member_id requis' });
+    const sanitizedMemberId = sanitizeMemberId(member_id);
+    const filePath = path.join(GROUPS_DIR, `${code}.json`);
+    if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Groupe introuvable' });
+    try {
+        await withFileLock(filePath, () => {
+            const group = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+            group.members = group.members.filter(m => m.member_id !== sanitizedMemberId);
+            atomicWriteFile(filePath, JSON.stringify(group, null, 2));
+        });
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Error leaving group:', err);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
+});
+
+// PUT /running-order/api/anon/position — Mettre à jour sa position
+app.put('/running-order/api/anon/position', async (req, res) => {
+    const { member_id, position } = req.body;
+    if (!member_id) return res.status(400).json({ error: 'member_id requis' });
+    const sanitizedMemberId = sanitizeMemberId(member_id);
+    if (!sanitizedMemberId) return res.status(400).json({ error: 'member_id invalide' });
+    const filePath = path.join(ANON_DIR, `${sanitizedMemberId}.json`);
+    const data = {
+        member_id: sanitizedMemberId,
+        position: position || null,
+        position_updated_at: new Date().toISOString(),
+    };
+    try {
+        await withFileLock(filePath, () => atomicWriteFile(filePath, JSON.stringify(data, null, 2)));
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Error updating position:', err);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
+});
+
+// GET /running-order/api/admin/cleanup-groups — Purge anon/ et groups/ post-festival
+app.get('/running-order/api/admin/cleanup-groups', (req, res) => {
+    if (process.env.NODE_ENV === 'production') {
+        if (!ADMIN_SECRET || req.query.secret !== ADMIN_SECRET) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+    }
+    let deleted = 0;
+    const errors = [];
+    for (const dir of [ANON_DIR, GROUPS_DIR]) {
+        try {
+            const files = fs.readdirSync(dir).filter(f => f.endsWith('.json'));
+            for (const file of files) {
+                try { fs.unlinkSync(path.join(dir, file)); deleted++; }
+                catch (e) { errors.push(file); }
+            }
+        } catch (e) { errors.push(`Erreur lecture ${dir}`); }
+    }
+    res.json({ success: true, deleted, errors });
 });
 
 // ─── Health check ───────────────────────────────────────────────────────────

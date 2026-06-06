@@ -16,7 +16,7 @@ const HeaderBar = ({
     customEvents, contacts, onSaveContact, onDeleteContact, onCheckContact,
     isGuestMode, guestName, onExitGuestMode, onClearCustomEvents,
     isInstallable, isInstalled, installApp, hasPrompt, platform,
-    isAuthenticated, username, notif
+    isAuthenticated, username, notif, onOpenGroups
 }) => {
     const { userState } = useCheckedState();
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
@@ -262,6 +262,7 @@ const HeaderBar = ({
                 onShowPwaGuide={() => setPwaGuideOpen(true)}
                 isAuthenticated={isAuthenticated}
                 username={username}
+                onOpenGroups={onOpenGroups}
             />
 
             <CommunityPanel

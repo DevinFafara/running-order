@@ -31,6 +31,13 @@ Le serveur écoute sur le port `3001` par défaut (configurable via `PORT`).
 | `POST` | `/api/ro/:username` | Sauvegarder le RO (auth requise) |
 | `DELETE` | `/api/ro/:username` | Supprimer le RO (auth requise) |
 | `GET` | `/api/admin/rebuild-index` | Reconstruire l'index depuis les fichiers |
+| `GET` | `/api/admin/cleanup-groups` | Purger tous les fichiers anon/ et groups/ (post-festival) |
+| `POST` | `/api/groups` | Créer un groupe |
+| `GET` | `/api/groups/:code` | Lire un groupe (membres + positions) |
+| `POST` | `/api/groups/:code/join` | Rejoindre un groupe |
+| `DELETE` | `/api/groups/:code` | Supprimer un groupe (créateur uniquement) |
+| `DELETE` | `/api/groups/:code/leave` | Quitter un groupe |
+| `PUT` | `/api/anon/position` | Mettre à jour sa position sur la carte |
 
 ## Structure des données
 
@@ -40,9 +47,12 @@ backend/
 ├── package.json
 └── data/
     ├── index.json          ← Index global (users opt-in, count, etc.)
-    └── users/
-        ├── alice.json      ← Données individuelles
-        └── bob.json
+    ├── users/              ← RO des utilisateurs Discourse
+    │   └── alice.json
+    ├── anon/               ← Positions des utilisateurs anonymes (groupes)
+    │   └── <uuid>.json
+    └── groups/             ← Groupes de festivaliers
+        └── XXXX-0000.json
 ```
 
 Chaque fichier utilisateur :

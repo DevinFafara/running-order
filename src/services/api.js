@@ -90,4 +90,45 @@ export const api = {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ endpoint }),
         }).then(handleResponse),
+
+    // ── Groups ──────────────────────────────────────────────────────────────
+
+    getGroup: (code) =>
+        fetch(`${API_BASE}/groups/${encodeURIComponent(code)}`)
+            .then(handleResponse),
+
+    createGroup: (data) =>
+        fetch(`${API_BASE}/groups`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+        }).then(handleResponse),
+
+    joinGroup: (code, data) =>
+        fetch(`${API_BASE}/groups/${encodeURIComponent(code)}/join`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+        }).then(handleResponse),
+
+    leaveGroup: (code, memberId) =>
+        fetch(`${API_BASE}/groups/${encodeURIComponent(code)}/leave`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ member_id: memberId }),
+        }).then(handleResponse),
+
+    deleteGroup: (code, memberId) =>
+        fetch(`${API_BASE}/groups/${encodeURIComponent(code)}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ member_id: memberId }),
+        }).then(handleResponse),
+
+    updatePosition: (memberId, position) =>
+        fetch(`${API_BASE}/anon/position`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ member_id: memberId, position }),
+        }).then(handleResponse),
 };
