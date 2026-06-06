@@ -396,6 +396,8 @@ const StageSchedulePanel = ({ stageKey, stageData, dayGroups, simMinutes, onClos
     const { config, status } = stageData || {};
     const [selectedBand, setSelectedBand] = useState(null);
 
+    useEffect(() => { setSelectedBand(null); }, [stageKey]);
+
     if (!config) return null;
 
     const currentMins = getCurrentFestivalMinutes(simMinutes);
