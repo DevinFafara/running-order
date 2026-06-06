@@ -1,7 +1,9 @@
 import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
-import { STAGES, DAYS, MAP_POIS, INTEREST_LEVELS, CONTEXT_TAGS } from '../../constants';
+import { STAGES, DAYS, MAP_POIS, INTEREST_LEVELS, CONTEXT_TAGS, STAGE_CONFIG } from '../../constants';
 import { useCheckedState } from '../../context/CheckedStateContext';
 import { useCurrentBands } from '../../hooks/useCurrentBands';
+import { useGPS } from '../../hooks/useGPS';
+import { gpsToMapPosition } from '../../utils/gpsToMap';
 import StageMarker from '../map/StageMarker';
 import '../../styles/MapView.css';
 
@@ -77,10 +79,9 @@ function clampPan(px, py, zoom, containerW, containerH, imgW, imgH) {
     const overflowX = Math.max(0, scaledW - containerW);
     const overflowY = Math.max(0, scaledH - containerH);
     const margin = 40;
-    const upMargin = 400;
     return {
         x: Math.min(overflowX / 2 + margin, Math.max(-(overflowX / 2 + margin), px)),
-        y: Math.min(overflowY / 2 + margin, Math.max(-(overflowY / 2 + upMargin), py)),
+        y: Math.min(overflowY / 2 + margin, Math.max(-(overflowY / 2 + margin), py)),
     };
 }
 
@@ -190,6 +191,153 @@ const StageGridPanel = ({ stageStatus, onGroupSelect, isPrePhase }) => {
     );
 };
 
+// ── Helpers position (partagés avec GroupsPanel) ─────────────────────────────
+
+function nearestStageName(position) {
+    if (!position) return null;
+    const x = parseFloat(position.x);
+    const y = parseFloat(position.y);
+    let min = Infinity, nearest = null;
+    Object.values(STAGE_CONFIG).forEach(cfg => {
+        if (!cfg.mapPosition) return;
+        const dx = x - parseFloat(cfg.mapPosition.left);
+        const dy = y - parseFloat(cfg.mapPosition.top);
+        const d = dx * dx + dy * dy;
+        if (d < min) { min = d; nearest = cfg.name; }
+    });
+    return nearest;
+}
+
+function positionAge(updatedAt) {
+    if (!updatedAt) return null;
+    return Date.now() - new Date(updatedAt).getTime();
+}
+
+function formatAge(ms) {
+    if (ms < 60000) return "à l'instant";
+    if (ms < 3600000) return `il y a ${Math.floor(ms / 60000)} min`;
+    return `il y a ${Math.floor(ms / 3600000)}h${String(Math.floor((ms % 3600000) / 60000)).padStart(2, '0')}`;
+}
+
+// ── GroupsTabContent ──────────────────────────────────────────────────────────
+
+const GroupsTabContent = ({
+    myGroups, activeGroupCode, setActiveGroupCode, activeGroupData,
+    memberId, positionSource, setPositionSource, positionMode, setPositionMode, onFlyToMember,
+    gpsAccuracy, gpsError,
+}) => {
+    const selectedGroup = myGroups.find(g => g.code === activeGroupCode);
+    const rawMembers = activeGroupData?.code === activeGroupCode ? activeGroupData.members : [];
+
+    // Tri : moi en premier, puis online par proximité, puis offline
+    const myPosition = rawMembers.find(m => m.member_id === memberId)?.position;
+    const dist = (pos) => {
+        if (!pos || !myPosition) return Infinity;
+        const dx = parseFloat(pos.x) - parseFloat(myPosition.x);
+        const dy = parseFloat(pos.y) - parseFloat(myPosition.y);
+        return dx * dx + dy * dy;
+    };
+    const isOffline = (m) => {
+        const age = positionAge(m.position_updated_at);
+        return age === null || age > 7200000;
+    };
+    const members = [...rawMembers].sort((a, b) => {
+        if (a.member_id === memberId) return -1;
+        if (b.member_id === memberId) return 1;
+        const aOff = isOffline(a), bOff = isOffline(b);
+        if (aOff && !bOff) return 1;
+        if (!aOff && bOff) return -1;
+        return dist(a.position) - dist(b.position);
+    });
+
+    return (
+        <div className="map-groups-tab">
+            {/* Switch Manuel / GPS + bouton positionnement */}
+            <div className="map-groups-switch">
+                <button
+                    className={`map-switch-btn${positionSource === 'manual' ? ' map-switch-btn--active' : ''}`}
+                    onClick={() => setPositionSource('manual')}
+                >
+                    <i className="fa-solid fa-hand-pointer" style={{ marginRight: 5 }} />Manuel
+                </button>
+                <button
+                    className={`map-switch-btn${positionSource === 'gps' ? ' map-switch-btn--active' : ''}`}
+                    onClick={() => setPositionSource(s => s === 'gps' ? 'manual' : 'gps')}
+                    title={gpsError ?? 'Localisation GPS automatique (toutes les 5 min)'}
+                >
+                    <i className="fa-solid fa-location-dot" style={{ marginRight: 5 }} />GPS
+                    {positionSource === 'gps' && (
+                        gpsAccuracy !== null
+                            ? <span className="map-switch-soon-badge">±{Math.round(gpsAccuracy)}m</span>
+                            : <span className="map-switch-soon-badge"><i className="fa-solid fa-spinner fa-spin" /></span>
+                    )}
+                </button>
+                {positionSource === 'manual' && (
+                    <button
+                        className={`map-switch-btn${positionMode ? ' map-switch-btn--active' : ''}`}
+                        onClick={() => setPositionMode(p => !p)}
+                        style={{ marginLeft: 'auto' }}
+                    >
+                        <i className="fa-solid fa-crosshairs" style={{ marginRight: 5 }} />
+                        {positionMode ? 'Annuler' : 'Changer ma position'}
+                    </button>
+                )}
+            </div>
+
+            {/* Liste groupes ou membres */}
+            <div className="map-groups-list">
+                {selectedGroup ? (
+                    <>
+                        <button className="map-groups-back" onClick={() => setActiveGroupCode(null)}>
+                            <i className="fa-solid fa-chevron-left" style={{ marginRight: 6 }} />{selectedGroup.name}
+                        </button>
+                        {members.length === 0 && (
+                            <div className="map-groups-empty">
+                                <i className="fa-solid fa-spinner fa-spin" style={{ marginRight: 6 }} />Chargement…
+                            </div>
+                        )}
+                        {members.map(m => {
+                            const isMe = m.member_id === memberId;
+                            const age = positionAge(m.position_updated_at);
+                            const dotColor = age === null || age > 7200000 ? '#555' : age > 1800000 ? '#e6a817' : '#4caf50';
+                            const stageName = nearestStageName(m.position);
+                            const posText = age === null ? 'Position inconnue'
+                                : age > 7200000 ? 'Hors ligne'
+                                : `${stageName ? `Près de ${stageName} · ` : ''}${formatAge(age)}`;
+                            return (
+                                <div
+                                    key={m.member_id}
+                                    className={`map-member-row${m.position ? ' map-member-row--zoomable' : ''}`}
+                                    onClick={() => m.position && onFlyToMember(m)}
+                                >
+                                    <span className="map-member-dot" style={{ backgroundColor: dotColor }} />
+                                    <div className="map-member-info">
+                                        <span className="map-member-name">
+                                            {m.pseudo}{isMe && <span className="map-member-me"> (moi)</span>}
+                                        </span>
+                                        <span className="map-member-pos">{posText}</span>
+                                    </div>
+                                    {m.position && <i className="fa-solid fa-crosshairs map-member-zoom-icon" />}
+                                </div>
+                            );
+                        })}
+                    </>
+                ) : (
+                    myGroups.map(g => (
+                        <div key={g.code} className="map-group-row" onClick={() => setActiveGroupCode(g.code)}>
+                            <i className="fa-solid fa-people-group" style={{ color: '#dc2829', marginRight: 10, flexShrink: 0 }} />
+                            <span className="map-group-name">{g.name}</span>
+                            <i className="fa-solid fa-chevron-right" style={{ color: '#444', marginLeft: 'auto', flexShrink: 0 }} />
+                        </div>
+                    ))
+                )}
+            </div>
+        </div>
+    );
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 const MemberMarker = ({ member, isMe, counterTransform }) => {
     if (!member.position) return null;
     const age = member.position_updated_at
@@ -219,8 +367,34 @@ const MemberMarker = ({ member, isMe, counterTransform }) => {
     );
 };
 
-const MapView = ({ groups, onGroupSelect, groupMembers = [], myMemberId = null, onSetPosition = null }) => {
+const MapView = ({
+    groups, onGroupSelect,
+    myGroups = [], activeGroupCode = null, setActiveGroupCode = null,
+    activeGroupData = null, memberId = null, updatePosition = null,
+}) => {
     const [activePoiId, setActivePoiId] = useState(null);
+
+    const [activeTab, setActiveTab] = useState(() => localStorage.getItem('hf_map_tab') || 'scenes');
+    const [positionSource, setPositionSource] = useState('manual');
+
+    const switchTab = useCallback((tab) => {
+        setActiveTab(tab);
+        localStorage.setItem('hf_map_tab', tab);
+    }, []);
+
+    // Auto-switch to groups tab when a group is activated from GroupsPanel
+    useEffect(() => {
+        if (activeGroupCode && myGroups.length > 0) switchTab('groups');
+    }, [activeGroupCode]);
+
+    // Auto-switch to scenes if user left all groups
+    useEffect(() => {
+        if (activeTab === 'groups' && myGroups.length === 0) switchTab('scenes');
+    }, [myGroups.length]);
+
+    const [positionMode, setPositionMode] = useState(false);
+
+    const groupMembers = activeGroupData?.members || [];
 
     // Simulation — null = heure réelle
     const [simDate, setSimDate] = useState(null); // ex: '2026-06-21'
@@ -262,18 +436,16 @@ const MapView = ({ groups, onGroupSelect, groupMembers = [], myMemberId = null, 
         ? `${String(simHour).padStart(2, '0')}h00`
         : null;
 
-    // Avant Jeudi 01h00 → scènes secondaires + Off ; après → toutes scènes sauf Off
-    const isPrePhase = useMemo(() => {
+    // Mardi ou Mercredi du festival uniquement (pas avant le festival)
+    const isMardMer = useMemo(() => {
         const ref = effectiveDate ?? new Date();
-        return ref < new Date(2026, 5, 18, 1, 0, 0);
+        const day = getDayName(ref);
+        return day === 'Mardi' || day === 'Mercredi';
     }, [effectiveDate]);
 
-    // Message de fin de festival (Lundi 22/06 : 00h30–01h00 → remerciements, 01h00+ → terminé)
     const festivalEndState = useMemo(() => {
         return getFestivalEndState(effectiveDate ?? new Date());
     }, [effectiveDate]);
-
-    const [positionMode, setPositionMode] = useState(false);
 
     const [view, setView] = useState({ zoom: MIN_ZOOM, x: 0, y: 0 });
     const [initialCentered, setInitialCentered] = useState(false);
@@ -309,9 +481,16 @@ const MapView = ({ groups, onGroupSelect, groupMembers = [], myMemberId = null, 
             const { w: cW, h: cH } = getContainerSize();
             const { w: iW, h: iH } = getImgSize();
             const zoom = DEFAULT_ZOOM;
-            // Target point: far left side of the map (Mainstage area), upper half
-            const targetX = iW * 0.520;
-            const targetY = iH * 0.417;
+            // Mardi/Mercredi (pré-phase) → Metal Corner ; sinon → centre du site
+            let targetX, targetY;
+            if (isMardMer) {
+                const mc = STAGE_CONFIG[STAGES.METAL_CORNER]?.mapPosition;
+                targetX = iW * (mc ? parseFloat(mc.left) / 100 : 0.847);
+                targetY = iH * (mc ? parseFloat(mc.top)  / 100 : 0.791);
+            } else {
+                targetX = iW * 0.520;
+                targetY = iH * 0.417;
+            }
             // L'image est centrée dans le viewport par CSS (top/left 50% + translate -50%).
             // Pour centrer sur un point, on calcule l'offset de ce point par rapport au centre de l'image.
             const px = -(targetX - iW / 2) * zoom;
@@ -359,7 +538,7 @@ const MapView = ({ groups, onGroupSelect, groupMembers = [], myMemberId = null, 
         };
         const t = setTimeout(attach, 0);
         return () => { clearTimeout(t); obs?.disconnect(); };
-    }, [isPrePhase, festivalEndState]);
+    }, [isMardMer, festivalEndState]);
 
     useEffect(() => () => document.documentElement.style.removeProperty('--map-grid-height'), []);
 
@@ -403,6 +582,14 @@ const MapView = ({ groups, onGroupSelect, groupMembers = [], myMemberId = null, 
 
 
 
+    const flyToMember = useCallback((member) => {
+        if (!member.position) return;
+        const { w: iW, h: iH } = getImgSize();
+        const targetX = parseFloat(member.position.x) / 100 * iW;
+        const targetY = parseFloat(member.position.y) / 100 * iH;
+        setView({ zoom: MAX_ZOOM, x: -(targetX - iW / 2) * MAX_ZOOM, y: -(targetY - iH / 2) * MAX_ZOOM });
+    }, []);
+
     // ── Mouse wheel zoom ──────────────────────────────────────────────────────
     const onWheel = useCallback((e) => {
         e.preventDefault();
@@ -425,7 +612,7 @@ const MapView = ({ groups, onGroupSelect, groupMembers = [], myMemberId = null, 
         dragStart.current = { x: e.clientX, y: e.clientY };
         panStart.current = { x: view.x, y: view.y };
         e.preventDefault();
-    }, [view.x, view.y]);
+    }, [positionMode, view.x, view.y]);
 
     const onMouseMove = useCallback((e) => {
         if (!isDragging.current) return;
@@ -490,49 +677,58 @@ const MapView = ({ groups, onGroupSelect, groupMembers = [], myMemberId = null, 
         const x = ((e.clientX - rect.left) / rect.width * 100).toFixed(1);
         const y = ((e.clientY - rect.top) / rect.height * 100).toFixed(1);
 
-        if (positionMode && onSetPosition) {
-            onSetPosition({ x: `${x}%`, y: `${y}%` });
+        if (positionMode && updatePosition) {
+            updatePosition({ x: `${x}%`, y: `${y}%` });
             setPositionMode(false);
             return;
         }
 
         if (activePoiId) setActivePoiId(null);
-    }, [positionMode, onSetPosition, activePoiId]);
+    }, [positionMode, updatePosition, activePoiId]);
 
     const counterTransform = `scale(${1 / view.zoom})`;
-    // Suppression du bouton de réinitialisation via resetView non utilisé dans le header désormais
+
+    const handleGPSPosition = useCallback((mapPos) => {
+        if (updatePosition) updatePosition(mapPos);
+    }, [updatePosition]);
+
+    const { accuracy: gpsAccuracy, error: gpsError } = useGPS({
+        active: positionSource === 'gps',
+        onPosition: handleGPSPosition,
+        onPermissionDenied: useCallback(() => setPositionSource('manual'), []),
+    });
+
+    // Disable tap-to-position mode when GPS takes over
+    useEffect(() => {
+        if (positionSource === 'gps') setPositionMode(false);
+    }, [positionSource]);
+
+    useEffect(() => {
+        if (!import.meta.env.DEV) return;
+        window.__testGPS = (lat, lng) => {
+            const pos = gpsToMapPosition(lat, lng);
+            handleGPSPosition(pos);
+            console.log('[GPS test]', { lat, lng, mapPos: pos });
+        };
+        return () => { delete window.__testGPS; };
+    }, [handleGPSPosition]);
 
 
     return (
         <div className="map-view">
             {/* Header */}
             <div className="map-view__header">
-                <div className="map-view__legend">
-                    <span className="map-legend-item"><span className="map-legend-dot map-legend-dot--playing" /> En cours</span>
-                    <span className="map-legend-item"><span className="map-legend-dot map-legend-dot--next" /> Prochain</span>
-                    <span className="map-legend-item"><span className="map-legend-dot map-legend-dot--idle" /> Inactif</span>
-                    <div className="map-zoom-btns">
-                        <button className="map-zoom-btn" onClick={() => changeZoom(-ZOOM_STEP)} disabled={view.zoom <= MIN_ZOOM} title="Zoom arrière"><i className="fa-solid fa-minus" /></button>
-                        <span className="map-zoom-level">{Math.round(view.zoom * 100)}%</span>
-                        <button className="map-zoom-btn" onClick={() => changeZoom(ZOOM_STEP)} disabled={view.zoom >= MAX_ZOOM} title="Zoom avant"><i className="fa-solid fa-plus" /></button>
-                    </div>
-                    {onSetPosition && (
-                        <button
-                            className={`map-position-btn${positionMode ? ' map-position-btn--active' : ''}`}
-                            onClick={() => setPositionMode(p => !p)}
-                            title="Définir ma position"
-                        >
-                            <i className="fa-solid fa-location-dot" />
-                            <span>Ma position</span>
-                        </button>
-                    )}
+                <div className="map-zoom-btns">
+                    <button className="map-zoom-btn" onClick={() => changeZoom(-ZOOM_STEP)} disabled={view.zoom <= MIN_ZOOM} title="Zoom arrière"><i className="fa-solid fa-minus" /></button>
+                    <span className="map-zoom-level">{Math.round(view.zoom * 100)}%</span>
+                    <button className="map-zoom-btn" onClick={() => changeZoom(ZOOM_STEP)} disabled={view.zoom >= MAX_ZOOM} title="Zoom avant"><i className="fa-solid fa-plus" /></button>
                 </div>
             </div>
 
             {positionMode && (
                 <div className="map-position-banner">
-                    <span><i className="fa-solid fa-hand-pointer" style={{ marginRight: 6 }} />Appuie sur la carte pour te localiser</span>
-                    <button onClick={() => setPositionMode(false)} style={{ background: 'none', border: 'none', color: '#90caf9', cursor: 'pointer', fontSize: '0.85rem', padding: 0 }}>Annuler</button>
+                    <i className="fa-solid fa-hand-pointer" style={{ marginRight: 6 }} />Tap sur la carte pour te localiser
+                    <button onClick={() => setPositionMode(false)} style={{ background: 'none', border: 'none', color: '#90caf9', cursor: 'pointer', fontSize: '0.8rem', padding: 0, marginLeft: 'auto' }}>Annuler</button>
                 </div>
             )}
 
@@ -597,13 +793,13 @@ const MapView = ({ groups, onGroupSelect, groupMembers = [], myMemberId = null, 
                         <MemberMarker
                             key={m.member_id}
                             member={m}
-                            isMe={m.member_id === myMemberId}
+                            isMe={m.member_id === memberId}
                             counterTransform={counterTransform}
                         />
                     ))}
 
-                    {/* POI Markers — visibles seulement au-dessus de 20% de zoom */}
-                    {view.zoom > 1.00 && MAP_POIS.map((poi) => (
+                    {/* POI Markers — visibles à partir de 70% de zoom (compris) */}
+                    {view.zoom >= DEFAULT_ZOOM && MAP_POIS.map((poi) => (
                         <POIMarker
                             key={poi.id}
                             poi={poi}
@@ -617,10 +813,54 @@ const MapView = ({ groups, onGroupSelect, groupMembers = [], myMemberId = null, 
                 </div>
             </div>
 
-            {festivalEndState
-                ? <FestivalEndMessage state={festivalEndState} />
-                : <StageGridPanel stageStatus={stageStatus} onGroupSelect={onGroupSelect} isPrePhase={isPrePhase} />
-            }
+            {/* Zone tabulée bas */}
+            <div className="map-bottom-zone">
+                <div className="map-bottom-zone__tabs">
+                    <button
+                        className={`map-tab-btn${activeTab === 'scenes' ? ' map-tab-btn--active' : ''}`}
+                        onClick={() => switchTab('scenes')}
+                    >
+                        Scènes
+                    </button>
+                    {myGroups.length > 0 && (
+                        <button
+                            className={`map-tab-btn${activeTab === 'groups' ? ' map-tab-btn--active' : ''}`}
+                            onClick={() => switchTab('groups')}
+                        >
+                            Mes groupes
+                        </button>
+                    )}
+                </div>
+                <div className="map-bottom-zone__content">
+                    {activeTab === 'scenes' ? (
+                        festivalEndState
+                            ? <FestivalEndMessage state={festivalEndState} />
+                            : <div className="map-scenes-content">
+                                {isMardMer && (
+                                    <div className="map-prephase-msg">
+                                        Ouverture des portes Jeudi à 14h
+                                    </div>
+                                )}
+                                <StageGridPanel stageStatus={stageStatus} onGroupSelect={onGroupSelect} isPrePhase={isMardMer} />
+                              </div>
+                    ) : (
+                        <GroupsTabContent
+                            myGroups={myGroups}
+                            activeGroupCode={activeGroupCode}
+                            setActiveGroupCode={setActiveGroupCode}
+                            activeGroupData={activeGroupData}
+                            memberId={memberId}
+                            positionSource={positionSource}
+                            setPositionSource={setPositionSource}
+                            positionMode={positionMode}
+                            setPositionMode={setPositionMode}
+                            onFlyToMember={flyToMember}
+                            gpsAccuracy={gpsAccuracy}
+                            gpsError={gpsError}
+                        />
+                    )}
+                </div>
+            </div>
         </div>
     );
 };

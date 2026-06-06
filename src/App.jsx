@@ -379,9 +379,12 @@ function AppContent() {
                     const gridTop = grid ? grid.getBoundingClientRect().top : window.innerHeight * 0.6;
                     handleGroupSelect(g, { clientX: window.innerWidth / 2 - 175, clientY: gridTop - 400 });
                 }}
-                groupMembers={groups.activeGroupData?.members || []}
-                myMemberId={groups.memberId}
-                onSetPosition={groups.myGroups.length > 0 ? groups.updatePosition : null}
+                myGroups={groups.myGroups}
+                activeGroupCode={groups.activeGroupCode}
+                setActiveGroupCode={groups.setActiveGroupCode}
+                activeGroupData={groups.activeGroupData}
+                memberId={groups.memberId}
+                updatePosition={groups.updatePosition}
               />
             ) : (
               <WeeklyView
