@@ -992,6 +992,176 @@
     flex-direction: column;
     flex: 1;
     min-height: 0;
+    overflow: hidden;
+}
+
+/* ── Scenes slider (grille ↔ détail scène) ───────────────────────────────── */
+
+.map-scenes-slider {
+    display: flex;
+    width: 200%;
+    flex: 1;
+    min-height: 0;
+    transition: transform 0.28s ease;
+    will-change: transform;
+}
+
+.map-scenes-slider--detail {
+    transform: translateX(-50%);
+}
+
+.map-scenes-slider__page {
+    width: 50%;
+    flex-shrink: 0;
+    overflow: hidden;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ── Stage schedule panel ────────────────────────────────────────────────── */
+
+.map-schedule-panel {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+
+.map-schedule-panel__header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--stage-color);
+    flex-shrink: 0;
+}
+
+.map-schedule-panel__icon {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.map-schedule-panel__name {
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #fff;
+    flex: 1;
+}
+
+.map-schedule-panel__close {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.65);
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 4px 6px;
+    line-height: 1;
+    transition: color 0.15s;
+}
+
+.map-schedule-panel__close:hover {
+    color: #fff;
+}
+
+.map-schedule-panel__list {
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+}
+
+.map-schedule-panel__empty {
+    padding: 20px 16px;
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 0.82rem;
+    text-align: center;
+}
+
+.map-schedule-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.map-schedule-item--live {
+    background: rgba(255, 68, 68, 0.08);
+}
+
+.map-schedule-item--next {
+    background: rgba(255, 165, 0, 0.06);
+}
+
+.map-schedule-item__time {
+    font-size: 0.73rem;
+    color: rgba(255, 255, 255, 0.45);
+    font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
+    min-width: 86px;
+}
+
+.map-schedule-item__band {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #fff;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.map-schedule-item__badge {
+    font-size: 0.66rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 10px;
+    flex-shrink: 0;
+    letter-spacing: 0.04em;
+}
+
+.map-schedule-item__badge--live {
+    color: #ff4444;
+    background: rgba(255, 68, 68, 0.15);
+}
+
+.map-schedule-item__badge--next {
+    color: #ffa500;
+    background: rgba(255, 165, 0, 0.15);
+}
+
+.map-schedule-item__chevron {
+    font-size: 0.65rem;
+    color: rgba(255, 255, 255, 0.25);
+    flex-shrink: 0;
+}
+
+/* ── Band detail panel (inside map bottom zone) ──────────────────────────── */
+
+.map-band-detail {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.map-band-detail .card-header {
+    padding: 7px 12px !important;
+    border-radius: 0;
+}
+
+.map-band-detail .card-header h3 {
+    font-size: 0.9rem;
+}
+
+.map-band-detail .header-actions button {
+    font-size: 0.9rem;
+    padding: 3px;
 }
 
 /* ── Groups tab ──────────────────────────────────────────────────────────── */

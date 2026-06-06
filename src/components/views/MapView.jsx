@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
-import { STAGES, DAYS, MAP_POIS, INTEREST_LEVELS, CONTEXT_TAGS, STAGE_CONFIG } from '../../constants';
+import { STAGES, DAYS, MAP_POIS, INTEREST_LEVELS, INTEREST_ORDER, CONTEXT_TAGS, CONTEXT_ORDER, STAGE_CONFIG } from '../../constants';
+import bandLogos from '../../data/bandLogos.json';
 import { useCheckedState } from '../../context/CheckedStateContext';
 import { useCurrentBands } from '../../hooks/useCurrentBands';
 import { useGPS } from '../../hooks/useGPS';
@@ -8,6 +9,23 @@ import StageMarker from '../map/StageMarker';
 import '../../styles/MapView.css';
 
 const ALL_STAGE_KEYS = Object.keys(STAGES);
+
+function timeToMinutes(timeStr) {
+    if (!timeStr) return null;
+    const normalized = timeStr.replace('h', ':');
+    const [h, m] = normalized.split(':').map(Number);
+    if (isNaN(h) || isNaN(m)) return null;
+    let minutes = h * 60 + m;
+    if (h < 6) minutes += 24 * 60;
+    return minutes;
+}
+
+function getCurrentFestivalMinutes(simMinutes) {
+    if (simMinutes !== null) return simMinutes;
+    const now = new Date();
+    const h = now.getHours();
+    return h * 60 + now.getMinutes() + (h < 6 ? 24 * 60 : 0);
+}
 
 // Mercredi soir (avant Jeudi 01:00) : scènes secondaires + Off
 const PRE_PAIRS = [
@@ -97,7 +115,7 @@ const StageGridItem = ({ stageKey, stageData, isLeft, onSelect }) => {
 
     const handleClick = (e) => {
         e.stopPropagation();
-        if (displayGroup && onSelect) onSelect(displayGroup);
+        if (onSelect) onSelect(stageKey);
     };
 
     const getGroupTags = () => {
@@ -170,7 +188,7 @@ const FestivalEndMessage = ({ state }) => (
     </div>
 );
 
-const StageGridPanel = ({ stageStatus, onGroupSelect, isPrePhase }) => {
+const StageGridPanel = ({ stageStatus, onStageSelect, isPrePhase }) => {
     if (!stageStatus || Object.keys(stageStatus).length === 0) return null;
 
     const pairs = isPrePhase ? PRE_PAIRS : MAIN_PAIRS;
@@ -180,13 +198,234 @@ const StageGridPanel = ({ stageStatus, onGroupSelect, isPrePhase }) => {
             {pairs.map(([leftKey, rightKey]) => (
                 <div key={`${leftKey}-${rightKey}`} className="map-stage-grid__row">
                     {stageStatus[leftKey] && (
-                        <StageGridItem stageKey={leftKey} stageData={stageStatus[leftKey]} isLeft={true} onSelect={onGroupSelect} />
+                        <StageGridItem stageKey={leftKey} stageData={stageStatus[leftKey]} isLeft={true} onSelect={onStageSelect} />
                     )}
                     {stageStatus[rightKey] && (
-                        <StageGridItem stageKey={rightKey} stageData={stageStatus[rightKey]} isLeft={false} onSelect={onGroupSelect} />
+                        <StageGridItem stageKey={rightKey} stageData={stageStatus[rightKey]} isLeft={false} onSelect={onStageSelect} />
                     )}
                 </div>
             ))}
+        </div>
+    );
+};
+
+// ── BandDetailPanel ───────────────────────────────────────────────────────────
+
+const BandDetailPanel = ({ group, stageColor, onClose }) => {
+    const { state, setInterest, setContext, getBandTag, getInterestColor, updateNote } = useCheckedState();
+    const [activeTab, setActiveTab] = useState('infos');
+    const [note, setNote] = useState('');
+    const [showTagDropdown, setShowTagDropdown] = useState(false);
+
+    const bandTag = getBandTag(group.id);
+    const currentInterest = bandTag?.interest;
+    const currentContext = bandTag?.context;
+
+    useEffect(() => {
+        setNote(state?.notes?.[group.id] || '');
+    }, [group.id, state?.notes]);
+
+    useEffect(() => {
+        if (!showTagDropdown) return;
+        const close = () => setShowTagDropdown(false);
+        document.addEventListener('click', close);
+        return () => document.removeEventListener('click', close);
+    }, [showTagDropdown]);
+
+    const handleNoteChange = (e) => {
+        const val = e.target.value;
+        setNote(val);
+        updateNote?.(group.id, val);
+    };
+
+    const getHeaderIcon = () => {
+        if (currentInterest) return <span className="header-star" style={{ color: getInterestColor(currentInterest) }}>★</span>;
+        if (currentContext) return <span className="header-context">{CONTEXT_TAGS[currentContext].icon}</span>;
+        return <span className="header-star-empty">☆</span>;
+    };
+
+    const renderContent = () => {
+        switch (activeTab) {
+            case 'infos':
+                return (
+                    <div className="tab-content fade-in">
+                        {bandLogos[group.GROUPE] && (
+                            <div className="group-logo-container" style={{ width: '100%', marginBottom: '10px', display: 'flex', justifyContent: 'center', backgroundColor: 'black' }}>
+                                <img src={`${import.meta.env.BASE_URL}${bandLogos[group.GROUPE]}`} alt={group.GROUPE} style={{ maxWidth: '100%', maxHeight: '80px', objectFit: 'contain' }} />
+                            </div>
+                        )}
+                        {group.STYLE && <div className="info-row"><i className="fa-solid fa-music" style={{ color: stageColor }} /><span>{group.STYLE}</span></div>}
+                        {group.PAYS && <div className="info-row"><i className="fa-solid fa-globe" style={{ color: stageColor }} /><span>{group.PAYS}</span></div>}
+                        {group.PARTICIPATIONS && <div className="info-row"><i className="fa-solid fa-fire" style={{ color: stageColor }} /><span>{group.PARTICIPATIONS}</span></div>}
+                        {group.FFO && (
+                            <div className="info-block">
+                                <div className="info-label">Si vous aimez...</div>
+                                <div className="info-value ffo">{group.FFO}</div>
+                            </div>
+                        )}
+                    </div>
+                );
+            case 'bio':
+                return (
+                    <div className="tab-content fade-in scrollable">
+                        <p className="bio-text">{group.Bio || 'Pas de biographie disponible.'}</p>
+                    </div>
+                );
+            case 'links':
+                return (
+                    <div className="tab-content fade-in">
+                        <div className="links-grid">
+                            {group.QOBUZ && <a href={group.QOBUZ} target="_blank" rel="noopener noreferrer" className="link-btn qobuz"><img src={`${import.meta.env.BASE_URL}icons/qobuz_icon.png`} alt="Qobuz" className="qobuz-icon" />Qobuz</a>}
+                            {group.SPOTIFY && <a href={group.SPOTIFY} target="_blank" rel="noopener noreferrer" className="link-btn spotify"><i className="fa-brands fa-spotify" /> Spotify</a>}
+                            {group.DEEZER && <a href={group.DEEZER} target="_blank" rel="noopener noreferrer" className="link-btn deezer"><i className="fa-brands fa-deezer" /> Deezer</a>}
+                            {group.YOUTUBE && <a href={group.YOUTUBE} target="_blank" rel="noopener noreferrer" className="link-btn youtube"><i className="fa-brands fa-youtube" /> YouTube</a>}
+                            {group.BANDCAMP && <a href={group.BANDCAMP} target="_blank" rel="noopener noreferrer" className="link-btn bandcamp"><i className="fa-brands fa-bandcamp" /> Bandcamp</a>}
+                            {group.SETLISTFM && <a href={group.SETLISTFM} target="_blank" rel="noopener noreferrer" className="link-btn setlistfm"><i className="fa-solid fa-list-ol" /> Setlist.fm</a>}
+                            {group.FACEBOOK && <a href={group.FACEBOOK} target="_blank" rel="noopener noreferrer" className="link-btn facebook"><i className="fa-brands fa-facebook" /> Facebook</a>}
+                            {group.INSTAGRAM && <a href={group.INSTAGRAM} target="_blank" rel="noopener noreferrer" className="link-btn instagram"><i className="fa-brands fa-instagram" /> Instagram</a>}
+                            {group.SITE && <a href={group.SITE} target="_blank" rel="noopener noreferrer" className="link-btn website"><i className="fa-solid fa-globe" /> Site Web</a>}
+                        </div>
+                        {!group.QOBUZ && !group.SPOTIFY && !group.DEEZER && !group.YOUTUBE && !group.BANDCAMP && !group.SETLISTFM && !group.FACEBOOK && !group.INSTAGRAM && !group.SITE && (
+                            <div className="no-data">Aucun lien disponible</div>
+                        )}
+                    </div>
+                );
+            case 'notes':
+                return (
+                    <div className="tab-content fade-in">
+                        <textarea className="note-input" placeholder="Vos notes sur ce groupe..." value={note} onChange={handleNoteChange} />
+                    </div>
+                );
+            default:
+                return null;
+        }
+    };
+
+    return (
+        <div className="map-band-detail">
+            <div className="card-header" style={{ backgroundColor: stageColor }}>
+                <div className="header-top">
+                    <h3>{group.GROUPE}</h3>
+                    <div className="header-actions">
+                        <div className="tag-dropdown-container" style={{ position: 'relative' }}>
+                            <button
+                                className={`favorite-btn ${currentInterest || currentContext ? 'active' : ''}`}
+                                onClick={e => { e.stopPropagation(); setShowTagDropdown(p => !p); }}
+                                title="Marquer ce groupe"
+                            >
+                                {getHeaderIcon()}
+                            </button>
+                            {showTagDropdown && (
+                                <div className="tag-dropdown" onClick={e => e.stopPropagation()} style={{ position: 'absolute', bottom: '100%', right: 0, width: '200px', backgroundColor: '#222', border: '1px solid #444', borderRadius: '8px', padding: '10px', boxShadow: '0 -4px 12px rgba(0,0,0,0.5)', zIndex: 2000, marginBottom: '5px', textAlign: 'left' }}>
+                                    <div className="dropdown-section-title">Intérêt</div>
+                                    {INTEREST_ORDER.map(levelId => {
+                                        const level = INTEREST_LEVELS[levelId];
+                                        const isActive = currentInterest === levelId;
+                                        return (
+                                            <button key={levelId} className={`tag-dropdown-item ${isActive ? 'active' : ''}`} onClick={() => setInterest(group.id, isActive ? null : levelId)} style={{ '--tag-color': getInterestColor(levelId), display: 'flex', alignItems: 'center', width: '100%', padding: '6px', marginBottom: '4px', background: isActive ? '#333' : 'transparent', border: 'none', borderRadius: '4px', color: 'white', cursor: 'pointer' }}>
+                                                <span className="interest-star-single" style={{ color: isActive ? getInterestColor(levelId) : '#555' }}>★</span>
+                                                <span>{level.label}</span>
+                                                {isActive && <span className="tag-check">✓</span>}
+                                            </button>
+                                        );
+                                    })}
+                                    <div className="dropdown-section-title" style={{ marginTop: '10px', marginBottom: '5px', fontSize: '0.85em', color: '#888' }}>Contexte</div>
+                                    {CONTEXT_ORDER.map(contextId => {
+                                        const ctx = CONTEXT_TAGS[contextId];
+                                        const isActive = currentContext === contextId;
+                                        return (
+                                            <button key={contextId} className={`tag-dropdown-item ${isActive ? 'active' : ''}`} onClick={() => setContext(group.id, isActive ? null : contextId)} style={{ display: 'flex', alignItems: 'center', width: '100%', padding: '6px', marginBottom: '4px', background: isActive ? '#333' : 'transparent', border: 'none', borderRadius: '4px', color: 'white', cursor: 'pointer', textAlign: 'left' }}>
+                                                <span className="tag-item-icon">{ctx.icon}</span>
+                                                <span>{ctx.label}</span>
+                                                {isActive && <span className="tag-check">✓</span>}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+                        <button className="close-btn" onClick={onClose}><i className="fa-solid fa-xmark" /></button>
+                    </div>
+                </div>
+            </div>
+            <div className="card-tabs">
+                <button className={`tab-btn ${activeTab === 'infos' ? 'active' : ''}`} onClick={() => setActiveTab('infos')}><i className="fa-solid fa-circle-info" /> Infos</button>
+                <button className={`tab-btn ${activeTab === 'bio' ? 'active' : ''}`} onClick={() => setActiveTab('bio')}><i className="fa-solid fa-align-left" /> Bio</button>
+                <button className={`tab-btn ${activeTab === 'links' ? 'active' : ''}`} onClick={() => setActiveTab('links')}><i className="fa-solid fa-link" /> Liens</button>
+                <button className={`tab-btn ${activeTab === 'notes' ? 'active' : ''}`} onClick={() => setActiveTab('notes')}><i className="fa-solid fa-pen" /> Notes</button>
+            </div>
+            <div className="card-body">
+                {renderContent()}
+            </div>
+        </div>
+    );
+};
+
+// ── StageSchedulePanel ────────────────────────────────────────────────────────
+
+const StageSchedulePanel = ({ stageKey, stageData, dayGroups, simMinutes, onClose }) => {
+    const { config, status } = stageData || {};
+    const [selectedBand, setSelectedBand] = useState(null);
+
+    if (!config) return null;
+
+    const currentMins = getCurrentFestivalMinutes(simMinutes);
+    const stageName = STAGES[stageKey];
+
+    const remaining = dayGroups
+        .filter(g => g.SCENE === stageName && timeToMinutes(g.FIN) > currentMins)
+        .sort((a, b) => timeToMinutes(a.DEBUT) - timeToMinutes(b.DEBUT));
+
+    return (
+        <div className="map-schedule-panel" style={{ '--stage-color': config.themeColor }}>
+            <div className={`map-scenes-slider${selectedBand ? ' map-scenes-slider--detail' : ''}`}>
+                <div className="map-scenes-slider__page">
+                    <div className="map-schedule-panel__header">
+                        <img src={config.icon} alt={config.name} className="map-schedule-panel__icon" />
+                        <span className="map-schedule-panel__name">{config.name}</span>
+                        <button className="map-schedule-panel__close" onClick={onClose} aria-label="Fermer">
+                            <i className="fa-solid fa-xmark" />
+                        </button>
+                    </div>
+                    <div className="map-schedule-panel__list">
+                        {remaining.length === 0 ? (
+                            <div className="map-schedule-panel__empty">Aucun groupe à venir</div>
+                        ) : (
+                            remaining.map((group, idx) => {
+                                const isFirst = idx === 0;
+                                const isLive = isFirst && status === 'playing';
+                                const isNextUp = isFirst && status === 'next';
+                                return (
+                                    <div
+                                        key={group.id}
+                                        className={`map-schedule-item${isLive ? ' map-schedule-item--live' : isNextUp ? ' map-schedule-item--next' : ''}`}
+                                        onClick={() => setSelectedBand(group)}
+                                    >
+                                        <div className="map-schedule-item__time">
+                                            {group.DEBUT?.replace('h', ':')}–{group.FIN?.replace('h', ':')}
+                                        </div>
+                                        <div className="map-schedule-item__band">
+                                            {group.GROUPE}
+                                        </div>
+                                        {isLive && <span className="map-schedule-item__badge map-schedule-item__badge--live">● LIVE</span>}
+                                        {isNextUp && <span className="map-schedule-item__badge map-schedule-item__badge--next">Prochain</span>}
+                                        <i className="fa-solid fa-chevron-right map-schedule-item__chevron" />
+                                    </div>
+                                );
+                            })
+                        )}
+                    </div>
+                </div>
+                <div className="map-scenes-slider__page">
+                    {selectedBand && (
+                        <BandDetailPanel
+                            group={selectedBand}
+                            stageColor={config.themeColor}
+                            onClose={() => setSelectedBand(null)}
+                        />
+                    )}
+                </div>
+            </div>
         </div>
     );
 };
@@ -373,6 +612,7 @@ const MapView = ({
     activeGroupData = null, memberId = null, updatePosition = null,
 }) => {
     const [activePoiId, setActivePoiId] = useState(null);
+    const [selectedStageKey, setSelectedStageKey] = useState(null);
 
     const [activeTab, setActiveTab] = useState(() => localStorage.getItem('hf_map_tab') || 'scenes');
     const [positionSource, setPositionSource] = useState('manual');
@@ -380,6 +620,7 @@ const MapView = ({
     const switchTab = useCallback((tab) => {
         setActiveTab(tab);
         localStorage.setItem('hf_map_tab', tab);
+        setSelectedStageKey(null);
     }, []);
 
     // Auto-switch to groups tab when a group is activated from GroupsPanel
@@ -836,12 +1077,27 @@ const MapView = ({
                         festivalEndState
                             ? <FestivalEndMessage state={festivalEndState} />
                             : <div className="map-scenes-content">
-                                {isMardMer && (
-                                    <div className="map-prephase-msg">
-                                        Ouverture des portes Jeudi à 14h
+                                <div className={`map-scenes-slider${selectedStageKey ? ' map-scenes-slider--detail' : ''}`}>
+                                    <div className="map-scenes-slider__page">
+                                        {isMardMer && (
+                                            <div className="map-prephase-msg">
+                                                Ouverture des portes Jeudi à 14h
+                                            </div>
+                                        )}
+                                        <StageGridPanel stageStatus={stageStatus} onStageSelect={setSelectedStageKey} isPrePhase={isMardMer} />
                                     </div>
-                                )}
-                                <StageGridPanel stageStatus={stageStatus} onGroupSelect={onGroupSelect} isPrePhase={isMardMer} />
+                                    <div className="map-scenes-slider__page">
+                                        {selectedStageKey && stageStatus[selectedStageKey] && (
+                                            <StageSchedulePanel
+                                                stageKey={selectedStageKey}
+                                                stageData={stageStatus[selectedStageKey]}
+                                                dayGroups={dayGroups}
+                                                simMinutes={simMinutes}
+                                                onClose={() => setSelectedStageKey(null)}
+                                            />
+                                        )}
+                                    </div>
+                                </div>
                               </div>
                     ) : (
                         <GroupsTabContent
