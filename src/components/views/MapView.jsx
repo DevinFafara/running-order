@@ -23,8 +23,9 @@ const MAIN_PAIRS = [
     ['METAL_CORNER', 'PURPLE_HOUSE'],
 ];
 
-const MIN_ZOOM = 0.10;
-const MAX_ZOOM = 0.50;
+const MIN_ZOOM = 0.30;
+const MAX_ZOOM = 1.50;
+const DEFAULT_ZOOM = 0.70;
 const ZOOM_STEP = 0.25;
 const ZOOM_WHEEL_STEP = 0.08;
 
@@ -219,8 +220,6 @@ const MemberMarker = ({ member, isMe, counterTransform }) => {
 };
 
 const MapView = ({ groups, onGroupSelect, groupMembers = [], myMemberId = null, onSetPosition = null }) => {
-    const [editMode, setEditMode] = useState(false);
-    const [copiedCoords, setCopiedCoords] = useState(null);
     const [activePoiId, setActivePoiId] = useState(null);
 
     // Simulation — null = heure réelle
@@ -288,7 +287,7 @@ const MapView = ({ groups, onGroupSelect, groupMembers = [], myMemberId = null, 
     const innerRef = useRef(null);
     const imgRef = useRef(null);
 
-    const mapSrc = `${import.meta.env.BASE_URL}hf-map.svg`;
+    const mapSrc = `${import.meta.env.BASE_URL}hf-map.png`;
 
     const getContainerSize = () => {
         const el = containerRef.current;
@@ -297,7 +296,7 @@ const MapView = ({ groups, onGroupSelect, groupMembers = [], myMemberId = null, 
 
     const getImgSize = () => {
         const el = imgRef.current;
-        return el ? { w: el.naturalWidth || el.clientWidth, h: el.naturalHeight || el.clientHeight } : { w: 4597, h: 2654 };
+        return el ? { w: el.naturalWidth || el.clientWidth, h: el.naturalHeight || el.clientHeight } : { w: 1376, h: 768 };
     };
 
     // Center map on left part once image is loaded
@@ -309,14 +308,15 @@ const MapView = ({ groups, onGroupSelect, groupMembers = [], myMemberId = null, 
         const doCenter = () => {
             const { w: cW, h: cH } = getContainerSize();
             const { w: iW, h: iH } = getImgSize();
-            const zoom = MIN_ZOOM;
+            const zoom = DEFAULT_ZOOM;
             // Target point: far left side of the map (Mainstage area), upper half
-            const targetX = iW * 0.42;
-            const targetY = iH * 1.4;
-            const px = -(targetX * zoom - cW / 2);
-            const py = -(targetY * zoom - cH / 2);
-            const clamped = clampPan(px, py, zoom, cW, cH, iW, iH);
-            setView({ zoom, x: clamped.x, y: clamped.y });
+            const targetX = iW * 0.520;
+            const targetY = iH * 0.417;
+            // L'image est centrée dans le viewport par CSS (top/left 50% + translate -50%).
+            // Pour centrer sur un point, on calcule l'offset de ce point par rapport au centre de l'image.
+            const px = -(targetX - iW / 2) * zoom;
+            const py = -(targetY - iH / 2) * zoom;
+            setView({ zoom, x: px, y: py });
             setInitialCentered(true);
         };
 
@@ -420,12 +420,12 @@ const MapView = ({ groups, onGroupSelect, groupMembers = [], myMemberId = null, 
 
     // ── Mouse pan ─────────────────────────────────────────────────────────────
     const onMouseDown = useCallback((e) => {
-        if (positionMode || editMode || e.button !== 0) return;
+        if (positionMode || e.button !== 0) return;
         isDragging.current = true;
         dragStart.current = { x: e.clientX, y: e.clientY };
         panStart.current = { x: view.x, y: view.y };
         e.preventDefault();
-    }, [editMode, view.x, view.y]);
+    }, [view.x, view.y]);
 
     const onMouseMove = useCallback((e) => {
         if (!isDragging.current) return;
@@ -446,7 +446,7 @@ const MapView = ({ groups, onGroupSelect, groupMembers = [], myMemberId = null, 
 
     // ── Touch pan + pinch zoom + twist ────────────────────────────────────────
     const onTouchStart = useCallback((e) => {
-        if (positionMode || editMode) return;
+        if (positionMode) return;
         if (e.touches.length === 1) {
             isDragging.current = true;
             dragStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
@@ -457,7 +457,7 @@ const MapView = ({ groups, onGroupSelect, groupMembers = [], myMemberId = null, 
             const dy = e.touches[0].clientY - e.touches[1].clientY;
             lastPinchDist.current = Math.hypot(dx, dy);
         }
-    }, [editMode, view.x, view.y]);
+    }, [view.x, view.y]);
 
     const onTouchMove = useCallback((e) => {
         if (e.touches.length === 1 && isDragging.current) {
@@ -497,10 +497,7 @@ const MapView = ({ groups, onGroupSelect, groupMembers = [], myMemberId = null, 
         }
 
         if (activePoiId) setActivePoiId(null);
-        if (!editMode) return;
-        setCopiedCoords({ left: `${x}%`, top: `${y}%` });
-        navigator.clipboard.writeText(`mapPosition: { left: '${x}%', top: '${y}%' }`).catch(() => { });
-    }, [positionMode, onSetPosition, activePoiId, editMode]);
+    }, [positionMode, onSetPosition, activePoiId]);
 
     const counterTransform = `scale(${1 / view.zoom})`;
     // Suppression du bouton de réinitialisation via resetView non utilisé dans le header désormais
@@ -564,23 +561,9 @@ const MapView = ({ groups, onGroupSelect, groupMembers = [], myMemberId = null, 
                 <LiveClock isPreviewActive={isPreviewActive} isFestivalLive={isFestivalLive} simDay={isSimMode ? activeDayName : null} simTimeLabel={simTimeLabel} />
             </div>
 
-            {/* Edit mode banner */}
-            {editMode && (
-                <div className="map-edit-banner">
-                    <i className="fa-solid fa-circle-info" />
-                    &nbsp;Cliquez sur la carte pour copier les coordonnées.
-                    {copiedCoords && (
-                        <span className="map-edit-coords">
-                            &nbsp;→ <code>left: {copiedCoords.left}, top: {copiedCoords.top}</code>
-                            <span className="map-edit-copied">✓ Copié !</span>
-                        </span>
-                    )}
-                </div>
-            )}
-
             {/* Map viewport */}
             <div
-                className={`map-view__container ${positionMode ? 'map-view__container--position' : editMode ? 'map-view__container--edit' : 'map-view__container--pan'}`}
+                className={`map-view__container ${positionMode ? 'map-view__container--position' : 'map-view__container--pan'}`}
                 ref={containerRef}
                 onMouseDown={onMouseDown}
                 onTouchStart={onTouchStart}
@@ -620,7 +603,7 @@ const MapView = ({ groups, onGroupSelect, groupMembers = [], myMemberId = null, 
                     ))}
 
                     {/* POI Markers — visibles seulement au-dessus de 20% de zoom */}
-                    {view.zoom > 0.20 && MAP_POIS.map((poi) => (
+                    {view.zoom > 1.00 && MAP_POIS.map((poi) => (
                         <POIMarker
                             key={poi.id}
                             poi={poi}
@@ -630,9 +613,7 @@ const MapView = ({ groups, onGroupSelect, groupMembers = [], myMemberId = null, 
                         />
                     ))}
 
-                    {editMode && copiedCoords && (
-                        <div className="map-edit-crosshair" style={{ left: copiedCoords.left, top: copiedCoords.top }} />
-                    )}
+
                 </div>
             </div>
 

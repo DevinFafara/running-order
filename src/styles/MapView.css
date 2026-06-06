@@ -361,7 +361,7 @@
     flex-shrink: 0;
     z-index: 20;
 /* --- A commenter en developpement --- */
-    display: none;
+    /* display: none; */
 }
 
 .map-preview-btn {
@@ -515,6 +515,9 @@
     opacity: 0.95;
     position: relative;
     z-index: 1;
+    transform: translateZ(0);
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
 }
 
 /* ── Info chip structure ── */

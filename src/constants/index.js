@@ -27,7 +27,7 @@ export const STAGE_CONFIG = {
     slug: 'mainstage1',
     themeColor: '#0055a5',
     bandColor: '#9eaad3',
-    mapPosition: { left: '30.0%', top: '11.9%' }
+    mapPosition: { left: '41.1%', top: '12.6%' }
   },
   [STAGES.MAINSTAGE_2]: {
     name: 'Mainstage 2',
@@ -43,7 +43,7 @@ export const STAGE_CONFIG = {
     slug: 'warzone',
     themeColor: '#949b1a',
     bandColor: '#cecb93',
-    mapPosition: { left: '14.7%', top: '43.0%' }
+    mapPosition: { left: '8.1%', top: '41.6%' }
   },
   [STAGES.VALLEY]: {
     name: 'Valley',
@@ -51,7 +51,7 @@ export const STAGE_CONFIG = {
     slug: 'valley',
     themeColor: '#ce7c19',
     bandColor: '#eabe97',
-    mapPosition: { left: '33.1%', top: '56.6%' }
+    mapPosition: { left: '28.9%', top: '60.2%' }
   },
   [STAGES.ALTAR]: {
     name: 'Altar',
@@ -59,7 +59,7 @@ export const STAGE_CONFIG = {
     slug: 'altar',
     themeColor: '#dc2829',
     bandColor: '#f19e9e',
-    mapPosition: { left: '51.4%', top: '24.8%' }
+    mapPosition: { left: '59.1%', top: '24.7%' }
   },
   [STAGES.TEMPLE]: {
     name: 'Temple',
@@ -67,7 +67,7 @@ export const STAGE_CONFIG = {
     slug: 'temple',
     themeColor: '#93a7b0',
     bandColor: '#cbd4d8',
-    mapPosition: { left: '55.2%', top: '28.2%' }
+    mapPosition: { left: '63.2%', top: '29.4%' }
   },
   [STAGES.HELLSTAGE]: {
     name: 'Hellstage',
@@ -75,7 +75,7 @@ export const STAGE_CONFIG = {
     slug: 'hellstage',
     themeColor: '#239c60',
     bandColor: '#a0d8b7',
-    mapPosition: { left: '58.0%', top: '48.7%' }
+    mapPosition: { left: '68.9%', top: '53.4%' }
   },
   [STAGES.METAL_CORNER]: {
     name: 'Metal Corner',
@@ -83,7 +83,7 @@ export const STAGE_CONFIG = {
     slug: 'metal_corner',
     themeColor: '#9f9c78',
     bandColor: '#d0cfae',
-    mapPosition: { left: '71.3%', top: '65.6%' }
+    mapPosition: { left: '84.7%', top: '79.1%' }
   },
   [STAGES.PURPLE_HOUSE]: {
     name: 'Purple House',
@@ -91,7 +91,7 @@ export const STAGE_CONFIG = {
     slug: 'purple_house',
     themeColor: '#9500c6',
     bandColor: '#d6b2e0',
-    mapPosition: { left: '70.1%', top: '56.7%' }
+    mapPosition: { left: '78.0%', top: '68.8%' }
   },
   [STAGES.HELLCITY_STAGE]: {
     name: 'Hellcity Brewpub',
@@ -99,7 +99,7 @@ export const STAGE_CONFIG = {
     slug: 'hellcity_stage',
     themeColor: '#c45c00',
     bandColor: '#e8b07a',
-    mapPosition: { left: '68.0%', top: '46.0%' }
+    mapPosition: { left: '80.6%', top: '53.1%' }
   },
   [STAGES.LE_OFF1]: {
     name: 'Le Off 1',
@@ -107,7 +107,7 @@ export const STAGE_CONFIG = {
     slug: 'le_off1',
     themeColor: '#7a1a1a',
     bandColor: '#c47070',
-    mapPosition: { left: '88.0%', top: '62.0%' }
+    mapPosition: { left: '101.6%', top: '84.3%' }
   },
   [STAGES.LE_OFF2]: {
     name: 'Le Off 2',
@@ -115,7 +115,7 @@ export const STAGE_CONFIG = {
     slug: 'le_off2',
     themeColor: '#3a3a3a',
     bandColor: '#8a8a8a',
-    mapPosition: { left: '88.0%', top: '70.0%' }
+    mapPosition: { left: '101.7%', top: '98.0%' }
   },
 };
 
@@ -138,22 +138,27 @@ export const SIDE_STAGES = [
 ];
 
 export const MAP_POIS = [
-  { id: 'poi-tree', name: 'Foret du Muscadet', icon: 'fa-solid fa-tree', mapPosition: { left: '32.3%', top: '41.6%' }, color: '#4CAF50' },
-  { id: 'poi-burger', name: 'Food Court', icon: 'fa-solid fa-burger', mapPosition: { left: '38.8%', top: '45.9%' }, color: '#FF9800' },
-  { id: 'poi-meteor', name: 'Bar Météore', icon: 'fa-solid fa-meteor', mapPosition: { left: '32.2%', top: '26.1%' }, color: '#9C27B0' },
-  { id: 'poi-church', name: 'Cathédrale', icon: 'fa-solid fa-church', mapPosition: { left: '47.6%', top: '41.0%' }, color: '#795548' },
-  { id: 'poi-dharma', name: 'Grande Roue', icon: 'fa-solid fa-dharmachakra', mapPosition: { left: '24.1%', top: '33.9%' }, color: '#E91E63' },
-  { id: 'poi-cowboy', name: 'Statue de Lemmy', icon: 'fa-solid fa-hat-cowboy', mapPosition: { left: '23.0%', top: '51.9%' }, color: '#8D6E63' },
-  { id: 'poi-snowflake', name: 'Hellfresh', icon: 'fa-solid fa-snowflake', mapPosition: { left: '29.1%', top: '48.8%' }, color: '#03A9F4' },
-  { id: 'poi-torii', name: 'Murs d’eau', icon: 'fa-solid fa-torii-gate', mapPosition: { left: '32.0%', top: '31.1%' }, color: '#D32F2F' },
-  { id: 'poi-fire', name: 'Brasero', icon: 'fa-solid fa-fire', mapPosition: { left: '36.3%', top: '37.8%' }, color: '#FF5722' },
-  { id: 'poi-cart', name: 'Xtrem Market', icon: 'fa-solid fa-cart-shopping', mapPosition: { left: '62.1%', top: '54.7%' }, color: '#607D8B' },
-  { id: 'poi-bag', name: 'Sanctuary', icon: 'fa-solid fa-bag-shopping', mapPosition: { left: '56.7%', top: '42.0%' }, color: '#607D8B' },
-  { id: 'poi-shirt', name: 'Merch Artistes', icon: 'fa-solid fa-shirt', mapPosition: { left: '47.7%', top: '47.5%' }, color: '#607D8B' },
-  { id: 'poi-shower', name: 'Douches', icon: 'fa-solid fa-shower', mapPosition: { left: '76.0%', top: '58.7%' }, color: '#2196F3' },
-  { id: 'poi-tents', name: 'Campings', icon: 'fa-solid fa-tents', mapPosition: { left: '79.7%', top: '81.0%' }, color: '#795548' },
-  { id: 'poi-guitar', name: 'Rond-Point de la Guitare', icon: 'fa-solid fa-guitar', mapPosition: { left: '74.6%', top: '42.9%' }, color: '#FFC107' },
-  { id: 'poi-entrance', name: 'Entrée principale', icon: 'fa-solid fa-right-to-bracket', mapPosition: { left: '67.2%', top: '40.7%' }, color: '#4CAF50' },
+  { id: 'poi-tree', name: 'Foret du Muscadet', icon: 'fa-solid fa-tree', mapPosition: { left: '30.4%', top: '41.4%' }, color: '#4CAF50' },
+  { id: 'poi-burger', name: 'Food Court', icon: 'fa-solid fa-burger', mapPosition: { left: '39.3%', top: '48.2%' }, color: '#FF9800' },
+  { id: 'poi-meteor', name: 'Bar Météore', icon: 'fa-solid fa-meteor', mapPosition: { left: '35.5%', top: '24.7%' }, color: '#9C27B0' },
+  { id: 'poi-church', name: 'Cathédrale', icon: 'fa-solid fa-church', mapPosition: { left: '52.0%', top: '41.7%' }, color: '#795548' },
+  { id: 'poi-dharma', name: 'Grande Roue', icon: 'fa-solid fa-dharmachakra', mapPosition: { left: '22.6%', top: '34.9%' }, color: '#E91E63' },
+  { id: 'poi-cowboy', name: 'Statue de Lemmy', icon: 'fa-solid fa-hat-cowboy', mapPosition: { left: '16.0%', top: '52.6%' }, color: '#8D6E63' },
+  { id: 'poi-snowflake', name: 'Hellfresh', icon: 'fa-solid fa-snowflake', mapPosition: { left: '25.3%', top: '50.4%' }, color: '#03A9F4' },
+  { id: 'poi-torii', name: 'Murs d’eau', icon: 'fa-solid fa-torii-gate', mapPosition: { left: '34.2%', top: '28.9%' }, color: '#D32F2F' },
+  { id: 'poi-fire', name: 'Brasero', icon: 'fa-solid fa-fire', mapPosition: { left: '38.2%', top: '39.2%' }, color: '#FF5722' },
+  { id: 'poi-cart', name: 'Xtrem Market', icon: 'fa-solid fa-cart-shopping', mapPosition: { left: '70.7%', top: '62.1%' }, color: '#607D8B' },
+  { id: 'poi-bag', name: 'Sanctuary', icon: 'fa-solid fa-bag-shopping', mapPosition: { left: '64.5%', top: '44.9%' }, color: '#607D8B' },
+  { id: 'poi-shirt', name: 'Merch Artistes', icon: 'fa-solid fa-shirt', mapPosition: { left: '50.4%', top: '51.6%' }, color: '#607D8B' },
+  { id: 'poi-shower', name: 'Douches', icon: 'fa-solid fa-shower', mapPosition: { left: '90.3%', top: '71.1%' }, color: '#2196F3' },
+  { id: 'poi-tents', name: 'Campings', icon: 'fa-solid fa-tents', mapPosition: { left: '85.8%', top: '98.8%' }, color: '#795548' },
+  { id: 'poi-guitar', name: 'Rond-Point de la Guitare', icon: 'fa-solid fa-guitar', mapPosition: { left: '91.8%', top: '49.8%' }, color: '#FFC107' },
+  { id: 'poi-entrance', name: 'Entrée principale', icon: 'fa-solid fa-right-to-bracket', mapPosition: { left: '81.6%', top: '44.7%' }, color: '#4CAF50' },
+  { id: 'poi-at-bar', name: 'Bar Altar/Temple', icon: 'fa-solid fa-beer', mapPosition: { left: '52.5%', top: '35.1%' }, color: '#dfa022' },
+  { id: 'poi-wz-bar', name: 'Bar Warzone', icon: 'fa-solid fa-beer', mapPosition: { left: '14.0%', top: '49.7%' }, color: '#dfa022' },
+  { id: 'poi-vl-bar', name: 'Bar Valley', icon: 'fa-solid fa-beer', mapPosition: { left: '23.2%', top: '63.7%' }, color: '#dfa022' },
+  { id: 'poi-hc-bar', name: 'Bar Hellcity', icon: 'fa-solid fa-beer', mapPosition: { left: '71.8%', top: '45.1%' }, color: '#dfa022' },
+  { id: 'poi-mc-bar', name: 'Bar MetalCorner', icon: 'fa-solid fa-beer', mapPosition: { left: '79.1%', top: '80.8%' }, color: '#dfa022' },
 ];
 
 export const DAYS = ['Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
