@@ -55,13 +55,30 @@ function fitAffine(gcps, key) {
 const [ax, bx, cx] = fitAffine(GCPs, 'px');
 const [ay, by, cy] = fitAffine(GCPs, 'py');
 
+// Bounding box géographique du site festival + marge ~500m
+// (la transformation affine étant linéaire, elle peut projeter n'importe quelle
+//  coordonnée dans l'image — il faut un filtre sur les coords GPS brutes)
+const GEO_BOUNDS = {
+    latMin: 47.091, latMax: 47.104,
+    lngMin: -1.277, lngMax: -1.258,
+};
+
+// Retourne { x, y, isInBounds }
+// isInBounds = false si la position GPS est hors du périmètre géographique du festival
 export function gpsToMapPosition(lat, lng) {
+    const isInBounds = lat >= GEO_BOUNDS.latMin && lat <= GEO_BOUNDS.latMax
+        && lng >= GEO_BOUNDS.lngMin && lng <= GEO_BOUNDS.lngMax;
     const latC = lat - meanLat;
     const lngC = lng - meanLng;
-    const px = Math.max(0, Math.min(IMG_W, ax * latC + bx * lngC + cx));
-    const py = Math.max(0, Math.min(IMG_H, ay * latC + by * lngC + cy));
+    const rawPx = ax * latC + bx * lngC + cx;
+    const rawPy = ay * latC + by * lngC + cy;
+    const px = Math.max(0, Math.min(IMG_W, rawPx));
+    const py = Math.max(0, Math.min(IMG_H, rawPy));
     return {
         x: `${(px / IMG_W * 100).toFixed(1)}%`,
         y: `${(py / IMG_H * 100).toFixed(1)}%`,
+        rawX: `${(rawPx / IMG_W * 100).toFixed(1)}%`,
+        rawY: `${(rawPy / IMG_H * 100).toFixed(1)}%`,
+        isInBounds,
     };
 }

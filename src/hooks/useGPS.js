@@ -5,10 +5,13 @@ const INTERVAL_MS = 5 * 60 * 1000;
 const GEO_OPTIONS = { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 };
 
 // active: controlled by parent (positionSource === 'gps')
-// onPosition: called with { x: 'X%', y: 'Y%' } on each GPS fix
+// onPosition: called with { x, y } (clamped) on each GPS fix — toujours appelé
 // onPermissionDenied: called when browser refuses access — parent should switch back to manual
+// rawPosition: position non clampée { x, y } pour calcul de distance réelle
 export function useGPS({ active, onPosition, onPermissionDenied }) {
     const [accuracy, setAccuracy] = useState(null);
+    const [inBounds, setInBounds] = useState(null);
+    const [rawPosition, setRawPosition] = useState(null);
     const [error, setError] = useState(null);
     const intervalRef = useRef(null);
     const onPositionRef = useRef(onPosition);
@@ -26,7 +29,10 @@ export function useGPS({ active, onPosition, onPermissionDenied }) {
             ({ coords }) => {
                 setAccuracy(coords.accuracy);
                 setError(null);
-                onPositionRef.current(gpsToMapPosition(coords.latitude, coords.longitude));
+                const pos = gpsToMapPosition(coords.latitude, coords.longitude);
+                setInBounds(pos.isInBounds);
+                setRawPosition({ x: pos.rawX, y: pos.rawY });
+                onPositionRef.current({ x: pos.x, y: pos.y }); // toujours mettre à jour
             },
             (err) => {
                 setError(err.message);
@@ -40,6 +46,8 @@ export function useGPS({ active, onPosition, onPermissionDenied }) {
         if (!active) {
             clearInterval(intervalRef.current);
             setAccuracy(null);
+            setInBounds(null);
+            setRawPosition(null);
             setError(null);
             return;
         }
@@ -48,5 +56,5 @@ export function useGPS({ active, onPosition, onPermissionDenied }) {
         return () => clearInterval(intervalRef.current);
     }, [active, fetchPosition]);
 
-    return { accuracy, error };
+    return { accuracy, inBounds, rawPosition, error };
 }

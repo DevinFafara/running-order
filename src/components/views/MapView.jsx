@@ -1,4 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { STAGES, DAYS, MAP_POIS, INTEREST_LEVELS, INTEREST_ORDER, CONTEXT_TAGS, CONTEXT_ORDER, STAGE_CONFIG } from '../../constants';
 import bandLogos from '../../data/bandLogos.json';
 import { useCheckedState } from '../../context/CheckedStateContext';
@@ -216,6 +217,9 @@ const BandDetailPanel = ({ group, stageColor, onClose }) => {
     const [activeTab, setActiveTab] = useState('infos');
     const [note, setNote] = useState('');
     const [showTagDropdown, setShowTagDropdown] = useState(false);
+    const [dropdownPos, setDropdownPos] = useState(null);
+    const tagBtnRef = useRef(null);
+    const dropdownRef = useRef(null);
 
     const bandTag = getBandTag(group.id);
     const currentInterest = bandTag?.interest;
@@ -227,10 +231,23 @@ const BandDetailPanel = ({ group, stageColor, onClose }) => {
 
     useEffect(() => {
         if (!showTagDropdown) return;
-        const close = () => setShowTagDropdown(false);
-        document.addEventListener('click', close);
-        return () => document.removeEventListener('click', close);
+        const close = (e) => {
+            if (dropdownRef.current?.contains(e.target)) return;
+            if (tagBtnRef.current?.contains(e.target)) return;
+            setShowTagDropdown(false);
+        };
+        document.addEventListener('mousedown', close);
+        return () => document.removeEventListener('mousedown', close);
     }, [showTagDropdown]);
+
+    const toggleDropdown = (e) => {
+        e.stopPropagation();
+        if (tagBtnRef.current) {
+            const rect = tagBtnRef.current.getBoundingClientRect();
+            setDropdownPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+        }
+        setShowTagDropdown(p => !p);
+    };
 
     const handleNoteChange = (e) => {
         const val = e.target.value;
@@ -309,39 +326,41 @@ const BandDetailPanel = ({ group, stageColor, onClose }) => {
                     <div className="header-actions">
                         <div className="tag-dropdown-container" style={{ position: 'relative' }}>
                             <button
+                                ref={tagBtnRef}
                                 className={`favorite-btn ${currentInterest || currentContext ? 'active' : ''}`}
-                                onClick={e => { e.stopPropagation(); setShowTagDropdown(p => !p); }}
+                                onClick={toggleDropdown}
                                 title="Marquer ce groupe"
                             >
                                 {getHeaderIcon()}
                             </button>
-                            {showTagDropdown && (
-                                <div className="tag-dropdown" onClick={e => e.stopPropagation()} style={{ position: 'absolute', bottom: '100%', right: 0, width: '200px', backgroundColor: '#222', border: '1px solid #444', borderRadius: '8px', padding: '10px', boxShadow: '0 -4px 12px rgba(0,0,0,0.5)', zIndex: 2000, marginBottom: '5px', textAlign: 'left' }}>
-                                    <div className="dropdown-section-title">Intérêt</div>
+                            {showTagDropdown && dropdownPos && createPortal(
+                                <div ref={dropdownRef} className="tag-dropdown" style={{ position: 'fixed', top: dropdownPos.top, right: dropdownPos.right, width: '190px', backgroundColor: '#222', border: '1px solid #444', borderRadius: '8px', padding: '6px', boxShadow: '0 4px 12px rgba(0,0,0,0.5)', zIndex: 9999, textAlign: 'left' }}>
+                                    <div className="dropdown-section-title" style={{ fontSize: '0.75em', padding: '2px 4px', marginBottom: '2px' }}>Intérêt</div>
                                     {INTEREST_ORDER.map(levelId => {
                                         const level = INTEREST_LEVELS[levelId];
                                         const isActive = currentInterest === levelId;
                                         return (
-                                            <button key={levelId} className={`tag-dropdown-item ${isActive ? 'active' : ''}`} onClick={() => setInterest(group.id, isActive ? null : levelId)} style={{ '--tag-color': getInterestColor(levelId), display: 'flex', alignItems: 'center', width: '100%', padding: '6px', marginBottom: '4px', background: isActive ? '#333' : 'transparent', border: 'none', borderRadius: '4px', color: 'white', cursor: 'pointer' }}>
+                                            <button key={levelId} className={`tag-dropdown-item ${isActive ? 'active' : ''}`} onClick={() => setInterest(group.id, isActive ? null : levelId)} style={{ '--tag-color': getInterestColor(levelId), display: 'flex', alignItems: 'center', width: '100%', padding: '3px 4px', marginBottom: '1px', background: isActive ? '#333' : 'transparent', border: 'none', borderRadius: '4px', color: 'white', cursor: 'pointer', fontSize: '0.85em' }}>
                                                 <span className="interest-star-single" style={{ color: isActive ? getInterestColor(levelId) : '#555' }}>★</span>
                                                 <span>{level.label}</span>
                                                 {isActive && <span className="tag-check">✓</span>}
                                             </button>
                                         );
                                     })}
-                                    <div className="dropdown-section-title" style={{ marginTop: '10px', marginBottom: '5px', fontSize: '0.85em', color: '#888' }}>Contexte</div>
+                                    <div className="dropdown-section-title" style={{ marginTop: '5px', marginBottom: '2px', fontSize: '0.75em', color: '#888', padding: '2px 4px' }}>Contexte</div>
                                     {CONTEXT_ORDER.map(contextId => {
                                         const ctx = CONTEXT_TAGS[contextId];
                                         const isActive = currentContext === contextId;
                                         return (
-                                            <button key={contextId} className={`tag-dropdown-item ${isActive ? 'active' : ''}`} onClick={() => setContext(group.id, isActive ? null : contextId)} style={{ display: 'flex', alignItems: 'center', width: '100%', padding: '6px', marginBottom: '4px', background: isActive ? '#333' : 'transparent', border: 'none', borderRadius: '4px', color: 'white', cursor: 'pointer', textAlign: 'left' }}>
+                                            <button key={contextId} className={`tag-dropdown-item ${isActive ? 'active' : ''}`} onClick={() => setContext(group.id, isActive ? null : contextId)} style={{ display: 'flex', alignItems: 'center', width: '100%', padding: '3px 4px', marginBottom: '1px', background: isActive ? '#333' : 'transparent', border: 'none', borderRadius: '4px', color: 'white', cursor: 'pointer', textAlign: 'left', fontSize: '0.85em' }}>
                                                 <span className="tag-item-icon">{ctx.icon}</span>
                                                 <span>{ctx.label}</span>
                                                 {isActive && <span className="tag-check">✓</span>}
                                             </button>
                                         );
                                     })}
-                                </div>
+                                </div>,
+                                document.body
                             )}
                         </div>
                         <button className="close-btn" onClick={onClose}><i className="fa-solid fa-xmark" /></button>
@@ -432,19 +451,44 @@ const StageSchedulePanel = ({ stageKey, stageData, dayGroups, simMinutes, onClos
 
 // ── Helpers position (partagés avec GroupsPanel) ─────────────────────────────
 
-function nearestStageName(position) {
+const OFF_STAGE_KEYS = new Set([STAGES.LE_OFF1, STAGES.LE_OFF2]);
+
+// Scale dérivé des GCPs : ~6.7m par 1% horizontal, ~6.5m par 1% vertical
+const M_PER_PCT_X = 6.7;
+const M_PER_PCT_Y = 6.5;
+const MAX_NEAREST_M = 70;
+const CAMPING_POI = MAP_POIS.find(p => p.id === 'poi-tents');
+const MAX_CAMPING_M = 500;
+
+// Retourne { name, distanceM } du POI/scène le plus proche, ou null si aucun candidat
+function nearestLandmark(position) {
     if (!position) return null;
     const x = parseFloat(position.x);
     const y = parseFloat(position.y);
-    let min = Infinity, nearest = null;
-    Object.values(STAGE_CONFIG).forEach(cfg => {
-        if (!cfg.mapPosition) return;
-        const dx = x - parseFloat(cfg.mapPosition.left);
-        const dy = y - parseFloat(cfg.mapPosition.top);
+    // Position exactement au bord = clampée depuis hors-périmètre → pas de "Près de"
+    if (x <= 0 || x >= 100 || y <= 0 || y >= 100) return null;
+    let minDsq = Infinity, nearest = null, bestDx = 0, bestDy = 0;
+
+    const check = (name, left, top) => {
+        const dx = x - parseFloat(left);
+        const dy = y - parseFloat(top);
         const d = dx * dx + dy * dy;
-        if (d < min) { min = d; nearest = cfg.name; }
+        if (d < minDsq) { minDsq = d; nearest = name; bestDx = dx; bestDy = dy; }
+    };
+
+    Object.entries(STAGE_CONFIG).forEach(([key, cfg]) => {
+        if (OFF_STAGE_KEYS.has(key) || !cfg.mapPosition) return;
+        check(cfg.name, cfg.mapPosition.left, cfg.mapPosition.top);
     });
-    return nearest;
+
+    MAP_POIS.forEach(poi => {
+        if (!poi.mapPosition) return;
+        check(poi.name, poi.mapPosition.left, poi.mapPosition.top);
+    });
+
+    if (!nearest) return null;
+    const distanceM = Math.sqrt((bestDx * M_PER_PCT_X) ** 2 + (bestDy * M_PER_PCT_Y) ** 2);
+    return { name: nearest, distanceM };
 }
 
 function positionAge(updatedAt) {
@@ -463,7 +507,7 @@ function formatAge(ms) {
 const GroupsTabContent = ({
     myGroups, activeGroupCode, setActiveGroupCode, activeGroupData,
     memberId, positionSource, setPositionSource, positionMode, setPositionMode, onFlyToMember,
-    gpsAccuracy, gpsError,
+    gpsAccuracy, gpsInBounds, gpsRawPosition, gpsError,
 }) => {
     const selectedGroup = myGroups.find(g => g.code === activeGroupCode);
     const rawMembers = activeGroupData?.code === activeGroupCode ? activeGroupData.members : [];
@@ -506,9 +550,11 @@ const GroupsTabContent = ({
                 >
                     <i className="fa-solid fa-location-dot" style={{ marginRight: 5 }} />GPS
                     {positionSource === 'gps' && (
-                        gpsAccuracy !== null
-                            ? <span className="map-switch-soon-badge">±{Math.round(gpsAccuracy)}m</span>
-                            : <span className="map-switch-soon-badge"><i className="fa-solid fa-spinner fa-spin" /></span>
+                        gpsAccuracy === null
+                            ? <span className="map-switch-soon-badge"><i className="fa-solid fa-spinner fa-spin" /></span>
+                            : gpsInBounds === false
+                                ? <span className="map-switch-soon-badge" style={{ color: '#ff8a65' }}>Hors zone</span>
+                                : <span className="map-switch-soon-badge">±{Math.round(gpsAccuracy)}m</span>
                     )}
                 </button>
                 {positionSource === 'manual' && (
@@ -539,10 +585,30 @@ const GroupsTabContent = ({
                             const isMe = m.member_id === memberId;
                             const age = positionAge(m.position_updated_at);
                             const dotColor = age === null || age > 7200000 ? '#555' : age > 1800000 ? '#e6a817' : '#4caf50';
-                            const stageName = nearestStageName(m.position);
+                            // Pour le user courant en mode GPS, utiliser la position brute
+                            // (non clampée) afin de calculer une distance réelle
+                            const posForDistance = (isMe && positionSource === 'gps' && gpsRawPosition)
+                                ? gpsRawPosition
+                                : m.position;
+                            const landmark = nearestLandmark(posForDistance);
+                            let nearText = null;
+                            if (landmark && landmark.distanceM <= MAX_NEAREST_M) {
+                                nearText = landmark.name;
+                            } else if (posForDistance && CAMPING_POI) {
+                                const cx2 = parseFloat(posForDistance.x);
+                                const cy2 = parseFloat(posForDistance.y);
+                                if (cx2 > 0 && cx2 < 100 && cy2 > 0 && cy2 < 100) {
+                                    const dx = cx2 - parseFloat(CAMPING_POI.mapPosition.left);
+                                    const dy = cy2 - parseFloat(CAMPING_POI.mapPosition.top);
+                                    const dCamp = Math.sqrt((dx * M_PER_PCT_X) ** 2 + (dy * M_PER_PCT_Y) ** 2);
+                                    if (dCamp <= MAX_CAMPING_M) nearText = CAMPING_POI.name;
+                                }
+                            }
                             const posText = age === null ? 'Position inconnue'
                                 : age > 7200000 ? 'Hors ligne'
-                                : `${stageName ? `Près de ${stageName} · ` : ''}${formatAge(age)}`;
+                                : nearText
+                                    ? `Près de ${nearText} · ${formatAge(age)}`
+                                    : formatAge(age);
                             return (
                                 <div
                                     key={m.member_id}
@@ -564,7 +630,7 @@ const GroupsTabContent = ({
                 ) : (
                     myGroups.map(g => (
                         <div key={g.code} className="map-group-row" onClick={() => setActiveGroupCode(g.code)}>
-                            <i className="fa-solid fa-people-group" style={{ color: '#dc2829', marginRight: 10, flexShrink: 0 }} />
+                            <i className="fa-solid fa-user-group" style={{ color: '#dc2829', marginRight: 10, flexShrink: 0 }} />
                             <span className="map-group-name">{g.name}</span>
                             <i className="fa-solid fa-chevron-right" style={{ color: '#444', marginLeft: 'auto', flexShrink: 0 }} />
                         </div>
@@ -915,8 +981,8 @@ const MapView = ({
         const inner = innerRef.current;
         if (!inner) return;
         const rect = inner.getBoundingClientRect();
-        const x = ((e.clientX - rect.left) / rect.width * 100).toFixed(1);
-        const y = ((e.clientY - rect.top) / rect.height * 100).toFixed(1);
+        const x = Math.max(0.1, Math.min(99.9, (e.clientX - rect.left) / rect.width * 100)).toFixed(1);
+        const y = Math.max(0.1, Math.min(99.9, (e.clientY - rect.top) / rect.height * 100)).toFixed(1);
 
         if (positionMode && updatePosition) {
             updatePosition({ x: `${x}%`, y: `${y}%` });
@@ -933,7 +999,7 @@ const MapView = ({
         if (updatePosition) updatePosition(mapPos);
     }, [updatePosition]);
 
-    const { accuracy: gpsAccuracy, error: gpsError } = useGPS({
+    const { accuracy: gpsAccuracy, inBounds: gpsInBounds, rawPosition: gpsRawPosition, error: gpsError } = useGPS({
         active: positionSource === 'gps',
         onPosition: handleGPSPosition,
         onPermissionDenied: useCallback(() => setPositionSource('manual'), []),
@@ -969,7 +1035,14 @@ const MapView = ({
             {positionMode && (
                 <div className="map-position-banner">
                     <i className="fa-solid fa-hand-pointer" style={{ marginRight: 6 }} />Tap sur la carte pour te localiser
-                    <button onClick={() => setPositionMode(false)} style={{ background: 'none', border: 'none', color: '#90caf9', cursor: 'pointer', fontSize: '0.8rem', padding: 0, marginLeft: 'auto' }}>Annuler</button>
+                    <button
+                        onClick={() => { updatePosition(null); setPositionMode(false); }}
+                        style={{ background: 'none', border: 'none', color: '#ef9a9a', cursor: 'pointer', fontSize: '0.8rem', padding: 0, marginLeft: 'auto' }}
+                    >Retirer ma position</button>
+                    <button
+                        onClick={() => setPositionMode(false)}
+                        style={{ background: 'none', border: 'none', color: '#90caf9', cursor: 'pointer', fontSize: '0.8rem', padding: 0, marginLeft: 8 }}
+                    >Annuler</button>
                 </div>
             )}
 
@@ -1112,6 +1185,8 @@ const MapView = ({
                             setPositionMode={setPositionMode}
                             onFlyToMember={flyToMember}
                             gpsAccuracy={gpsAccuracy}
+                            gpsInBounds={gpsInBounds}
+                            gpsRawPosition={gpsRawPosition}
                             gpsError={gpsError}
                         />
                     )}
