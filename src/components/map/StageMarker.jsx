@@ -23,7 +23,7 @@ const StageMarker = ({ stageKey, stageData, onSelect, counterTransform }) => {
 
     const handleClick = (e) => {
         e.stopPropagation();
-        if (displayGroup && onSelect) onSelect(displayGroup);
+        if (onSelect) onSelect(stageKey);
     };
 
     // Helper to get user tags for the displayed group

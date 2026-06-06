@@ -28,6 +28,14 @@ function getCurrentFestivalMinutes(simMinutes) {
     return h * 60 + now.getMinutes() + (h < 6 ? 24 * 60 : 0);
 }
 
+function formatRemaining(mins) {
+    if (mins <= 0) return '–';
+    if (mins < 60) return `${mins} min`;
+    const h = Math.floor(mins / 60);
+    const m = mins % 60;
+    return m > 0 ? `${h}h${m.toString().padStart(2, '0')}` : `${h}h`;
+}
+
 // Mercredi soir (avant Jeudi 01:00) : scènes secondaires + Off
 const PRE_PAIRS = [
     ['HELLSTAGE', 'HELLCITY_STAGE'],
@@ -104,7 +112,7 @@ function clampPan(px, py, zoom, containerW, containerH, imgW, imgH) {
     };
 }
 
-const StageGridItem = ({ stageKey, stageData, isLeft, onSelect }) => {
+const StageGridItem = ({ stageKey, stageData, isLeft, onSelect, simMinutes }) => {
     const { playing, next, status, config } = stageData;
     const { getBandTag, getInterestColor } = useCheckedState();
     if (!config) return null;
@@ -113,6 +121,8 @@ const StageGridItem = ({ stageKey, stageData, isLeft, onSelect }) => {
     const displayGroup = playing || next;
     const isPlaying = status === 'playing';
     const isNext = status === 'next';
+
+    const currentMinutes = getCurrentFestivalMinutes(simMinutes ?? null);
 
     const handleClick = (e) => {
         e.stopPropagation();
@@ -164,8 +174,8 @@ const StageGridItem = ({ stageKey, stageData, isLeft, onSelect }) => {
                                 {isNext && <span className="stage-marker__chip-badge stage-marker__chip-badge--next">Prochain</span>}
                                 <span className="stage-marker__chip-time">
                                     {isPlaying
-                                        ? `${displayGroup.DEBUT?.replace('h', ':')}—${displayGroup.FIN?.replace('h', ':')}`
-                                        : displayGroup.DEBUT?.replace('h', ':')}
+                                        ? `- ${formatRemaining(timeToMinutes(displayGroup.FIN) - currentMinutes)}`
+                                        : `dans ${formatRemaining(timeToMinutes(displayGroup.DEBUT) - currentMinutes)}`}
                                 </span>
                             </div>
                             <span className="stage-marker__chip-band" style={{ color }}>{displayGroup.GROUPE}</span>
@@ -189,7 +199,7 @@ const FestivalEndMessage = ({ state }) => (
     </div>
 );
 
-const StageGridPanel = ({ stageStatus, onStageSelect, isPrePhase }) => {
+const StageGridPanel = ({ stageStatus, onStageSelect, isPrePhase, simMinutes }) => {
     if (!stageStatus || Object.keys(stageStatus).length === 0) return null;
 
     const pairs = isPrePhase ? PRE_PAIRS : MAIN_PAIRS;
@@ -199,10 +209,10 @@ const StageGridPanel = ({ stageStatus, onStageSelect, isPrePhase }) => {
             {pairs.map(([leftKey, rightKey]) => (
                 <div key={`${leftKey}-${rightKey}`} className="map-stage-grid__row">
                     {stageStatus[leftKey] && (
-                        <StageGridItem stageKey={leftKey} stageData={stageStatus[leftKey]} isLeft={true} onSelect={onStageSelect} />
+                        <StageGridItem stageKey={leftKey} stageData={stageStatus[leftKey]} isLeft={true} onSelect={onStageSelect} simMinutes={simMinutes} />
                     )}
                     {stageStatus[rightKey] && (
-                        <StageGridItem stageKey={rightKey} stageData={stageStatus[rightKey]} isLeft={false} onSelect={onStageSelect} />
+                        <StageGridItem stageKey={rightKey} stageData={stageStatus[rightKey]} isLeft={false} onSelect={onStageSelect} simMinutes={simMinutes} />
                     )}
                 </div>
             ))}
@@ -689,6 +699,12 @@ const MapView = ({
         setSelectedStageKey(null);
     }, []);
 
+    const handleStageMarkerClick = useCallback((stageKey) => {
+        setActiveTab('scenes');
+        localStorage.setItem('hf_map_tab', 'scenes');
+        setSelectedStageKey(stageKey);
+    }, []);
+
     // Auto-switch to groups tab when a group is activated from GroupsPanel
     useEffect(() => {
         if (activeGroupCode && myGroups.length > 0) switchTab('groups');
@@ -1096,7 +1112,7 @@ const MapView = ({
                                 key={stageKey}
                                 stageKey={stageKey}
                                 stageData={data}
-                                onSelect={undefined}
+                                onSelect={handleStageMarkerClick}
                                 counterTransform={counterTransform}
                             />
                         );
@@ -1157,7 +1173,7 @@ const MapView = ({
                                                 Ouverture des portes Jeudi à 14h
                                             </div>
                                         )}
-                                        <StageGridPanel stageStatus={stageStatus} onStageSelect={setSelectedStageKey} isPrePhase={isMardMer} />
+                                        <StageGridPanel stageStatus={stageStatus} onStageSelect={setSelectedStageKey} isPrePhase={isMardMer} simMinutes={simMinutes} />
                                     </div>
                                     <div className="map-scenes-slider__page">
                                         {selectedStageKey && stageStatus[selectedStageKey] && (
