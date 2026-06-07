@@ -130,6 +130,64 @@ export const CheckedStateProvider = ({ children, user }) => {
     const [contactsForSync, setContactsForSync] = useState([]);
     const [serverContacts, setServerContacts] = useState(null); // contacts loaded from server
 
+    // ─── Manual reload from server (called from SettingsPanel) ──────────
+    const reloadFromServer = useCallback(async () => {
+        if (!user) return { status: 'error' };
+
+        // Activate sync if currently disabled
+        if (!consentChoice || consentChoice === 'local_only') {
+            setConsentChoice('private');
+        }
+        // Prevent the initial-load effect from double-firing
+        initialLoadDoneRef.current = true;
+
+        try {
+            const serverData = await api.getRO(user.username);
+            if (!serverData || !serverData.favorites) return { status: 'empty' };
+
+            const decoded = decodeROFromServer(serverData.favorites);
+            if (!decoded) return { status: 'empty' };
+
+            const localTaggedBands = state.taggedBands;
+            const serverTaggedBands = decoded.taggedBands;
+            const localHasData = Object.keys(localTaggedBands).length > 0;
+            const serverHasData = Object.keys(serverTaggedBands).length > 0;
+
+            if (!serverHasData) return { status: 'empty' };
+
+            if (localHasData && toComparable(localTaggedBands) !== toComparable(serverTaggedBands)) {
+                setConflictData({
+                    server: {
+                        taggedBands: serverTaggedBands,
+                        customEvents: decoded.customEvents,
+                        bandCount: Object.keys(serverTaggedBands).length,
+                        updatedAt: serverData.updated_at
+                    },
+                    local: {
+                        taggedBands: localTaggedBands,
+                        customEvents: customEventsForSync,
+                        bandCount: Object.keys(localTaggedBands).length
+                    }
+                });
+                return { status: 'conflict' };
+            }
+
+            // No conflict or local is empty → apply server data directly
+            setState(prev => ({ ...prev, taggedBands: serverTaggedBands }));
+            lastSavedEncodedRef.current = serverData.favorites;
+
+            if (serverData.contacts && Array.isArray(serverData.contacts) && serverData.contacts.length > 0) {
+                const decodedContacts = decodeContacts(serverData.contacts);
+                if (decodedContacts.length > 0) setServerContacts(decodedContacts);
+            }
+
+            return { status: 'applied' };
+        } catch (err) {
+            if (err.status === 404) return { status: 'empty' };
+            throw err;
+        }
+    }, [user, consentChoice, setConsentChoice, state.taggedBands, customEventsForSync]);
+
     // ─── Initial load from server ───────────────────────────────────────
     useEffect(() => {
         if (!shouldSync || initialLoadDoneRef.current) return;
@@ -436,6 +494,7 @@ export const CheckedStateProvider = ({ children, user }) => {
             resolveConflict,
             consentChoice,
             setConsentChoice,
+            reloadFromServer,
             setCustomEventsForSync,
             setContactsForSync,
             serverContacts
