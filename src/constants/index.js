@@ -159,6 +159,13 @@ export const MAP_POIS = [
   { id: 'poi-vl-bar', name: 'Bar Valley', icon: 'fa-solid fa-beer', mapPosition: { left: '23.2%', top: '63.7%' }, color: '#dfa022' },
   { id: 'poi-hc-bar', name: 'Bar Hellcity', icon: 'fa-solid fa-beer', mapPosition: { left: '71.8%', top: '45.1%' }, color: '#dfa022' },
   { id: 'poi-mc-bar', name: 'Bar MetalCorner', icon: 'fa-solid fa-beer', mapPosition: { left: '79.1%', top: '80.8%' }, color: '#dfa022' },
+  { id: 'poi-esplanade-ms2', name: 'Esplanade MS2', icon: 'fa-solid fa-circle-dot', mapPosition: { left: '28.0%', top: '22.4%' }, color: '#78909C' },
+  { id: 'poi-esplanade-ms1', name: 'Esplanade MS1', icon: 'fa-solid fa-circle-dot', mapPosition: { left: '43.2%', top: '23.7%' }, color: '#78909C' },
+  { id: 'poi-muscadet-kingdom', name: 'Kingdom of Muscadet', icon: 'fa-solid fa-wine-glass', mapPosition: { left: '20.9%', top: '46.8%' }, color: '#9C27B0' },
+  { id: 'poi-esplanade-centrale', name: 'Esplanade centrale', icon: 'fa-solid fa-circle-dot', mapPosition: { left: '45.1%', top: '32.4%' }, color: '#78909C' },
+  { id: 'poi-restos-valley', name: 'Restos Valley', icon: 'fa-solid fa-utensils', mapPosition: { left: '16.4%', top: '60.2%' }, color: '#FF9800' },
+  { id: 'poi-hellcity-square', name: 'Hellcity Square', icon: 'fa-solid fa-circle-dot', mapPosition: { left: '60.9%', top: '59.2%' }, color: '#78909C' },
+  { id: 'poi-restos-mc', name: 'Restos Metal Corner', icon: 'fa-solid fa-utensils', mapPosition: { left: '89.3%', top: '79.4%' }, color: '#FF9800' },
 ];
 
 export const DAYS = ['Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
