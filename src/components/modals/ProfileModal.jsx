@@ -9,13 +9,12 @@ const ProfileModal = ({ isOpen, onClose, onOpenPanel, onShare, isInstallable, is
 
     const MENU_ITEMS = [
         { id: 'stats', label: 'Mes Stats', icon: 'fa-solid fa-chart-pie', color: '#FFD700' },
-        { id: 'playlists', label: 'Playlists', icon: 'fa-solid fa-music', color: '#1DB954' },
         { id: 'contacts', label: 'Mes Contacts', icon: 'fa-solid fa-address-book', color: '#2196F3' },
-        { id: 'groups', label: 'Groupes', icon: 'fa-solid fa-user-group', color: '#dc2829' },
         ...(isAuthenticated ? [{ id: 'community', label: 'Communauté', icon: 'fa-solid fa-users', color: '#FF6B35' }] : []),
         { id: 'share', label: 'Partager', icon: 'fa-solid fa-share-nodes', color: '#9C27B0' },
         { id: 'install', label: isInstalled ? 'Installée' : 'Installer', icon: 'fa-solid fa-download', color: isInstalled ? '#555' : '#00b894', disabled: isInstalled },
         { id: 'settings', label: 'Paramètres', icon: 'fa-solid fa-gear', color: '#aaa' },
+        { id: 'playlists', label: 'Playlists', icon: 'fa-solid fa-music', color: '#1DB954' },
         { id: 'credits', label: 'Crédits', icon: 'fa-solid fa-heart', color: '#ff6b6b' },
     ];
 

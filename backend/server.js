@@ -777,13 +777,20 @@ app.put('/running-order/api/anon/position', async (req, res) => {
     const sanitizedMemberId = sanitizeMemberId(member_id);
     if (!sanitizedMemberId) return res.status(400).json({ error: 'member_id invalide' });
     const filePath = path.join(ANON_DIR, `${sanitizedMemberId}.json`);
-    const data = {
-        member_id: sanitizedMemberId,
-        position: position || null,
-        position_updated_at: new Date().toISOString(),
-    };
     try {
-        await withFileLock(filePath, () => atomicWriteFile(filePath, JSON.stringify(data, null, 2)));
+        await withFileLock(filePath, () => {
+            let existing = {};
+            if (fs.existsSync(filePath)) {
+                try { existing = JSON.parse(fs.readFileSync(filePath, 'utf-8')); } catch {}
+            }
+            const data = {
+                ...existing,
+                member_id: sanitizedMemberId,
+                position: position || null,
+                position_updated_at: new Date().toISOString(),
+            };
+            atomicWriteFile(filePath, JSON.stringify(data, null, 2));
+        });
         res.json({ success: true });
     } catch (err) {
         console.error('Error updating position:', err);

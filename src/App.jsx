@@ -44,6 +44,7 @@ function AppContent() {
   const [popoverPosition, setPopoverPosition] = useState(null);
   const [viewMode, setViewMode] = useState('day');
   const [groupsOpen, setGroupsOpen] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
   const [groupRo, setGroupRo] = useState(null);
   const [mapFlyTarget, setMapFlyTarget] = useState(null);
 
@@ -347,6 +348,8 @@ function AppContent() {
         username={user?.username}
         notif={notif}
         onOpenGroups={() => setGroupsOpen(true)}
+        filterOpen={filterOpen}
+        onCloseFilter={() => setFilterOpen(false)}
       />
 
       {isGuestMode && (
@@ -390,6 +393,7 @@ function AppContent() {
           onSelectGroup={handleGroupSelect}
           isAuthenticated={isAuthenticated}
           username={user?.username}
+          onOpenFilter={() => setFilterOpen(true)}
         />
       )}
 

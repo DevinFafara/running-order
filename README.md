@@ -41,6 +41,7 @@ VITE_API_URL=http://localhost:3001/running-order/api
 - Export de playlists Spotify/Deezer
 - Partage de RO entre utilisateurs
 - WeeklyView : dropdown de filtres scènes (split-button œil/scènes), message état vide, switch scènes annexes en mode groupe
+- Bouton filtre dans la barre de navigation DayView (à gauche du bouton Vue étendue/Scènes annexes), texte masqué sous 800px
 
 ### Carte interactive (MapView)
 - Image du site Hellfest (`hf-map.png`, 1376×768px)
@@ -57,7 +58,7 @@ VITE_API_URL=http://localhost:3001/running-order/api
 - Conversion GPS → pixel via transformation affine par moindres carrés (10 GCPs dans `public/gcps.json`)
 - Précision affichée en temps réel (`±Xm`), fallback automatique en manuel si permission refusée
 - Polling membres 30s, positions expirées après 2h
-- Panel dans le menu principal
+- Accessible via "Fonctionnalités expérimentales" dans le panel Paramètres (retiré du menu principal)
 
 ### RO Collaboratif de groupe
 - **"RO du groupe"** : WeeklyView fusionnant les favoris de tous les membres avec pastilles colorées (initiales + niveau d'intérêt)

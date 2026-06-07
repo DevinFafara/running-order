@@ -16,12 +16,12 @@ const HeaderBar = ({
     customEvents, contacts, onSaveContact, onDeleteContact, onCheckContact,
     isGuestMode, guestName, onExitGuestMode, onClearCustomEvents,
     isInstallable, isInstalled, installApp, hasPrompt, platform,
-    isAuthenticated, username, notif, onOpenGroups
+    isAuthenticated, username, notif, onOpenGroups,
+    filterOpen = false, onCloseFilter
 }) => {
     const { userState } = useCheckedState();
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
     const [playlistOpen, setPlaylistOpen] = useState(false);
-    const [filterOpen, setFilterOpen] = useState(false);
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [creditsOpen, setCreditsOpen] = useState(false);
     const [statsOpen, setStatsOpen] = useState(false);
@@ -162,17 +162,6 @@ const HeaderBar = ({
                     </button>
 
                     <button
-                        className={`toolbar-btn ${filterOpen ? 'active' : ''}`}
-                        title="Filtres"
-                        onClick={() => {
-                            if (onInteraction) onInteraction();
-                            setFilterOpen(true);
-                        }}
-                    >
-                        <i className="fa-solid fa-filter"></i>
-                    </button>
-
-                    <button
                         className={`toolbar-btn ${viewMode === 'week' ? 'active' : ''}`}
                         title={viewMode === 'week' ? "Vue Journalière" : "Vue Semaine"}
                         onClick={() => {
@@ -212,7 +201,7 @@ const HeaderBar = ({
 
             <FilterPanel
                 isOpen={filterOpen}
-                onClose={() => setFilterOpen(false)}
+                onClose={onCloseFilter}
             />
 
             <PlaylistPanel
@@ -226,6 +215,7 @@ const HeaderBar = ({
                 onClearCustomEvents={onClearCustomEvents}
                 onViewChange={onViewChange}
                 notif={notif}
+                onOpenGroups={onOpenGroups}
             />
 
             <CreditsPanel

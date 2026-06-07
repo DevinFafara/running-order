@@ -3,7 +3,7 @@ import { useCheckedState } from '../../context/CheckedStateContext';
 import { INTEREST_LEVELS, INTEREST_ORDER } from '../../constants';
 import { api } from '../../services/api';
 
-const SettingsPanel = ({ isOpen, onClose, onClearCustomEvents, onViewChange, notif }) => {
+const SettingsPanel = ({ isOpen, onClose, onClearCustomEvents, onViewChange, notif, onOpenGroups }) => {
     const { state, setState, getInterestColor, setInterestColor, resetInterestColors, clearAllFavorites, consentChoice, setConsentChoice, user } = useCheckedState();
     const isAuthenticated = !!user;
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
@@ -341,6 +341,22 @@ const SettingsPanel = ({ isOpen, onClose, onClearCustomEvents, onViewChange, not
                         )}
                     </div>
                 )}
+
+                {/* Fonctionnalités expérimentales */}
+                <div className="settings-section">
+                    <h3>Fonctionnalités expérimentales</h3>
+                    <p className="settings-section-desc" style={{ color: '#888', marginBottom: '10px' }}>
+                        Ces fonctionnalités sont en cours de développement et peuvent être instables.
+                    </p>
+                    <button
+                        className="settings-reset-btn"
+                        style={{ width: '100%', backgroundColor: '#1a3a1a', border: '1px solid #2e7d32', color: '#81c784', display: 'flex', alignItems: 'center', gap: 8 }}
+                        onClick={() => { onOpenGroups?.(); onClose(); }}
+                    >
+                        <i className="fa-solid fa-user-group" />
+                        Groupes & Localisation
+                    </button>
+                </div>
 
                 {/* Zone de danger */}
                 <div className="settings-section">

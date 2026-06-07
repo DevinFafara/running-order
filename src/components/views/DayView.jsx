@@ -395,40 +395,6 @@ const DayView = ({ groups, selectGroup, selectedGroupId, day, customEvents = [],
         setState(prev => ({ ...prev, compact: !prev.compact }));
     };
 
-    // Toolbar (only visible if can use extended view)
-    const renderToolbar = () => {
-        if (!canUseExtendedView) return null;
-        return (
-            <div className="day-view-toolbar" style={{
-                display: 'flex',
-                justifyContent: 'flex-end',
-                padding: '10px 20px',
-                marginBottom: '10px'
-            }}>
-                <button
-                    className="view-toggle-btn"
-                    onClick={toggleCompact}
-                    style={{
-                        background: 'rgba(50, 50, 50, 0.8)',
-                        border: '1px solid #555',
-                        color: 'white',
-                        padding: '6px 12px',
-                        borderRadius: '4px',
-                        fontSize: '0.9em',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        transition: 'all 0.2s'
-                    }}
-                >
-                    <i className={`fa-solid ${!state.compact ? 'fa-table-columns' : 'fa-list'}`}></i>
-                    {state.compact ? "Vue Étendue" : "Vue Compacte"}
-                </button>
-            </div>
-        );
-    };
-
     // MODE ÉTENDU : colonnes individuelles avec heures
     if (isExtendedView) {
         // Scènes principales

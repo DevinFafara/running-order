@@ -13,7 +13,7 @@ const chevronBtnStyle = {
     flexShrink: 0,
 };
 
-const Navigation = ({ groups, onSelectGroup, isAuthenticated = false, username = null }) => {
+const Navigation = ({ groups, onSelectGroup, isAuthenticated = false, username = null, onOpenFilter }) => {
     const { state, setDay, setState } = useCheckedState();
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
@@ -137,7 +137,28 @@ const Navigation = ({ groups, onSelectGroup, isAuthenticated = false, username =
                             </span>
                         )}
                     </div>
-                    <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
+                    <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                        {onOpenFilter && (
+                            <button
+                                onClick={onOpenFilter}
+                                title="Filtres"
+                                style={{
+                                    background: 'rgba(255,255,255,0.1)',
+                                    border: '1px solid rgba(255,255,255,0.15)',
+                                    borderRadius: '50%',
+                                    width: '32px',
+                                    height: '32px',
+                                    color: 'white',
+                                    cursor: 'pointer',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontSize: '0.9rem',
+                                }}
+                            >
+                                <i className="fa-solid fa-filter"></i>
+                            </button>
+                        )}
                         <button
                             onClick={toggleSideScenes}
                             title={state.sideScenes ? "Afficher scènes principales" : "Afficher scènes annexes"}
@@ -203,43 +224,64 @@ const Navigation = ({ groups, onSelectGroup, isAuthenticated = false, username =
             </div>
 
             {/* Toggle Vue (Droite) */}
-            <button
-                onClick={canUseExtendedView ? toggleCompact : toggleSideScenes}
-                title={canUseExtendedView
-                    ? (state.compact ? "Passer en vue étendue" : "Passer en vue compacte")
-                    : (state.sideScenes ? "Afficher scènes principales" : "Afficher scènes annexes")
-                }
-                style={{
-                    position: 'absolute',
-                    right: '25px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    fontSize: '0.8rem',
-                    fontWeight: 'bold',
-                    opacity: 0.8,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    background: 'rgba(255,255,255,0.1)',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    padding: '8px 16px',
-                    borderRadius: '20px',
-                    color: 'white',
-                    cursor: 'pointer',
-                }}
-            >
-                {canUseExtendedView ? (
-                    <>
-                        <span>{state.compact ? "VUE ÉTENDUE" : "VUE COMPACTE"}</span>
-                        <i className={`fa-solid ${!state.compact ? 'fa-table-columns' : 'fa-list'}`}></i>
-                    </>
-                ) : (
-                    <>
-                        <span>{state.sideScenes ? "SCÈNES PRINC." : "SCÈNES ANNEXES"}</span>
-                        <i className={`fa-solid ${state.sideScenes ? 'fa-guitar' : 'fa-tent'}`}></i>
-                    </>
+            <div style={{ position: 'absolute', right: '25px', top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {onOpenFilter && (
+                    <button
+                        onClick={onOpenFilter}
+                        title="Filtres"
+                        style={{
+                            fontSize: '0.8rem',
+                            fontWeight: 'bold',
+                            opacity: 0.8,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            background: 'rgba(255,255,255,0.1)',
+                            border: '1px solid rgba(255,255,255,0.1)',
+                            padding: '8px 16px',
+                            borderRadius: '20px',
+                            color: 'white',
+                            cursor: 'pointer',
+                        }}
+                    >
+                        {windowWidth >= 800 && <span>FILTRES</span>}
+                        <i className="fa-solid fa-filter"></i>
+                    </button>
                 )}
-            </button>
+                <button
+                    onClick={canUseExtendedView ? toggleCompact : toggleSideScenes}
+                    title={canUseExtendedView
+                        ? (state.compact ? "Passer en vue étendue" : "Passer en vue compacte")
+                        : (state.sideScenes ? "Afficher scènes principales" : "Afficher scènes annexes")
+                    }
+                    style={{
+                        fontSize: '0.8rem',
+                        fontWeight: 'bold',
+                        opacity: 0.8,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        background: 'rgba(255,255,255,0.1)',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                        padding: '8px 16px',
+                        borderRadius: '20px',
+                        color: 'white',
+                        cursor: 'pointer',
+                    }}
+                >
+                    {canUseExtendedView ? (
+                        <>
+                            <span>{state.compact ? "VUE ÉTENDUE" : "VUE COMPACTE"}</span>
+                            <i className={`fa-solid ${!state.compact ? 'fa-table-columns' : 'fa-list'}`}></i>
+                        </>
+                    ) : (
+                        <>
+                            <span>{state.sideScenes ? "SCÈNES PRINC." : "SCÈNES ANNEXES"}</span>
+                            <i className={`fa-solid ${state.sideScenes ? 'fa-guitar' : 'fa-tent'}`}></i>
+                        </>
+                    )}
+                </button>
+            </div>
         </nav>
     );
 };
