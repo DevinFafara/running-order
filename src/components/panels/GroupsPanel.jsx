@@ -109,7 +109,7 @@ const PanelWrapper = ({ onClose, title, children }) => (
                 textAlign: 'center', fontFamily: '"Metal Mania", cursive', letterSpacing: '1px',
             }}>
                 <i className="fa-solid fa-user-group" style={{ marginRight: 10, color: '#FF6B35' }} />
-                Groupes
+                Crews
             </h2>
 
             <button onClick={onClose} style={{
@@ -143,7 +143,7 @@ const GroupsPanel = ({
     isOpen, onClose,
     myGroups, activeGroupCode, setActiveGroupCode, activeGroupData,
     memberId, loading, error, setError,
-    createGroup, joinGroup, leaveGroup, deleteGroup,
+    createGroup, joinGroup, leaveGroup, deleteGroup, removeMember,
     onShowOnMap, onShowGroupRO, onViewMemberRO, onFlyToMember,
 }) => {
     const [screen, setScreen] = useState('list');
@@ -166,7 +166,7 @@ const GroupsPanel = ({
 
     const handleCreate = async () => {
         setFormError(null);
-        if (!createName.trim()) return setFormError('Donne un nom au groupe');
+        if (!createName.trim()) return setFormError('Donne un nom au crew');
         if (!createPseudo.trim()) return setFormError('Choisis un pseudo');
         try {
             const code = await createGroup(createName.trim(), createPseudo.trim());
@@ -177,23 +177,28 @@ const GroupsPanel = ({
 
     const handleJoin = async () => {
         setFormError(null);
-        if (!joinCode.trim()) return setFormError('Saisis le code du groupe');
+        if (!joinCode.trim()) return setFormError('Saisis le code du crew');
         if (!joinPseudo.trim()) return setFormError('Choisis un pseudo');
         try {
             const code = await joinGroup(joinCode.trim(), joinPseudo.trim());
             setJoinCode(''); setJoinPseudo('');
             goToDetail(code);
-        } catch (err) { setFormError(err.message || 'Code invalide ou groupe introuvable'); }
+        } catch (err) { setFormError(err.message || 'Code invalide ou crew introuvable'); }
     };
 
     const handleLeave = async (code) => {
-        if (!window.confirm('Quitter ce groupe ?')) return;
+        if (!window.confirm('Quitter ce crew ?')) return;
         try { await leaveGroup(code); goToList(); } catch {}
     };
 
     const handleDelete = async (code) => {
-        if (!window.confirm('Supprimer ce groupe ? Action irréversible.')) return;
+        if (!window.confirm('Supprimer ce crew ? Action irréversible.')) return;
         try { await deleteGroup(code); goToList(); } catch {}
+    };
+
+    const handleKick = async (code, targetMemberId, pseudo) => {
+        if (!window.confirm(`Exclure ${pseudo} du crew ?`)) return;
+        try { await removeMember(code, targetMemberId); } catch {}
     };
 
     const myGroupMeta = myGroups.find(g => g.code === detailCode);
@@ -204,7 +209,7 @@ const GroupsPanel = ({
         const isOwner = myGroupMeta?.is_owner;
 
         return (
-            <PanelWrapper onClose={onClose} title="Groupes">
+            <PanelWrapper onClose={onClose} title="Crew">
                 {/* Breadcrumb */}
                 <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16 }}>
                     <button onClick={goToList} style={S.btnBack}>
@@ -230,7 +235,7 @@ const GroupsPanel = ({
                         onClick={() => { onShowGroupRO && onShowGroupRO(); onClose(); }}
                     >
                         <i className="fa-solid fa-calendar-week" style={{ marginRight: 8 }} />
-                        RO du groupe
+                        RO du crew
                     </button>
                     <button
                         style={{ ...S.btnPrimary, backgroundColor: '#1565C0' }}
@@ -267,7 +272,7 @@ const GroupsPanel = ({
                                     <PositionLabel position={m.position} updatedAt={m.position_updated_at} />
                                 </div>
                                 <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
-                                    <button
+                                    {!isMe && <button
                                         title={m.favorites ? 'Voir son RO' : 'RO non partagé'}
                                         disabled={!m.favorites}
                                         onClick={() => { onViewMemberRO && onViewMemberRO(m); onClose(); }}
@@ -279,8 +284,8 @@ const GroupsPanel = ({
                                         }}
                                     >
                                         <i className="fa-solid fa-calendar-week" />
-                                    </button>
-                                    <button
+                                    </button>}
+                                    {!isMe && <button
                                         title={m.position ? 'Voir sur la carte' : 'Position inconnue'}
                                         disabled={!m.position}
                                         onClick={() => { onFlyToMember && onFlyToMember(m); onClose(); }}
@@ -292,7 +297,19 @@ const GroupsPanel = ({
                                         }}
                                     >
                                         <i className="fa-solid fa-map-location-dot" />
-                                    </button>
+                                    </button>}
+                                    {isOwner && !isMe && <button
+                                        title="Exclure du crew"
+                                        onClick={() => handleKick(detailCode, m.member_id, m.pseudo)}
+                                        style={{
+                                            background: 'transparent',
+                                            border: '1px solid #4a2020', borderRadius: 6,
+                                            color: '#e57373', padding: '4px 7px',
+                                            cursor: 'pointer', fontSize: '0.72rem',
+                                        }}
+                                    >
+                                        <i className="fa-solid fa-user-xmark" />
+                                    </button>}
                                 </div>
                             </div>
                         );
@@ -304,12 +321,12 @@ const GroupsPanel = ({
                     {isOwner ? (
                         <button style={{ ...S.btnSecondary, color: '#e57373', borderColor: '#4a2020' }} onClick={() => handleDelete(detailCode)}>
                             <i className="fa-solid fa-trash" style={{ marginRight: 8 }} />
-                            Supprimer le groupe
+                            Supprimer le crew
                         </button>
                     ) : (
                         <button style={S.btnSecondary} onClick={() => handleLeave(detailCode)}>
                             <i className="fa-solid fa-right-from-bracket" style={{ marginRight: 8 }} />
-                            Quitter le groupe
+                            Quitter le crew
                         </button>
                     )}
                 </div>
@@ -323,24 +340,24 @@ const GroupsPanel = ({
             <PanelWrapper onClose={onClose}>
                 <div style={{ display: 'flex', alignItems: 'center', marginBottom: 20 }}>
                     <button onClick={goToList} style={S.btnBack}><i className="fa-solid fa-chevron-left" /></button>
-                    <span style={{ fontWeight: 'bold', color: '#fff' }}>Créer un groupe</span>
+                    <span style={{ fontWeight: 'bold', color: '#fff' }}>Créer un crew</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                     <div>
-                        <label style={S.label}>Nom du groupe</label>
-                        <input style={S.input} placeholder="Les Hellbangers du 44…" value={createName}
+                        <label style={S.label}>Nom du crew</label>
+                        <input style={S.input} placeholder="Les Zinzins du 56…" value={createName}
                             onChange={e => setCreateName(e.target.value)} maxLength={50} autoFocus />
                     </div>
                     <div>
-                        <label style={S.label}>Ton pseudo dans ce groupe</label>
-                        <input style={S.input} placeholder="La Bête, Metalhead42…" value={createPseudo}
+                        <label style={S.label}>Ton pseudo dans ce crew</label>
+                        <input style={S.input} placeholder=" Metalhead42, Roger…" value={createPseudo}
                             onChange={e => setCreatePseudo(e.target.value)} maxLength={30}
                             onKeyDown={e => e.key === 'Enter' && handleCreate()} />
                     </div>
                     {formError && <div style={S.errorBox}>{formError}</div>}
                     <ConsentNotice />
                     <button style={S.btnPrimary} onClick={handleCreate} disabled={loading}>
-                        {loading ? 'Création…' : 'Créer le groupe'}
+                        {loading ? 'Création…' : 'Créer le crew'}
                     </button>
                     <button style={S.btnSecondary} onClick={goToList}>Annuler</button>
                 </div>
@@ -354,18 +371,18 @@ const GroupsPanel = ({
             <PanelWrapper onClose={onClose}>
                 <div style={{ display: 'flex', alignItems: 'center', marginBottom: 20 }}>
                     <button onClick={goToList} style={S.btnBack}><i className="fa-solid fa-chevron-left" /></button>
-                    <span style={{ fontWeight: 'bold', color: '#fff' }}>Rejoindre un groupe</span>
+                    <span style={{ fontWeight: 'bold', color: '#fff' }}>Rejoindre un crew</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                     <div>
-                        <label style={S.label}>Code du groupe</label>
+                        <label style={S.label}>Code du crew</label>
                         <input
                             style={{ ...S.input, textTransform: 'uppercase', letterSpacing: '3px', fontFamily: 'monospace', fontSize: '1.05rem', textAlign: 'center' }}
                             placeholder="XXXX-0000" value={joinCode}
                             onChange={e => setJoinCode(e.target.value.toUpperCase())} maxLength={9} autoFocus />
                     </div>
                     <div>
-                        <label style={S.label}>Ton pseudo dans ce groupe</label>
+                        <label style={S.label}>Ton pseudo dans ce crew</label>
                         <input style={S.input} placeholder="La Bête, Metalhead42…" value={joinPseudo}
                             onChange={e => setJoinPseudo(e.target.value)} maxLength={30}
                             onKeyDown={e => e.key === 'Enter' && handleJoin()} />
@@ -403,12 +420,12 @@ const GroupsPanel = ({
             {myGroups.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '30px 0', color: '#555' }}>
                     <i className="fa-solid fa-user-group" style={{ fontSize: '2rem', marginBottom: 12, display: 'block' }} />
-                    <div style={{ marginBottom: 6 }}>Aucun groupe pour l'instant.</div>
-                    <div style={{ fontSize: '0.82rem' }}>Crée un groupe ou rejoins celui d'un ami avec son code.</div>
+                    <div style={{ marginBottom: 6 }}>Aucun crew pour l'instant.</div>
+                    <div style={{ fontSize: '0.82rem' }}>Crée un crew ou rejoins celui d'un ami avec son code.</div>
                 </div>
             ) : (
                 <div>
-                    <div style={S.sectionTitle}>Mes groupes</div>
+                    <div style={S.sectionTitle}>Mes crews</div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                         {myGroups.map(g => (
                             <div key={g.code} onClick={() => goToDetail(g.code)} style={{

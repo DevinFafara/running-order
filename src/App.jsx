@@ -42,7 +42,14 @@ function AppContent() {
   const [selectedGroup, setSelectedGroup] = useState(null);
   const { isInstallable, isInstalled, installApp, hasPrompt, platform } = usePWA();
   const [popoverPosition, setPopoverPosition] = useState(null);
-  const [viewMode, setViewMode] = useState('day');
+  const [viewMode, setViewMode] = useState(() => {
+    const saved = localStorage.getItem('viewMode');
+    return saved === 'week' || saved === 'map' ? saved : 'day';
+  });
+
+  React.useEffect(() => {
+    localStorage.setItem('viewMode', viewMode);
+  }, [viewMode]);
   const [groupsOpen, setGroupsOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [groupRo, setGroupRo] = useState(null);
@@ -164,10 +171,12 @@ function AppContent() {
   };
 
 
-  const handleCheckContactFromPanel = (data, mode) => {
+  const handleCheckContactFromPanel = (data, mode, origin = null) => {
     if (mode === 'replace') handleImportReplace(data);
     if (mode === 'view') {
-      setGuestRo(data);
+      setGroupRo(null);
+      setGuestRo({ ...data, origin });
+      setViewMode('weekly');
       setIsImportModalOpen(false);
     }
   };
@@ -208,6 +217,7 @@ function AppContent() {
         member_id: m.member_id,
         taggedBands: m.favorites ? (decodeROFromServer(m.favorites)?.taggedBands || {}) : {},
       }));
+    setGuestRo(null);
     setGroupRo({ name: groupMeta?.name || groups.activeGroupCode, members });
     setViewMode('weekly');
   };
@@ -222,7 +232,7 @@ function AppContent() {
     const decoded = decodeROFromServer(member.favorites);
     if (!decoded) return;
     setGroupRo(null);
-    setGuestRo({ bands: decoded.taggedBands, username: member.pseudo, customEvents: [] });
+    setGuestRo({ bands: decoded.taggedBands, username: member.pseudo, customEvents: [], origin: 'map' });
     setViewMode('weekly');
   };
 
@@ -354,6 +364,7 @@ function AppContent() {
 
       {isGuestMode && (
         <div style={{
+          className: 'guest-mode-bar',
           backgroundColor: '#2196F3',
           color: 'white',
           padding: '10px 15px',
@@ -426,6 +437,7 @@ function AppContent() {
                 updatePosition={groups.updatePosition}
                 flyTarget={mapFlyTarget}
                 onFlyComplete={() => setMapFlyTarget(null)}
+                onViewMemberRO={handleViewMemberRO}
               />
             ) : (
               <WeeklyView
@@ -434,7 +446,13 @@ function AppContent() {
                 customEvents={isGuestMode ? (guestRo.customEvents || []) : customEvents}
                 onEditCustomEvent={isGuestMode ? () => { } : handleEditCustomEvent}
                 groupRo={groupRo}
-                onExitGroupRo={() => setGroupRo(null)}
+                onExitGroupRo={() => { setGroupRo(null); setGroupsOpen(true); }}
+                guestName={isGuestMode ? guestRo.username : null}
+                onExitGuestMode={() => {
+                  const origin = guestRo?.origin;
+                  setGuestRo(null);
+                  if (origin === 'map') setViewMode('map');
+                }}
               />
             )
           } />
@@ -460,7 +478,9 @@ function AppContent() {
         onReplace={handleImportReplace}
         onSave={handleSaveContact}
         onView={(data) => {
-          setGuestRo(data);
+          setGroupRo(null);
+          setGuestRo({ ...data, origin: 'contacts' });
+          setViewMode('weekly');
           setIsImportModalOpen(false);
         }}
       />
@@ -523,6 +543,7 @@ function AppContent() {
         joinGroup={groups.joinGroup}
         leaveGroup={groups.leaveGroup}
         deleteGroup={groups.deleteGroup}
+        removeMember={groups.removeMember}
         onShowOnMap={() => setViewMode('map')}
         onShowGroupRO={handleShowGroupRO}
         onViewMemberRO={handleViewMemberRO}

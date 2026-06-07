@@ -9,7 +9,7 @@ const GroupCard = ({ group, position, onClose, onPositionChange, groupMembersFor
     // ... existing content ...
     const cardRef = useRef(null);
     const positionRef = useRef(position);
-    const { state, setInterest, setContext, getBandTag, getInterestColor, updateNote } = useCheckedState();
+    const { state, setInterest, setContext, getUserBandTag, getInterestColor, updateNote } = useCheckedState();
     // ...
 
     // Helper to get logo safely (case insensitive?)
@@ -33,7 +33,7 @@ const GroupCard = ({ group, position, onClose, onPositionChange, groupMembersFor
     });
 
     // Get current tag info
-    const bandTag = getBandTag(group.id);
+    const bandTag = getUserBandTag(group.id);
     const currentInterest = bandTag?.interest;
     const currentContext = bandTag?.context;
 
@@ -428,7 +428,7 @@ const GroupCard = ({ group, position, onClose, onPositionChange, groupMembersFor
                                 ))}
                             </ul>
                         ) : (
-                            <div className="no-data">Aucun membre du groupe ne va voir ce groupe.</div>
+                            <div className="no-data">Aucun membre du crew ne va voir ce groupe.</div>
                         )}
                     </div>
                 );

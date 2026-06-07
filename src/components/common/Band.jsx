@@ -2,15 +2,18 @@ import React from 'react';
 import chroma from 'chroma-js';
 import { useCheckedState } from '../../context/CheckedStateContext';
 import { STAGE_CONFIG, INTEREST_LEVELS, CONTEXT_TAGS } from '../../constants';
+import MemberBadges from './MemberBadges';
 
 const Band = ({ group, selectGroup, selectedGroupId, onTagClick, dayStartMinutes, dayEndMinutes, halfWidth = false, side = 'left' }) => {
     const { GROUPE, SCENE, DEBUT, FIN, id } = group;
-    const { state, getBandTag, getInterestColor, cycleInterest } = useCheckedState();
+    const { state, getBandTag, getUserBandTag, getInterestColor, cycleInterest, isGuestMode, guestRo } = useCheckedState();
 
     const isSelected = selectedGroupId === id;
-    const bandTag = getBandTag(id);
-    const hasInterest = !!bandTag?.interest;
-    const hasContext = !!bandTag?.context;
+    const ownTag = getUserBandTag(id);   // toujours les tags réels de l'utilisateur
+    const guestTag = isGuestMode ? getBandTag(id) : null; // tags de l'invité si mode invité
+    const bandTag = ownTag;
+    const hasInterest = !!ownTag?.interest;
+    const hasContext = !!ownTag?.context;
     const isTagged = hasInterest || hasContext;
 
     // Parsing des heures
@@ -155,10 +158,9 @@ const Band = ({ group, selectGroup, selectedGroupId, onTagClick, dayStartMinutes
             onContextMenu={handleRightClick}
             onDoubleClick={handleDoubleClick}
         >
-            {/* Tag indicators */}
+            {/* Tag indicators — étoiles pour les favoris de l'utilisateur */}
             {isTagged && (
                 <div className="band-tag-container">
-                    {/* Une seule étoile colorée */}
                     {interestColor && (
                         <span
                             className="band-star"
@@ -168,7 +170,6 @@ const Band = ({ group, selectGroup, selectedGroupId, onTagClick, dayStartMinutes
                             ★
                         </span>
                     )}
-                    {/* Icône de contexte (sans background) */}
                     {contextIcon && (
                         <span
                             className="band-context"
@@ -177,6 +178,12 @@ const Band = ({ group, selectGroup, selectedGroupId, onTagClick, dayStartMinutes
                             {contextIcon}
                         </span>
                     )}
+                </div>
+            )}
+            {/* Pastille invité — favoris du Running Order consulté */}
+            {guestTag && (
+                <div style={{ position: 'absolute', bottom: 2, right: 2 }}>
+                    <MemberBadges taggers={[{ pseudo: guestRo?.username || '?', interest: guestTag.interest, context: guestTag.context }]} />
                 </div>
             )}
 

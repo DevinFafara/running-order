@@ -69,7 +69,7 @@ export function useGroups(username = null, taggedBands = {}) {
 
     const createGroup = useCallback(async (name, pseudo) => {
         const count = parseInt(localStorage.getItem(CREATED_COUNT_KEY) || '0');
-        if (count >= MAX_CREATED) throw new Error('Tu as déjà créé 2 groupes. Supprime-en un pour en créer un nouveau.');
+        if (count >= MAX_CREATED) throw new Error('Tu as déjà créé 2 crews. Supprime-en un pour en créer un nouveau.');
         setLoading(true); setError(null);
         try {
             const result = await api.createGroup({ name, member_id: memberId, pseudo, username });
@@ -108,6 +108,11 @@ export function useGroups(username = null, taggedBands = {}) {
         if (activeGroupCode === code) setActiveGroupCode(null);
     }, [memberId, activeGroupCode]);
 
+    const removeMember = useCallback(async (code, targetMemberId) => {
+        await api.removeMember(code, memberId, targetMemberId);
+        if (activeGroupCode === code) fetchGroup(code);
+    }, [memberId, activeGroupCode, fetchGroup]);
+
     const updatePosition = useCallback(async (position) => {
         await api.updatePosition(memberId, position);
         if (activeGroupCode) fetchGroup(activeGroupCode);
@@ -126,6 +131,7 @@ export function useGroups(username = null, taggedBands = {}) {
         joinGroup,
         leaveGroup,
         deleteGroup,
+        removeMember,
         updatePosition,
     };
 }

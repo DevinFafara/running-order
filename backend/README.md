@@ -1,6 +1,6 @@
 # RO Planner — Backend API
 
-Mini serveur Node/Express pour la persistance des Running-Orders utilisateurs.
+Mini serveur Node/Express pour la persistance des Running-Orders utilisateurs et la gestion des crews.
 
 ## Installation
 
@@ -32,13 +32,14 @@ Le serveur écoute sur le port `3001` par défaut (configurable via `PORT`).
 | `DELETE` | `/api/ro/:username` | Supprimer le RO (auth requise) |
 | `GET` | `/api/admin/rebuild-index` | Reconstruire l'index depuis les fichiers |
 | `GET` | `/api/admin/cleanup-groups` | Purger tous les fichiers anon/ et groups/ (post-festival) |
-| `POST` | `/api/groups` | Créer un groupe |
-| `GET` | `/api/groups/:code` | Lire un groupe (membres + positions) |
-| `POST` | `/api/groups/:code/join` | Rejoindre un groupe |
-| `DELETE` | `/api/groups/:code` | Supprimer un groupe (créateur uniquement) |
-| `DELETE` | `/api/groups/:code/leave` | Quitter un groupe |
+| `POST` | `/api/groups` | Créer un crew |
+| `GET` | `/api/groups/:code` | Lire un crew (membres + positions) |
+| `POST` | `/api/groups/:code/join` | Rejoindre un crew |
+| `DELETE` | `/api/groups/:code` | Supprimer un crew (créateur uniquement) |
+| `DELETE` | `/api/groups/:code/leave` | Quitter un crew |
+| `DELETE` | `/api/groups/:code/members/:target_id` | Exclure un membre du crew (créateur uniquement) |
 | `PUT` | `/api/anon/position` | Mettre à jour sa position sur la carte |
-| `PUT` | `/api/anon/favorites` | Mettre à jour ses favoris (RO collaboratif groupe) |
+| `PUT` | `/api/anon/favorites` | Mettre à jour ses favoris (RO collaboratif crew) |
 
 ## Structure des données
 
@@ -52,7 +53,7 @@ backend/
     │   └── alice.json
     ├── anon/               ← Positions + favoris des utilisateurs anonymes (groupes)
     │   └── <uuid>.json
-    └── groups/             ← Groupes de festivaliers
+    └── groups/             ← Crews de festivaliers
         └── XXXX-0000.json
 ```
 

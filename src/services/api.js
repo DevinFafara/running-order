@@ -125,6 +125,13 @@ export const api = {
             body: JSON.stringify({ member_id: memberId }),
         }).then(handleResponse),
 
+    removeMember: (code, requesterMemberId, targetMemberId) =>
+        fetch(`${API_BASE}/groups/${encodeURIComponent(code)}/members/${encodeURIComponent(targetMemberId)}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ member_id: requesterMemberId }),
+        }).then(handleResponse),
+
     updatePosition: (memberId, position) =>
         fetch(`${API_BASE}/anon/position`, {
             method: 'PUT',

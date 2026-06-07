@@ -718,6 +718,37 @@ app.delete('/running-order/api/groups/:code', (req, res) => {
     }
 });
 
+// DELETE /running-order/api/groups/:code/members/:target_id — Exclure un membre (créateur uniquement)
+app.delete('/running-order/api/groups/:code/members/:target_id', async (req, res) => {
+    const code = sanitizeCode(req.params.code);
+    const targetId = sanitizeMemberId(req.params.target_id);
+    const { member_id } = req.body;
+    if (!member_id) return res.status(400).json({ error: 'member_id requis' });
+    const requesterMemberId = sanitizeMemberId(member_id);
+    if (requesterMemberId === targetId) return res.status(400).json({ error: 'Utilisez /leave pour quitter un groupe' });
+    const filePath = path.join(GROUPS_DIR, `${code}.json`);
+    if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Groupe introuvable' });
+    try {
+        await withFileLock(filePath, () => {
+            const group = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+            if (group.created_by !== requesterMemberId) {
+                const err = new Error('Seul le créateur peut exclure un membre');
+                err.status = 403;
+                throw err;
+            }
+            const before = group.members.length;
+            group.members = group.members.filter(m => m.member_id !== targetId);
+            if (group.members.length === before) return res.status(404).json({ error: 'Membre introuvable' });
+            atomicWriteFile(filePath, JSON.stringify(group, null, 2));
+        });
+        res.json({ success: true });
+    } catch (err) {
+        if (err.status === 403) return res.status(403).json({ error: err.message });
+        console.error('Error removing member:', err);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
+});
+
 // DELETE /running-order/api/groups/:code/leave — Quitter un groupe
 app.delete('/running-order/api/groups/:code/leave', async (req, res) => {
     const code = sanitizeCode(req.params.code);

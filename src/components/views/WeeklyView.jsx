@@ -5,6 +5,7 @@ import { useLineup } from '../../hooks/useLineup'; // Assuming this hook exists 
 import { STAGE_CONFIG, INTEREST_LEVELS, INTEREST_ORDER, CONTEXT_TAGS, CONTEXT_ORDER, DAYS, MAIN_STAGES, SIDE_STAGES } from '../../constants';
 import { timeToMinutes } from '../../utils/statsUtils';
 import TagMenu from '../common/TagMenu';
+import MemberBadges from '../common/MemberBadges';
 import { calculateWeeklyLayout } from '../../utils/pdfLayout';
 import PDFModal from '../modals/PDFModal';
 import './WeeklyView.css';
@@ -25,34 +26,7 @@ const ICONS = {
 
 // --- LAYOUT LOGIC MOVED TO UTILS/PDFLAYOUT.JS ---
 
-const INTEREST_DEFAULT_COLORS = {
-    must_see: '#e91e8c',
-    interested: '#1e88e5',
-    curious: '#43a047',
-};
 
-const MemberBadges = ({ taggers }) => {
-    const MAX_VISIBLE = 3;
-    const visible = taggers.slice(0, MAX_VISIBLE);
-    const extra = taggers.length - MAX_VISIBLE;
-    return (
-        <div className="weekly-member-badges">
-            {visible.map((t, i) => (
-                <span
-                    key={t.pseudo + i}
-                    className="weekly-member-badge"
-                    style={{ backgroundColor: t.interest ? (INTEREST_DEFAULT_COLORS[t.interest] || '#888') : '#555' }}
-                    title={`${t.pseudo}${t.interest ? ` · ${t.interest}` : ''}${t.context ? ` · ${t.context}` : ''}`}
-                >
-                    {t.pseudo.slice(0, 2).toUpperCase()}
-                </span>
-            ))}
-            {extra > 0 && (
-                <span className="weekly-member-badge weekly-member-badge--extra">+{extra}</span>
-            )}
-        </div>
-    );
-};
 
 const WeeklyCustomEvent = ({ event, onEdit }) => {
     const { state } = useCheckedState();
@@ -133,8 +107,8 @@ const WeeklyCustomEvent = ({ event, onEdit }) => {
     );
 };
 
-const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent, groupRo = null, onExitGroupRo }) => {
-    const { state, getInterestColor, getBandTag, cycleInterest, userState, isGuestMode } = useCheckedState();
+const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent, groupRo = null, onExitGroupRo, guestName = null, onExitGuestMode = null }) => {
+    const { state, getInterestColor, getBandTag, getUserBandTag, cycleInterest, userState, isGuestMode } = useCheckedState();
 
     const visibleDays = DAYS; // WeeklyView affiche toujours tous les jours, indépendamment du toggle DayView
 
@@ -146,6 +120,10 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
     const [tagMenuState, setTagMenuState] = useState({ open: false, groupId: null, position: { x: 0, y: 0 } });
     const [dimNonCommon, setDimNonCommon] = useState(false);
     const [highlightMyFavs, setHighlightMyFavs] = useState(false);
+    const [showMyFavsInGuest, setShowMyFavsInGuest] = useState(false);
+
+    useEffect(() => { if (!isGuestMode) { setShowMyFavsInGuest(false); setDimNonCommon(false); } }, [isGuestMode]);
+    useEffect(() => { setShowMyFavsInGuest(false); setDimNonCommon(false); }, [guestName]);
     const [showSceneDropdown, setShowSceneDropdown] = useState(false);
     const sceneDropdownRef = useRef(null);
 
@@ -244,25 +222,54 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
     // --- 0. GROUP RO MAP ---
     const groupTaggedBandsMap = useMemo(() => {
         if (!groupRo) return null;
+        const localMemberId = localStorage.getItem('hf_member_id');
         const map = {};
         groupRo.members.forEach(member => {
-            Object.entries(member.taggedBands).forEach(([bandId, tag]) => {
+            // Pour le membre courant, utiliser les tags locaux live (pas les données serveur potentiellement stale)
+            const isMe = localMemberId && member.member_id === localMemberId;
+            const bands = isMe ? userState.taggedBands : member.taggedBands;
+            Object.entries(bands).forEach(([bandId, tag]) => {
                 if (!map[bandId]) map[bandId] = [];
                 map[bandId].push({ pseudo: member.pseudo, interest: tag.interest || null, context: tag.context || null });
             });
         });
         return map;
-    }, [groupRo]);
+    }, [groupRo, userState.taggedBands]);
+
+    // --- 0b. GUEST + ME MAP (mode invité avec "Afficher mes favoris") ---
+    const guestTaggedBandsMap = useMemo(() => {
+        if (!isGuestMode || !showMyFavsInGuest) return null;
+        const map = {};
+        const normalize = (tag) => typeof tag === 'string'
+            ? { interest: 'must_see', context: null }
+            : { interest: tag?.interest || null, context: tag?.context || null };
+        // Favoris de l'invité (displayState = guestRo.bands en mode invité)
+        Object.entries(state.taggedBands).forEach(([bandId, tag]) => {
+            if (!map[bandId]) map[bandId] = [];
+            map[bandId].push({ pseudo: guestName, ...normalize(tag) });
+        });
+        // Favoris de l'utilisateur réel
+        Object.entries(userState.taggedBands).forEach(([bandId, tag]) => {
+            if (!map[bandId]) map[bandId] = [];
+            map[bandId].push({ pseudo: 'Moi', ...normalize(tag) });
+        });
+        return map;
+    }, [isGuestMode, showMyFavsInGuest, state.taggedBands, userState.taggedBands, guestName]);
+
+    const activeTaggedBandsMap = useMemo(
+        () => groupTaggedBandsMap || guestTaggedBandsMap,
+        [groupTaggedBandsMap, guestTaggedBandsMap]
+    );
 
     // --- 1. FILTERING ---
     const filteredGroups = useMemo(() => {
         if (!groups) return [];
         let selection = groups.filter(g => selectedScenes.includes(g.SCENE));
 
-        if (groupTaggedBandsMap) {
-            // Mode groupe : afficher les groupes tagués par au moins un membre
-            selection = selection.filter(g => groupTaggedBandsMap[g.id]);
-        } else if (filterMode === 'favorites') {
+        if (activeTaggedBandsMap && filterMode === 'favorites') {
+            // Mode groupe ou invité+moi en mode "Favoris" : afficher les groupes tagués par au moins un membre
+            selection = selection.filter(g => activeTaggedBandsMap[g.id]);
+        } else if (!activeTaggedBandsMap && filterMode === 'favorites') {
             // Mode personnel : filtrer par favoris + intérêt/contexte
             selection = selection.filter(g => {
                 const tag = getBandTag(g.id);
@@ -275,11 +282,11 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
         }
 
         return selection;
-    }, [groups, filterMode, state.taggedBands, selectedScenes, selectedInterests, selectedContexts, getBandTag, groupTaggedBandsMap]);
+    }, [groups, filterMode, state.taggedBands, selectedScenes, selectedInterests, selectedContexts, getBandTag, activeTaggedBandsMap]);
 
     // --- 2a. ANALYSE FAVORIS — détecte si un jour a des favoris des 2 types ET si c'est critique ---
     const dayFavoritesAnalysis = useMemo(() => {
-        if (!groupTaggedBandsMap && filterMode !== 'favorites') return {};
+        if (filterMode !== 'favorites') return {};
         const result = {};
         DAYS_WITH_BOTH.forEach(day => {
             const dayBands = filteredGroups.filter(g => g.DAY === day || g.JOUR === day);
@@ -305,7 +312,7 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
             result[day] = { showSwitch: maxSideClash > 1 };
         });
         return result;
-    }, [filteredGroups, filterMode, groupTaggedBandsMap]);
+    }, [filteredGroups, filterMode, activeTaggedBandsMap]);
 
     // --- 2b. LAYOUT ALGORITHM (The "Clashfinder" Logic) ---
     const dayColumns = useMemo(() => {
@@ -317,7 +324,7 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
 
             // Filtrage par type de scène selon le mode actif pour ce jour
             const needsFilter = DAYS_WITH_BOTH.includes(day) && (
-                (!groupTaggedBandsMap && filterMode === 'all') ||
+                filterMode === 'all' ||
                 dayFavoritesAnalysis[day]?.showSwitch
             );
             if (needsFilter) {
@@ -331,14 +338,33 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
         });
 
         return columns;
-    }, [filteredGroups, filterMode, state.reverse, selectedScenes, daySceneMode, dayFavoritesAnalysis, groupTaggedBandsMap]);
+    }, [filteredGroups, filterMode, state.reverse, selectedScenes, daySceneMode, dayFavoritesAnalysis, activeTaggedBandsMap]);
 
     return (
         <div className="weekly-view">
             <div className="weekly-header">
                 {/* Left: Title */}
                 <div className="weekly-header-left">
-                    {groupRo ? (
+                    {isGuestMode && guestName ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <button
+                                onClick={onExitGuestMode}
+                                style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '1rem', padding: 0 }}
+                                title="Retour"
+                            >
+                                <i className="fa-solid fa-chevron-left" />
+                            </button>
+                            <div>
+                                <h2 style={{ margin: 0, fontSize: '1rem' }}>
+                                    <i className="fa-solid fa-eye" style={{ marginRight: 8, color: '#FFD700' }} />
+                                    {guestName}
+                                </h2>
+                                <div style={{ fontSize: '0.72rem', color: '#666', marginTop: 2 }}>
+                                    favoris combinés
+                                </div>
+                            </div>
+                        </div>
+                    ) : groupRo ? (
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                             <button
                                 onClick={onExitGroupRo}
@@ -353,7 +379,7 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
                                     {groupRo.name}
                                 </h2>
                                 <div style={{ fontSize: '0.72rem', color: '#666', marginTop: 2 }}>
-                                    {groupRo.members.length} membre{groupRo.members.length > 1 ? 's' : ''} · favoris combinés
+                                    {groupRo.members.length} membre{groupRo.members.length > 1 ? 's' : ''} · RO partagé
                                 </div>
                             </div>
                             <button
@@ -507,6 +533,14 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
                                 <i className="fa-solid fa-people-arrows" style={{ marginRight: 5 }} />
                                 En commun
                             </button>
+                            <button
+                                className={`weekly-filter-btn ${showMyFavsInGuest ? 'active' : ''}`}
+                                onClick={() => setShowMyFavsInGuest(v => !v)}
+                                title={showMyFavsInGuest ? 'Masquer mes favoris' : 'Afficher mes favoris'}
+                            >
+                                <i className="fa-solid fa-star" style={{ marginRight: 5 }} />
+                                Mes favoris
+                            </button>
                         </div>
                     )}
 
@@ -599,7 +633,7 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
                         <div className="weekly-day-header">
                             <span>{day}</span>
                             {DAYS_WITH_BOTH.includes(day) && (
-                                (!groupTaggedBandsMap && filterMode === 'all') ||
+                                filterMode === 'all' ||
                                 dayFavoritesAnalysis[day]?.showSwitch
                             ) && (
                                 <button
@@ -629,15 +663,17 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
                             {dayColumns[day].map((item, idx) => {
                                 const stageColor = STAGE_CONFIG[item.band.SCENE]?.themeColor || '#555';
                                 const tagData = getBandTag(item.band.id);
-                                const isTagged = groupTaggedBandsMap
-                                    ? !!groupTaggedBandsMap[item.band.id]
+                                const isTagged = activeTaggedBandsMap
+                                    ? !!activeTaggedBandsMap[item.band.id]
                                     : !!tagData;
-                                const interestColor = !groupTaggedBandsMap && isTagged && tagData.interest
+                                const interestColor = !activeTaggedBandsMap && isTagged && tagData.interest
                                     ? getInterestColor(tagData.interest)
                                     : 'white';
 
                                 const isOwnFav = !!(userState?.taggedBands?.[item.band.id]);
-                                const isCommon = isGuestMode && isTagged && isOwnFav;
+                                // isCommon = tagué par l'invité ET par l'utilisateur réel
+                                const isGuestTagged = isGuestMode ? !!getBandTag(item.band.id) : false;
+                                const isCommon = isGuestMode && isGuestTagged && isOwnFav;
                                 const dimmed = (isGuestMode && dimNonCommon && !isCommon)
                                     || (groupTaggedBandsMap && highlightMyFavs && !isOwnFav);
                                 const baseShadow = colorMode === 'scene' ? '0 2px 8px rgba(0,0,0,0.4)' : '0 2px 4px rgba(0,0,0,0.4)';
@@ -677,7 +713,26 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
                                                 groupTaggedBandsMap[item.band.id] && (
                                                     <MemberBadges taggers={groupTaggedBandsMap[item.band.id]} />
                                                 )
-                                            ) : (
+                                            ) : guestTaggedBandsMap ? (
+                                                guestTaggedBandsMap[item.band.id] && (
+                                                    <MemberBadges taggers={guestTaggedBandsMap[item.band.id]} />
+                                                )
+                                            ) : isGuestMode ? (() => {
+                                                const ownTag = getUserBandTag(item.band.id);
+                                                return (<>
+                                                    {tagData && (
+                                                        <MemberBadges taggers={[{ pseudo: guestName, interest: tagData.interest, context: tagData.context }]} />
+                                                    )}
+                                                    {ownTag && (
+                                                        <div className="weekly-band-tag-indicator" style={{ color: ownTag.interest ? getInterestColor(ownTag.interest) : 'white' }}>
+                                                            {ownTag.interest
+                                                                ? <i className="fa-solid fa-star" style={{ fontSize: '0.7rem' }} />
+                                                                : <span style={{ fontSize: '0.7rem' }}>{CONTEXT_TAGS[ownTag.context]?.icon}</span>
+                                                            }
+                                                        </div>
+                                                    )}
+                                                </>);
+                                            })() : (
                                                 isTagged && (
                                                     <div
                                                         className="weekly-band-tag-indicator"
@@ -708,7 +763,7 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
                 {displayedDays.length === 0 && (
                     <div style={{ textAlign: 'center', color: '#555', padding: '60px 20px', fontSize: '1rem', fontStyle: 'italic' }}>
                         {groupRo
-                            ? 'Aucun groupe mis en favori par les membres du groupe.'
+                            ? 'Aucun groupe mis en favori par les membres du crew.'
                             : 'Aucun groupe mis en favori.'}
                     </div>
                 )}

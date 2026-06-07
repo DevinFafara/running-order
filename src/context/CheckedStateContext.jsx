@@ -332,7 +332,6 @@ export const CheckedStateProvider = ({ children, user }) => {
     };
 
     const setInterest = (groupId, interestLevel) => {
-        if (guestRo) return;
         setState(prev => {
             const newTaggedBands = { ...prev.taggedBands };
             const existing = newTaggedBands[groupId] || {};
@@ -351,7 +350,6 @@ export const CheckedStateProvider = ({ children, user }) => {
     };
 
     const setContext = (groupId, contextType) => {
-        if (guestRo) return;
         setState(prev => {
             const newTaggedBands = { ...prev.taggedBands };
             const existing = newTaggedBands[groupId] || {};
@@ -370,7 +368,7 @@ export const CheckedStateProvider = ({ children, user }) => {
     };
 
     const cycleInterest = (groupId) => {
-        const currentTag = getBandTag(groupId);
+        const currentTag = getUserBandTag(groupId);
         const currentInterest = currentTag?.interest;
 
         let nextInterest;
@@ -387,29 +385,21 @@ export const CheckedStateProvider = ({ children, user }) => {
         setInterest(groupId, nextInterest);
     };
 
-    const getBandTag = (groupId) => {
-        const tag = displayState.taggedBands?.[groupId];
+    const normalizeBandTag = (tag) => {
         if (!tag) return null;
-
-        if (typeof tag === 'string') {
-            return {
-                interest: 'must_see',
-                context: null,
-                taggedAt: Date.now()
-            };
-        }
-
+        if (typeof tag === 'string') return { interest: 'must_see', context: null, taggedAt: Date.now() };
         if (tag.category && !tag.interest) {
             const cat = tag.category;
-            if (['must_see', 'interested', 'curious'].includes(cat)) {
-                return { interest: cat, context: null, taggedAt: tag.taggedAt };
-            } else if (['with_friend', 'strategic', 'skip'].includes(cat)) {
-                return { interest: null, context: cat, taggedAt: tag.taggedAt };
-            }
+            if (['must_see', 'interested', 'curious'].includes(cat)) return { interest: cat, context: null, taggedAt: tag.taggedAt };
+            if (['with_friend', 'strategic', 'skip'].includes(cat)) return { interest: null, context: cat, taggedAt: tag.taggedAt };
         }
-
         return tag;
     };
+
+    const getBandTag = (groupId) => normalizeBandTag(displayState.taggedBands?.[groupId]);
+
+    // Toujours lire depuis le vrai état utilisateur, indépendamment du mode invité
+    const getUserBandTag = (groupId) => normalizeBandTag(state.taggedBands?.[groupId]);
 
     const getInterestColor = (interestLevel) => {
         return state.interestColors?.[interestLevel] || INTEREST_LEVELS[interestLevel]?.defaultColor || '#888';
@@ -481,6 +471,7 @@ export const CheckedStateProvider = ({ children, user }) => {
             setContext,
             cycleInterest,
             getBandTag,
+            getUserBandTag,
             getInterestColor,
             setInterestColor,
             resetInterestColors,

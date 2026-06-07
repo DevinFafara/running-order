@@ -422,22 +422,6 @@ const SettingsPanel = ({ isOpen, onClose, onClearCustomEvents, onViewChange, not
                     </div>
                 )}
 
-                {/* Fonctionnalités expérimentales */}
-                <div className="settings-section">
-                    <h3>Fonctionnalités expérimentales</h3>
-                    <p className="settings-section-desc" style={{ color: '#888', marginBottom: '10px' }}>
-                        Ces fonctionnalités sont en cours de développement et peuvent être instables.
-                    </p>
-                    <button
-                        className="settings-reset-btn"
-                        style={{ width: '100%', backgroundColor: '#1a3a1a', border: '1px solid #2e7d32', color: '#81c784', display: 'flex', alignItems: 'center', gap: 8 }}
-                        onClick={() => { onOpenGroups?.(); onClose(); }}
-                    >
-                        <i className="fa-solid fa-user-group" />
-                        Groupes & Localisation
-                    </button>
-                </div>
-
                 {/* Zone de danger */}
                 <div className="settings-section">
                     <h3>Zone de danger</h3>

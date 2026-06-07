@@ -14,6 +14,7 @@ const ProfileModal = ({ isOpen, onClose, onOpenPanel, onShare, isInstallable, is
         { id: 'share', label: 'Partager', icon: 'fa-solid fa-share-nodes', color: '#9C27B0' },
         { id: 'install', label: isInstalled ? 'Installée' : 'Installer', icon: 'fa-solid fa-download', color: isInstalled ? '#555' : '#00b894', disabled: isInstalled },
         { id: 'settings', label: 'Paramètres', icon: 'fa-solid fa-gear', color: '#aaa' },
+        { id: 'groups', label: 'Crew', icon: 'fa-solid fa-user-group', color: '#4CAF50' },
         { id: 'playlists', label: 'Playlists', icon: 'fa-solid fa-music', color: '#1DB954' },
         { id: 'credits', label: 'Crédits', icon: 'fa-solid fa-heart', color: '#ff6b6b' },
     ];

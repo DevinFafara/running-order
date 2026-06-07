@@ -3,10 +3,10 @@ import { INTEREST_LEVELS, INTEREST_ORDER, CONTEXT_TAGS, CONTEXT_ORDER } from '..
 import { useCheckedState } from '../../context/CheckedStateContext';
 
 const TagMenu = ({ groupId, position, onClose }) => {
-    const { setInterest, setContext, getBandTag, getInterestColor } = useCheckedState();
+    const { setInterest, setContext, getUserBandTag, getInterestColor } = useCheckedState();
     const menuRef = React.useRef(null);
 
-    const currentTag = getBandTag(groupId);
+    const currentTag = getUserBandTag(groupId);
     const currentInterest = currentTag?.interest;
     const currentContext = currentTag?.context;
 

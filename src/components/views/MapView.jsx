@@ -115,7 +115,7 @@ function clampPan(px, py, zoom, containerW, containerH, imgW, imgH) {
 
 const StageGridItem = ({ stageKey, stageData, isLeft, onSelect, simMinutes }) => {
     const { playing, next, status, config } = stageData;
-    const { getBandTag, getInterestColor } = useCheckedState();
+    const { getUserBandTag, getInterestColor } = useCheckedState();
     if (!config) return null;
 
     const color = config.themeColor;
@@ -132,7 +132,7 @@ const StageGridItem = ({ stageKey, stageData, isLeft, onSelect, simMinutes }) =>
 
     const getGroupTags = () => {
         if (!displayGroup) return null;
-        const tag = getBandTag(displayGroup.id);
+        const tag = getUserBandTag(displayGroup.id);
         if (!tag) return null;
         const interest = INTEREST_LEVELS[tag.interest];
         const context = CONTEXT_TAGS[tag.context];
@@ -224,7 +224,7 @@ const StageGridPanel = ({ stageStatus, onStageSelect, isPrePhase, simMinutes }) 
 // ── BandDetailPanel ───────────────────────────────────────────────────────────
 
 const BandDetailPanel = ({ group, stageColor, onClose, activeGroupData = null }) => {
-    const { state, setInterest, setContext, getBandTag, getInterestColor, updateNote } = useCheckedState();
+    const { state, setInterest, setContext, getUserBandTag, getInterestColor, updateNote } = useCheckedState();
 
     const groupMembersForBand = useMemo(() => {
         if (!activeGroupData?.members?.length) return null;
@@ -246,7 +246,7 @@ const BandDetailPanel = ({ group, stageColor, onClose, activeGroupData = null })
     const tagBtnRef = useRef(null);
     const dropdownRef = useRef(null);
 
-    const bandTag = getBandTag(group.id);
+    const bandTag = getUserBandTag(group.id);
     const currentInterest = bandTag?.interest;
     const currentContext = bandTag?.context;
 
@@ -360,7 +360,7 @@ const BandDetailPanel = ({ group, stageColor, onClose, activeGroupData = null })
                                 ))}
                             </ul>
                         ) : (
-                            <div className="no-data">Aucun membre du groupe ne va voir ce groupe.</div>
+                            <div className="no-data">Aucun membre du crew ne va voir ce groupe.</div>
                         )}
                     </div>
                 );
@@ -565,7 +565,7 @@ function formatAge(ms) {
 
 const GroupsTabContent = ({
     myGroups, activeGroupCode, setActiveGroupCode, activeGroupData,
-    memberId, positionSource, setPositionSource, positionMode, setPositionMode, onFlyToMember,
+    memberId, positionSource, setPositionSource, positionMode, setPositionMode, onFlyToMember, onViewMemberRO,
     gpsAccuracy, gpsInBounds, gpsRawPosition, gpsError,
 }) => {
     const selectedGroup = myGroups.find(g => g.code === activeGroupCode);
@@ -681,6 +681,25 @@ const GroupsTabContent = ({
                                         </span>
                                         <span className="map-member-pos">{posText}</span>
                                     </div>
+                                    {!isMe && m.favorites && onViewMemberRO && (
+                                        <button
+                                            title="Voir son RO"
+                                            onClick={(e) => { e.stopPropagation(); onViewMemberRO(m); }}
+                                            style={{
+                                                background: 'none',
+                                                border: 'none',
+                                                color: '#aaa',
+                                                padding: '0 2px',
+                                                cursor: 'pointer',
+                                                flexShrink: 0,
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                fontSize: '0.85rem',
+                                            }}
+                                        >
+                                            <i className="fa-solid fa-calendar-week" />
+                                        </button>
+                                    )}
                                     {m.position && <i className="fa-solid fa-crosshairs map-member-zoom-icon" />}
                                 </div>
                             );
@@ -735,7 +754,7 @@ const MapView = ({
     groups, onGroupSelect,
     myGroups = [], activeGroupCode = null, setActiveGroupCode = null,
     activeGroupData = null, memberId = null, updatePosition = null,
-    flyTarget = null, onFlyComplete = null,
+    flyTarget = null, onFlyComplete = null, onViewMemberRO = null,
 }) => {
     const [activePoiId, setActivePoiId] = useState(null);
     const [selectedStageKey, setSelectedStageKey] = useState(null);
@@ -1214,7 +1233,7 @@ const MapView = ({
                             className={`map-tab-btn${activeTab === 'groups' ? ' map-tab-btn--active' : ''}`}
                             onClick={() => switchTab('groups')}
                         >
-                            Mes groupes
+                            Mes crews
                         </button>
                     )}
                 </div>
@@ -1258,6 +1277,7 @@ const MapView = ({
                             positionMode={positionMode}
                             setPositionMode={setPositionMode}
                             onFlyToMember={flyToMember}
+                            onViewMemberRO={onViewMemberRO}
                             gpsAccuracy={gpsAccuracy}
                             gpsInBounds={gpsInBounds}
                             gpsRawPosition={gpsRawPosition}

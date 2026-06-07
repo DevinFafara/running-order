@@ -163,27 +163,39 @@ const HeaderBar = ({
 
                     <button
                         className={`toolbar-btn ${viewMode === 'week' ? 'active' : ''}`}
-                        title={viewMode === 'week' ? "Vue Journalière" : "Vue Semaine"}
+                        title="Vue Semaine"
                         onClick={() => {
                             if (onInteraction) onInteraction();
-                            onViewChange(viewMode === 'week' ? 'day' : 'week');
+                            onViewChange('week');
                         }}
                     >
-                        <i className={`fa-solid ${viewMode === 'week' ? 'fa-calendar-day' : 'fa-calendar-week'}`}></i>
+                        <i className="fa-solid fa-calendar-week"></i>
                     </button>
 
-                    {new Date() >= new Date(2026, 5, 16) && (
-                        <button
-                            className={`toolbar-btn toolbar-btn--mobile-only ${viewMode === 'map' ? 'active' : ''}`}
-                            title="Carte du site"
-                            onClick={() => {
-                                if (onInteraction) onInteraction();
-                                onViewChange(viewMode === 'map' ? 'day' : 'map');
-                            }}
-                        >
-                            <i className="fa-solid fa-map-location-dot"></i>
-                        </button>
-                    )}
+                    <button
+                        className={`toolbar-btn ${viewMode === 'day' ? 'active' : ''}`}
+                        title="Vue Journalière"
+                        onClick={() => {
+                            if (onInteraction) onInteraction();
+                            onViewChange('day');
+                        }}
+                    >
+                        <i className="fa-solid fa-calendar-day"></i>
+                    </button>
+
+                    <button
+                        className={`toolbar-btn ${viewMode === 'map' ? 'active' : ''}`}
+                        title="Carte du site"
+                        onClick={() => {
+                            if (onInteraction) onInteraction();
+                            if (isGuestMode) {
+                                if (onExitGuestMode) onExitGuestMode();
+                            }
+                            onViewChange('map');
+                        }}
+                    >
+                        <i className="fa-solid fa-map-location-dot"></i>
+                    </button>
 
                     <button
                         className={`toolbar-btn ${profileOpen ? 'active' : ''}`}
@@ -259,7 +271,7 @@ const HeaderBar = ({
                 isOpen={communityOpen}
                 onClose={() => setCommunityOpen(false)}
                 onViewUserRO={(data) => {
-                    onCheckContact(data, 'view');
+                    onCheckContact(data, 'view', 'community');
                     setCommunityOpen(false);
                 }}
                 onSaveContact={onSaveContact}
