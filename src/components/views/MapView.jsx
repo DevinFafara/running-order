@@ -739,6 +739,7 @@ const MapView = ({
 }) => {
     const [activePoiId, setActivePoiId] = useState(null);
     const [selectedStageKey, setSelectedStageKey] = useState(null);
+    const [devPickedPos, setDevPickedPos] = useState(null);
 
     const [activeTab, setActiveTab] = useState(() => localStorage.getItem('hf_map_tab') || 'scenes');
     const [positionSource, setPositionSource] = useState('manual');
@@ -1057,6 +1058,8 @@ const MapView = ({
         const x = Math.max(0.1, Math.min(99.9, (e.clientX - rect.left) / rect.width * 100)).toFixed(1);
         const y = Math.max(0.1, Math.min(99.9, (e.clientY - rect.top) / rect.height * 100)).toFixed(1);
 
+        if (import.meta.env.DEV) setDevPickedPos({ x, y });
+
         if (positionMode && updatePosition) {
             updatePosition({ x: `${x}%`, y: `${y}%` });
             setPositionMode(false);
@@ -1104,6 +1107,12 @@ const MapView = ({
                     <button className="map-zoom-btn" onClick={() => changeZoom(ZOOM_STEP)} disabled={view.zoom >= MAX_ZOOM} title="Zoom avant"><i className="fa-solid fa-plus" /></button>
                 </div>
             </div>
+
+            {import.meta.env.DEV && devPickedPos && (
+                <div style={{ position: 'absolute', top: 8, left: '50%', transform: 'translateX(-50%)', zIndex: 9999, background: '#1a1a2e', border: '1px solid #444', borderRadius: 6, padding: '4px 10px', fontSize: '0.75rem', fontFamily: 'monospace', color: '#e0e0e0', whiteSpace: 'nowrap', pointerEvents: 'none' }}>
+                    left: '{devPickedPos.x}%', top: '{devPickedPos.y}%'
+                </div>
+            )}
 
             {positionMode && (
                 <div className="map-position-banner">
