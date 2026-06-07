@@ -129,12 +129,22 @@ const PanelWrapper = ({ onClose, title, children }) => (
 
 // ── Main component ────────────────────────────────────────────────────────────
 
+const ConsentNotice = () => (
+    <div style={{
+        color: '#aaa', fontSize: '0.78rem', backgroundColor: 'rgba(255,255,255,0.04)',
+        padding: '10px 12px', borderRadius: 8, border: '1px solid #2a2a2a', lineHeight: 1.5,
+    }}>
+        <i className="fa-solid fa-circle-info" style={{ marginRight: 6, color: '#90caf9' }} />
+        Ta position et tes favoris seront visibles par les membres du groupe.
+    </div>
+);
+
 const GroupsPanel = ({
     isOpen, onClose,
     myGroups, activeGroupCode, setActiveGroupCode, activeGroupData,
     memberId, loading, error, setError,
     createGroup, joinGroup, leaveGroup, deleteGroup,
-    onShowOnMap,
+    onShowOnMap, onShowGroupRO, onViewMemberRO, onFlyToMember,
 }) => {
     const [screen, setScreen] = useState('list');
     const [detailCode, setDetailCode] = useState(null);
@@ -213,6 +223,24 @@ const GroupsPanel = ({
                     </button>
                 </div>
 
+                {/* Actions */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+                    <button
+                        style={{ ...S.btnPrimary, backgroundColor: '#2e7d32' }}
+                        onClick={() => { onShowGroupRO && onShowGroupRO(); onClose(); }}
+                    >
+                        <i className="fa-solid fa-calendar-week" style={{ marginRight: 8 }} />
+                        RO du groupe
+                    </button>
+                    <button
+                        style={{ ...S.btnPrimary, backgroundColor: '#1565C0' }}
+                        onClick={() => { setActiveGroupCode(detailCode); onShowOnMap(); onClose(); }}
+                    >
+                        <i className="fa-solid fa-map-location-dot" style={{ marginRight: 8 }} />
+                        Voir sur la carte
+                    </button>
+                </div>
+
                 {/* Members */}
                 <div style={S.sectionTitle}>Membres ({members.length || '…'})</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
@@ -228,7 +256,7 @@ const GroupsPanel = ({
                                 display: 'flex', alignItems: 'center', padding: '10px 12px',
                                 backgroundColor: isMe ? 'rgba(220,40,41,0.07)' : '#222',
                                 border: `1px solid ${isMe ? 'rgba(220,40,41,0.2)' : '#2e2e2e'}`,
-                                borderRadius: 10,
+                                borderRadius: 10, gap: 8,
                             }}>
                                 <StatusDot updatedAt={m.position_updated_at} />
                                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -238,20 +266,41 @@ const GroupsPanel = ({
                                     </div>
                                     <PositionLabel position={m.position} updatedAt={m.position_updated_at} />
                                 </div>
+                                <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+                                    <button
+                                        title={m.favorites ? 'Voir son RO' : 'RO non partagé'}
+                                        disabled={!m.favorites}
+                                        onClick={() => { onViewMemberRO && onViewMemberRO(m); onClose(); }}
+                                        style={{
+                                            background: m.favorites ? 'rgba(255,255,255,0.08)' : 'transparent',
+                                            border: '1px solid #333', borderRadius: 6,
+                                            color: m.favorites ? '#fff' : '#444', padding: '4px 7px',
+                                            cursor: m.favorites ? 'pointer' : 'default', fontSize: '0.72rem',
+                                        }}
+                                    >
+                                        <i className="fa-solid fa-calendar-week" />
+                                    </button>
+                                    <button
+                                        title={m.position ? 'Voir sur la carte' : 'Position inconnue'}
+                                        disabled={!m.position}
+                                        onClick={() => { onFlyToMember && onFlyToMember(m); onClose(); }}
+                                        style={{
+                                            background: m.position ? 'rgba(255,255,255,0.08)' : 'transparent',
+                                            border: '1px solid #333', borderRadius: 6,
+                                            color: m.position ? '#fff' : '#444', padding: '4px 7px',
+                                            cursor: m.position ? 'pointer' : 'default', fontSize: '0.72rem',
+                                        }}
+                                    >
+                                        <i className="fa-solid fa-map-location-dot" />
+                                    </button>
+                                </div>
                             </div>
                         );
                     })}
                 </div>
 
-                {/* Actions */}
+                {/* Quitter / Supprimer */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    <button
-                        style={{ ...S.btnPrimary, backgroundColor: '#1565C0' }}
-                        onClick={() => { setActiveGroupCode(detailCode); onShowOnMap(); onClose(); }}
-                    >
-                        <i className="fa-solid fa-map-location-dot" style={{ marginRight: 8 }} />
-                        Voir sur la carte
-                    </button>
                     {isOwner ? (
                         <button style={{ ...S.btnSecondary, color: '#e57373', borderColor: '#4a2020' }} onClick={() => handleDelete(detailCode)}>
                             <i className="fa-solid fa-trash" style={{ marginRight: 8 }} />
@@ -289,6 +338,7 @@ const GroupsPanel = ({
                             onKeyDown={e => e.key === 'Enter' && handleCreate()} />
                     </div>
                     {formError && <div style={S.errorBox}>{formError}</div>}
+                    <ConsentNotice />
                     <button style={S.btnPrimary} onClick={handleCreate} disabled={loading}>
                         {loading ? 'Création…' : 'Créer le groupe'}
                     </button>
@@ -321,6 +371,7 @@ const GroupsPanel = ({
                             onKeyDown={e => e.key === 'Enter' && handleJoin()} />
                     </div>
                     {formError && <div style={S.errorBox}>{formError}</div>}
+                    <ConsentNotice />
                     <button style={S.btnPrimary} onClick={handleJoin} disabled={loading}>
                         {loading ? 'Vérification…' : 'Rejoindre'}
                     </button>

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '../services/api';
+import { encodeROForServer } from '../utils/sharingUtils';
 
 const MEMBER_ID_KEY = 'hf_member_id';
 const GROUPS_KEY = 'hf_groups';
@@ -21,7 +22,7 @@ function loadMyGroups() {
     catch { return []; }
 }
 
-export function useGroups(username = null) {
+export function useGroups(username = null, taggedBands = {}) {
     const [memberId] = useState(getOrCreateMemberId);
     const [myGroups, setMyGroups] = useState(loadMyGroups);
     const [activeGroupCode, setActiveGroupCode] = useState(null);
@@ -29,6 +30,7 @@ export function useGroups(username = null) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const pollRef = useRef(null);
+    const favSyncRef = useRef(null);
 
     useEffect(() => {
         localStorage.setItem(GROUPS_KEY, JSON.stringify(myGroups));
@@ -53,6 +55,17 @@ export function useGroups(username = null) {
         pollRef.current = setInterval(() => fetchGroup(activeGroupCode), POLL_INTERVAL);
         return () => clearInterval(pollRef.current);
     }, [activeGroupCode, fetchGroup]);
+
+    // Sync favoris vers anon/ quand l'utilisateur est dans au moins un groupe
+    useEffect(() => {
+        if (myGroups.length === 0) return;
+        clearTimeout(favSyncRef.current);
+        favSyncRef.current = setTimeout(() => {
+            const encoded = encodeROForServer(taggedBands, []);
+            api.updateFavorites(memberId, encoded).catch(() => {});
+        }, 1500);
+        return () => clearTimeout(favSyncRef.current);
+    }, [taggedBands, myGroups.length, memberId]);
 
     const createGroup = useCallback(async (name, pseudo) => {
         const count = parseInt(localStorage.getItem(CREATED_COUNT_KEY) || '0');

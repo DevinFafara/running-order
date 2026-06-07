@@ -6,6 +6,7 @@ import { useCheckedState } from '../../context/CheckedStateContext';
 import { useCurrentBands } from '../../hooks/useCurrentBands';
 import { useGPS } from '../../hooks/useGPS';
 import { gpsToMapPosition } from '../../utils/gpsToMap';
+import { decodeROFromServer } from '../../utils/sharingUtils';
 import StageMarker from '../map/StageMarker';
 import '../../styles/MapView.css';
 
@@ -222,9 +223,23 @@ const StageGridPanel = ({ stageStatus, onStageSelect, isPrePhase, simMinutes }) 
 
 // ── BandDetailPanel ───────────────────────────────────────────────────────────
 
-const BandDetailPanel = ({ group, stageColor, onClose }) => {
+const BandDetailPanel = ({ group, stageColor, onClose, activeGroupData = null }) => {
     const { state, setInterest, setContext, getBandTag, getInterestColor, updateNote } = useCheckedState();
-    const [activeTab, setActiveTab] = useState('infos');
+
+    const groupMembersForBand = useMemo(() => {
+        if (!activeGroupData?.members?.length) return null;
+        const result = [];
+        for (const m of activeGroupData.members) {
+            if (!m.favorites) continue;
+            const decoded = decodeROFromServer(m.favorites);
+            if (decoded?.taggedBands?.[group.id]) {
+                result.push({ pseudo: m.pseudo, ...decoded.taggedBands[group.id] });
+            }
+        }
+        return result;
+    }, [activeGroupData, group.id]);
+
+    const [activeTab, setActiveTab] = useState(activeGroupData?.members?.length > 0 ? 'going' : 'infos');
     const [note, setNote] = useState('');
     const [showTagDropdown, setShowTagDropdown] = useState(false);
     const [dropdownPos, setDropdownPos] = useState(null);
@@ -323,6 +338,32 @@ const BandDetailPanel = ({ group, stageColor, onClose }) => {
                         <textarea className="note-input" placeholder="Vos notes sur ce groupe..." value={note} onChange={handleNoteChange} />
                     </div>
                 );
+            case 'going':
+                return (
+                    <div className="tab-content fade-in scrollable">
+                        {groupMembersForBand && groupMembersForBand.length > 0 ? (
+                            <ul className="going-members-list">
+                                {groupMembersForBand.map((m, i) => (
+                                    <li key={m.pseudo + i} className="going-member-item">
+                                        <span className="going-member-pseudo">{m.pseudo}</span>
+                                        {m.interest && (
+                                            <span className="going-member-interest" style={{ color: INTEREST_LEVELS[m.interest]?.defaultColor || '#888' }}>
+                                                {INTEREST_LEVELS[m.interest]?.label || m.interest}
+                                            </span>
+                                        )}
+                                        {m.context && (
+                                            <span className="going-member-context">
+                                                {CONTEXT_TAGS[m.context]?.icon} {CONTEXT_TAGS[m.context]?.label || m.context}
+                                            </span>
+                                        )}
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : (
+                            <div className="no-data">Aucun membre du groupe ne va voir ce groupe.</div>
+                        )}
+                    </div>
+                );
             default:
                 return null;
         }
@@ -382,6 +423,11 @@ const BandDetailPanel = ({ group, stageColor, onClose }) => {
                 <button className={`tab-btn ${activeTab === 'bio' ? 'active' : ''}`} onClick={() => setActiveTab('bio')}><i className="fa-solid fa-align-left" /> Bio</button>
                 <button className={`tab-btn ${activeTab === 'links' ? 'active' : ''}`} onClick={() => setActiveTab('links')}><i className="fa-solid fa-link" /> Liens</button>
                 <button className={`tab-btn ${activeTab === 'notes' ? 'active' : ''}`} onClick={() => setActiveTab('notes')}><i className="fa-solid fa-pen" /> Notes</button>
+                {groupMembersForBand !== null && (
+                    <button className={`tab-btn ${activeTab === 'going' ? 'active' : ''}`} onClick={() => setActiveTab('going')}>
+                        <i className="fa-solid fa-users" /> Présents {groupMembersForBand.length > 0 && `(${groupMembersForBand.length})`}
+                    </button>
+                )}
             </div>
             <div className="card-body">
                 {renderContent()}
@@ -392,7 +438,7 @@ const BandDetailPanel = ({ group, stageColor, onClose }) => {
 
 // ── StageSchedulePanel ────────────────────────────────────────────────────────
 
-const StageSchedulePanel = ({ stageKey, stageData, dayGroups, simMinutes, onClose }) => {
+const StageSchedulePanel = ({ stageKey, stageData, dayGroups, simMinutes, onClose, activeGroupData = null }) => {
     const { config, status } = stageData || {};
     const [selectedBand, setSelectedBand] = useState(null);
 
@@ -453,6 +499,7 @@ const StageSchedulePanel = ({ stageKey, stageData, dayGroups, simMinutes, onClos
                             group={selectedBand}
                             stageColor={config.themeColor}
                             onClose={() => setSelectedBand(null)}
+                            activeGroupData={activeGroupData}
                         />
                     )}
                 </div>
@@ -688,6 +735,7 @@ const MapView = ({
     groups, onGroupSelect,
     myGroups = [], activeGroupCode = null, setActiveGroupCode = null,
     activeGroupData = null, memberId = null, updatePosition = null,
+    flyTarget = null, onFlyComplete = null,
 }) => {
     const [activePoiId, setActivePoiId] = useState(null);
     const [selectedStageKey, setSelectedStageKey] = useState(null);
@@ -906,6 +954,13 @@ const MapView = ({
     }, []);
 
 
+
+    // Fly to a member triggered from outside (GroupsPanel "Position" button)
+    useEffect(() => {
+        if (!flyTarget?.position || !initialCentered) return;
+        flyToMember(flyTarget);
+        onFlyComplete?.();
+    }, [flyTarget, initialCentered]);
 
     const flyToMember = useCallback((member) => {
         if (!member.position) return;
@@ -1185,6 +1240,7 @@ const MapView = ({
                                                 dayGroups={dayGroups}
                                                 simMinutes={simMinutes}
                                                 onClose={() => setSelectedStageKey(null)}
+                                                activeGroupData={activeGroupData}
                                             />
                                         )}
                                     </div>

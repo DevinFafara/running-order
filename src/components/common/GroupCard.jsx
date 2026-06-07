@@ -5,7 +5,7 @@ import { STAGE_CONFIG, INTEREST_LEVELS, INTEREST_ORDER, CONTEXT_TAGS, CONTEXT_OR
 // Import Logos
 import bandLogos from '../../data/bandLogos.json';
 
-const GroupCard = ({ group, position, onClose, onPositionChange }) => {
+const GroupCard = ({ group, position, onClose, onPositionChange, groupMembersForBand = null }) => {
     // ... existing content ...
     const cardRef = useRef(null);
     const positionRef = useRef(position);
@@ -15,7 +15,7 @@ const GroupCard = ({ group, position, onClose, onPositionChange }) => {
     // Helper to get logo safely (case insensitive?)
     // The scraper uses exact match from H2, which theoretically matches lineup data.
     const logoUrl = bandLogos[group.GROUPE];
-    const [activeTab, setActiveTab] = useState('infos');
+    const [activeTab, setActiveTab] = useState(groupMembersForBand !== null ? 'going' : 'infos');
     const [note, setNote] = useState('');
     const [cardPosition, setCardPosition] = useState(position);
     const [isDragging, setIsDragging] = useState(false);
@@ -406,6 +406,32 @@ const GroupCard = ({ group, position, onClose, onPositionChange }) => {
                         ></textarea>
                     </div>
                 );
+            case 'going':
+                return (
+                    <div className="tab-content fade-in scrollable">
+                        {groupMembersForBand && groupMembersForBand.length > 0 ? (
+                            <ul className="going-members-list">
+                                {groupMembersForBand.map((m, i) => (
+                                    <li key={m.pseudo + i} className="going-member-item">
+                                        <span className="going-member-pseudo">{m.pseudo}</span>
+                                        {m.interest && (
+                                            <span className="going-member-interest" style={{ color: INTEREST_LEVELS[m.interest]?.defaultColor || '#888' }}>
+                                                {INTEREST_LEVELS[m.interest]?.label || m.interest}
+                                            </span>
+                                        )}
+                                        {m.context && (
+                                            <span className="going-member-context">
+                                                {CONTEXT_TAGS[m.context]?.icon} {CONTEXT_TAGS[m.context]?.label || m.context}
+                                            </span>
+                                        )}
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : (
+                            <div className="no-data">Aucun membre du groupe ne va voir ce groupe.</div>
+                        )}
+                    </div>
+                );
             default:
                 return null;
         }
@@ -589,6 +615,14 @@ const GroupCard = ({ group, position, onClose, onPositionChange }) => {
                 >
                     <i className="fa-solid fa-pen"></i> Notes
                 </button>
+                {groupMembersForBand !== null && (
+                    <button
+                        className={`tab-btn ${activeTab === 'going' ? 'active' : ''}`}
+                        onClick={() => setActiveTab('going')}
+                    >
+                        <i className="fa-solid fa-users"></i> Présents {groupMembersForBand.length > 0 && `(${groupMembersForBand.length})`}
+                    </button>
+                )}
             </div>
 
             <div className="card-body">

@@ -650,15 +650,17 @@ app.get('/running-order/api/groups/:code', (req, res) => {
         const group = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
         const members = group.members.map(m => {
             const anonPath = path.join(ANON_DIR, `${m.member_id}.json`);
-            let position = null, position_updated_at = null;
+            let position = null, position_updated_at = null, favorites = null, favorites_updated_at = null;
             if (fs.existsSync(anonPath)) {
                 try {
                     const anon = JSON.parse(fs.readFileSync(anonPath, 'utf-8'));
                     position = anon.position || null;
                     position_updated_at = anon.position_updated_at || null;
+                    favorites = anon.favorites || null;
+                    favorites_updated_at = anon.favorites_updated_at || null;
                 } catch {}
             }
-            return { ...m, position, position_updated_at };
+            return { ...m, position, position_updated_at, favorites, favorites_updated_at };
         });
         res.json({ ...group, members });
     } catch (err) {
@@ -733,6 +735,37 @@ app.delete('/running-order/api/groups/:code/leave', async (req, res) => {
         res.json({ success: true });
     } catch (err) {
         console.error('Error leaving group:', err);
+        res.status(500).json({ error: 'Erreur serveur' });
+    }
+});
+
+// PUT /running-order/api/anon/favorites — Partager ses favoris dans les groupes
+app.put('/running-order/api/anon/favorites', async (req, res) => {
+    const { member_id, favorites } = req.body;
+    if (!member_id) return res.status(400).json({ error: 'member_id requis' });
+    const sanitizedMemberId = sanitizeMemberId(member_id);
+    if (!sanitizedMemberId) return res.status(400).json({ error: 'member_id invalide' });
+    if (favorites !== null && typeof favorites !== 'string') {
+        return res.status(400).json({ error: 'favorites doit être une chaîne ou null' });
+    }
+    const filePath = path.join(ANON_DIR, `${sanitizedMemberId}.json`);
+    try {
+        await withFileLock(filePath, () => {
+            let existing = {};
+            if (fs.existsSync(filePath)) {
+                try { existing = JSON.parse(fs.readFileSync(filePath, 'utf-8')); } catch {}
+            }
+            const data = {
+                ...existing,
+                member_id: sanitizedMemberId,
+                favorites: favorites || null,
+                favorites_updated_at: new Date().toISOString(),
+            };
+            atomicWriteFile(filePath, JSON.stringify(data, null, 2));
+        });
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Error updating favorites:', err);
         res.status(500).json({ error: 'Erreur serveur' });
     }
 });

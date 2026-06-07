@@ -38,6 +38,7 @@ Le serveur écoute sur le port `3001` par défaut (configurable via `PORT`).
 | `DELETE` | `/api/groups/:code` | Supprimer un groupe (créateur uniquement) |
 | `DELETE` | `/api/groups/:code/leave` | Quitter un groupe |
 | `PUT` | `/api/anon/position` | Mettre à jour sa position sur la carte |
+| `PUT` | `/api/anon/favorites` | Mettre à jour ses favoris (RO collaboratif groupe) |
 
 ## Structure des données
 
@@ -49,13 +50,13 @@ backend/
     ├── index.json          ← Index global (users opt-in, count, etc.)
     ├── users/              ← RO des utilisateurs Discourse
     │   └── alice.json
-    ├── anon/               ← Positions des utilisateurs anonymes (groupes)
+    ├── anon/               ← Positions + favoris des utilisateurs anonymes (groupes)
     │   └── <uuid>.json
     └── groups/             ← Groupes de festivaliers
         └── XXXX-0000.json
 ```
 
-Chaque fichier utilisateur :
+Chaque fichier utilisateur (`data/users/`) :
 ```json
 {
   "username": "alice",
@@ -69,6 +70,19 @@ Chaque fichier utilisateur :
   "updated_at": "2026-04-29T08:36:34.900Z"
 }
 ```
+
+Chaque fichier anonyme (`data/anon/`) :
+```json
+{
+  "member_id": "550e8400-e29b-41d4-a716-...",
+  "position": { "x": "45.2%", "y": "32.1%" },
+  "position_updated_at": "2026-06-19T14:30:00Z",
+  "favorites": "<LZString compressed>",
+  "favorites_updated_at": "2026-06-19T14:35:00Z"
+}
+```
+
+Le `GET /api/groups/:code` fait la jointure membres ↔ fichiers anon et expose `position`, `position_updated_at`, `favorites`, `favorites_updated_at` pour chaque membre.
 
 ## Déploiement (nginx)
 

@@ -22,7 +22,7 @@ import ImportModal from './components/modals/ImportModal';
 import ConfirmationModal from './components/modals/ConfirmationModal';
 import ContactsPanel from './components/panels/ContactsPanel';
 
-import { parseShareData } from './utils/sharingUtils';
+import { parseShareData, decodeROFromServer } from './utils/sharingUtils';
 import { useNotifications } from './hooks/useNotifications';
 import { useGroups } from './hooks/useGroups';
 import GroupsPanel from './components/panels/GroupsPanel';
@@ -38,12 +38,14 @@ function AppContent() {
   } = useCheckedState();
   const isAuthenticated = !!user;
   const notif = useNotifications();
-  const groups = useGroups(user?.username);
+  const groups = useGroups(user?.username, state.taggedBands);
   const [selectedGroup, setSelectedGroup] = useState(null);
   const { isInstallable, isInstalled, installApp, hasPrompt, platform } = usePWA();
   const [popoverPosition, setPopoverPosition] = useState(null);
   const [viewMode, setViewMode] = useState('day');
   const [groupsOpen, setGroupsOpen] = useState(false);
+  const [groupRo, setGroupRo] = useState(null);
+  const [mapFlyTarget, setMapFlyTarget] = useState(null);
 
 
   const [customEvents, setCustomEvents] = useState(() => {
@@ -193,6 +195,39 @@ function AppContent() {
 
   const handleClearCustomEvents = () => {
     setCustomEvents([]);
+  };
+
+  // ─── Group RO ─────────────────────────────────────────────────────
+  const handleShowGroupRO = () => {
+    if (!groups.activeGroupData) return;
+    const groupMeta = groups.myGroups.find(g => g.code === groups.activeGroupCode);
+    const members = groups.activeGroupData.members
+      .map(m => ({
+        pseudo: m.pseudo,
+        member_id: m.member_id,
+        taggedBands: m.favorites ? (decodeROFromServer(m.favorites)?.taggedBands || {}) : {},
+      }));
+    setGroupRo({ name: groupMeta?.name || groups.activeGroupCode, members });
+    setViewMode('weekly');
+  };
+
+  // Effacer le RO groupe quand on quitte la vue hebdo
+  React.useEffect(() => {
+    if (viewMode !== 'weekly') setGroupRo(null);
+  }, [viewMode]);
+
+  const handleViewMemberRO = (member) => {
+    if (!member.favorites) return;
+    const decoded = decodeROFromServer(member.favorites);
+    if (!decoded) return;
+    setGroupRo(null);
+    setGuestRo({ bands: decoded.taggedBands, username: member.pseudo, customEvents: [] });
+    setViewMode('weekly');
+  };
+
+  const handleFlyToMember = (member) => {
+    setMapFlyTarget(member);
+    setViewMode('map');
   };
 
   // ─── Consent handling ─────────────────────────────────────────────
@@ -385,6 +420,8 @@ function AppContent() {
                 activeGroupData={groups.activeGroupData}
                 memberId={groups.memberId}
                 updatePosition={groups.updatePosition}
+                flyTarget={mapFlyTarget}
+                onFlyComplete={() => setMapFlyTarget(null)}
               />
             ) : (
               <WeeklyView
@@ -392,6 +429,8 @@ function AppContent() {
                 onGroupClick={(g) => handleGroupSelect(g, { clientX: window.innerWidth / 2 - 200, clientY: window.innerHeight / 2 - 200 })}
                 customEvents={isGuestMode ? (guestRo.customEvents || []) : customEvents}
                 onEditCustomEvent={isGuestMode ? () => { } : handleEditCustomEvent}
+                groupRo={groupRo}
+                onExitGroupRo={() => setGroupRo(null)}
               />
             )
           } />
@@ -434,6 +473,12 @@ function AppContent() {
               onClose={() => setSelectedGroup(null)}
               position={popoverPosition}
               onPositionChange={handleCardPositionChange}
+              groupMembersForBand={groupRo
+                ? groupRo.members
+                    .filter(m => m.taggedBands?.[selectedGroup.id])
+                    .map(m => ({ pseudo: m.pseudo, ...m.taggedBands[selectedGroup.id] }))
+                : null
+              }
             />
           </div>
         </>
@@ -475,6 +520,9 @@ function AppContent() {
         leaveGroup={groups.leaveGroup}
         deleteGroup={groups.deleteGroup}
         onShowOnMap={() => setViewMode('map')}
+        onShowGroupRO={handleShowGroupRO}
+        onViewMemberRO={handleViewMemberRO}
+        onFlyToMember={handleFlyToMember}
       />
 
       <SaveIndicator status={saveStatus} />

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import chroma from 'chroma-js';
 import { useCheckedState } from '../../context/CheckedStateContext';
 import { useLineup } from '../../hooks/useLineup'; // Assuming this hook exists or we pass groups as prop
@@ -25,8 +25,116 @@ const ICONS = {
 
 // --- LAYOUT LOGIC MOVED TO UTILS/PDFLAYOUT.JS ---
 
-const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent }) => {
-    const { state, getInterestColor, getBandTag, cycleInterest } = useCheckedState();
+const INTEREST_DEFAULT_COLORS = {
+    must_see: '#e91e8c',
+    interested: '#1e88e5',
+    curious: '#43a047',
+};
+
+const MemberBadges = ({ taggers }) => {
+    const MAX_VISIBLE = 3;
+    const visible = taggers.slice(0, MAX_VISIBLE);
+    const extra = taggers.length - MAX_VISIBLE;
+    return (
+        <div className="weekly-member-badges">
+            {visible.map((t, i) => (
+                <span
+                    key={t.pseudo + i}
+                    className="weekly-member-badge"
+                    style={{ backgroundColor: t.interest ? (INTEREST_DEFAULT_COLORS[t.interest] || '#888') : '#555' }}
+                    title={`${t.pseudo}${t.interest ? ` · ${t.interest}` : ''}${t.context ? ` · ${t.context}` : ''}`}
+                >
+                    {t.pseudo.slice(0, 2).toUpperCase()}
+                </span>
+            ))}
+            {extra > 0 && (
+                <span className="weekly-member-badge weekly-member-badge--extra">+{extra}</span>
+            )}
+        </div>
+    );
+};
+
+const WeeklyCustomEvent = ({ event, onEdit }) => {
+    const { state } = useCheckedState();
+    const [isMasked, setIsMasked] = useState(false);
+
+    if (typeof event.startTime !== 'string' || typeof event.endTime !== 'string') return null;
+
+    const [startH, startM] = event.startTime.split(':').map(Number);
+    const [endH, endM] = event.endTime.split(':').map(Number);
+    let sH = startH, eH = endH;
+    if (sH < 6) sH += 24;
+    if (eH < 6) eH += 24;
+    if (eH < sH) eH += 24;
+
+    const start = sH * 60 + startM;
+    const end = eH * 60 + endM;
+    const height = Math.max(20, (end - start) * PIXELS_PER_MINUTE);
+    const originalTop = (start - START_HOUR * 60) * PIXELS_PER_MINUTE;
+    const MAX_HEIGHT = 18 * 60 * PIXELS_PER_MINUTE;
+    const top = state.reverse ? originalTop : MAX_HEIGHT - (originalTop + height);
+
+    return (
+        <div
+            className="weekly-custom-event"
+            title={`${event.title} (${event.startTime} - ${event.endTime})`}
+            style={{
+                position: 'absolute',
+                top: `${top}px`,
+                height: `${height}px`,
+                left: '2%', width: '96%', zIndex: 50,
+                backgroundColor: isMasked ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.45)',
+                border: '1px solid rgba(255,255,255,0.5)',
+                borderRadius: '6px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: '#fff',
+                backdropFilter: isMasked ? 'none' : 'blur(2px)',
+                transition: 'all 0.2s',
+                overflow: 'hidden',
+            }}
+        >
+            <button
+                onClick={(e) => { e.stopPropagation(); setIsMasked(m => !m); }}
+                style={{
+                    position: 'absolute', left: '4px', pointerEvents: 'auto', zIndex: 51,
+                    background: 'rgba(0,0,0,0.35)', border: 'none', color: '#fff',
+                    borderRadius: '50%', width: '20px', height: '20px',
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '0.65rem',
+                }}
+                title={isMasked ? 'Afficher' : 'Masquer'}
+            >
+                <i className={isMasked ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash'} />
+            </button>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '5px', overflow: 'hidden', padding: '0 28px', opacity: isMasked ? 0.1 : 1, transition: 'opacity 0.2s', pointerEvents: isMasked ? 'none' : 'auto' }}>
+                <span style={{ fontSize: '1.2rem' }}>{ICONS[event.type] || '📍'}</span>
+                {height > 25 && (
+                    <span style={{ fontSize: '0.85rem', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {event.title}
+                    </span>
+                )}
+            </div>
+
+            <button
+                onClick={(e) => { e.stopPropagation(); onEdit?.(event); }}
+                style={{
+                    position: 'absolute', right: '4px', pointerEvents: 'auto', zIndex: 51,
+                    background: 'rgba(0,0,0,0.35)', border: 'none', color: '#fff',
+                    borderRadius: '50%', width: '20px', height: '20px',
+                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '0.6rem',
+                }}
+                title="Modifier"
+            >
+                <i className="fa-solid fa-pen" />
+            </button>
+        </div>
+    );
+};
+
+const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent, groupRo = null, onExitGroupRo }) => {
+    const { state, getInterestColor, getBandTag, cycleInterest, userState, isGuestMode } = useCheckedState();
 
     const visibleDays = DAYS; // WeeklyView affiche toujours tous les jours, indépendamment du toggle DayView
 
@@ -36,6 +144,19 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
     const [selectedInterests, setSelectedInterests] = useState(['must_see', 'interested', 'curious']);
     const [selectedContexts, setSelectedContexts] = useState(['with_friend', 'strategic', 'skip']);
     const [tagMenuState, setTagMenuState] = useState({ open: false, groupId: null, position: { x: 0, y: 0 } });
+    const [dimNonCommon, setDimNonCommon] = useState(false);
+    const [highlightMyFavs, setHighlightMyFavs] = useState(false);
+    const [showSceneDropdown, setShowSceneDropdown] = useState(false);
+    const sceneDropdownRef = useRef(null);
+
+    useEffect(() => {
+        if (!showSceneDropdown) return;
+        const close = (e) => {
+            if (!sceneDropdownRef.current?.contains(e.target)) setShowSceneDropdown(false);
+        };
+        document.addEventListener('mousedown', close);
+        return () => document.removeEventListener('mousedown', close);
+    }, [showSceneDropdown]);
     const [showPdfModal, setShowPdfModal] = useState(false);
     const getDefaultColCount = (width) => {
         if (width > 1600) return 6;
@@ -120,34 +241,45 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
         }
     };
 
+    // --- 0. GROUP RO MAP ---
+    const groupTaggedBandsMap = useMemo(() => {
+        if (!groupRo) return null;
+        const map = {};
+        groupRo.members.forEach(member => {
+            Object.entries(member.taggedBands).forEach(([bandId, tag]) => {
+                if (!map[bandId]) map[bandId] = [];
+                map[bandId].push({ pseudo: member.pseudo, interest: tag.interest || null, context: tag.context || null });
+            });
+        });
+        return map;
+    }, [groupRo]);
+
     // --- 1. FILTERING ---
     const filteredGroups = useMemo(() => {
         if (!groups) return [];
         let selection = groups.filter(g => selectedScenes.includes(g.SCENE));
 
-        // If 'favorites' mode, apply interest/context filters
-        if (filterMode === 'favorites') {
+        if (groupTaggedBandsMap) {
+            // Mode groupe : afficher les groupes tagués par au moins un membre
+            selection = selection.filter(g => groupTaggedBandsMap[g.id]);
+        } else if (filterMode === 'favorites') {
+            // Mode personnel : filtrer par favoris + intérêt/contexte
             selection = selection.filter(g => {
                 const tag = getBandTag(g.id);
                 if (!tag) return false;
-                
-                // Match if interest is in selectedInterests OR context is in selectedContexts
                 const interestMatch = tag.interest && selectedInterests.includes(tag.interest);
                 const contextMatch = tag.context && selectedContexts.includes(tag.context);
-                
-                // If it has NO interest and NO context (old data), count as favorites
                 if (!tag.interest && !tag.context) return true;
-
                 return interestMatch || contextMatch;
             });
         }
 
         return selection;
-    }, [groups, filterMode, state.taggedBands, selectedScenes, selectedInterests, selectedContexts, getBandTag]);
+    }, [groups, filterMode, state.taggedBands, selectedScenes, selectedInterests, selectedContexts, getBandTag, groupTaggedBandsMap]);
 
     // --- 2a. ANALYSE FAVORIS — détecte si un jour a des favoris des 2 types ET si c'est critique ---
     const dayFavoritesAnalysis = useMemo(() => {
-        if (filterMode !== 'favorites') return {};
+        if (!groupTaggedBandsMap && filterMode !== 'favorites') return {};
         const result = {};
         DAYS_WITH_BOTH.forEach(day => {
             const dayBands = filteredGroups.filter(g => g.DAY === day || g.JOUR === day);
@@ -173,7 +305,7 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
             result[day] = { showSwitch: maxSideClash > 1 };
         });
         return result;
-    }, [filteredGroups, filterMode]);
+    }, [filteredGroups, filterMode, groupTaggedBandsMap]);
 
     // --- 2b. LAYOUT ALGORITHM (The "Clashfinder" Logic) ---
     const dayColumns = useMemo(() => {
@@ -185,8 +317,8 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
 
             // Filtrage par type de scène selon le mode actif pour ce jour
             const needsFilter = DAYS_WITH_BOTH.includes(day) && (
-                filterMode === 'all' ||
-                (filterMode === 'favorites' && dayFavoritesAnalysis[day]?.showSwitch)
+                (!groupTaggedBandsMap && filterMode === 'all') ||
+                dayFavoritesAnalysis[day]?.showSwitch
             );
             if (needsFilter) {
                 const mode = daySceneMode[day] || 'main';
@@ -199,61 +331,139 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
         });
 
         return columns;
-    }, [filteredGroups, filterMode, state.reverse, selectedScenes, daySceneMode, dayFavoritesAnalysis]);
+    }, [filteredGroups, filterMode, state.reverse, selectedScenes, daySceneMode, dayFavoritesAnalysis, groupTaggedBandsMap]);
 
     return (
         <div className="weekly-view">
             <div className="weekly-header">
                 {/* Left: Title */}
                 <div className="weekly-header-left">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                        <h2>Résumé Semaine</h2>
-                        <button
-                            className="export-pdf-btn"
-                            onClick={() => setShowPdfModal(true)}
-                        >
-                            <i className="fa-solid fa-file-pdf"></i>
-                            <span>PDF</span>
-                        </button>
-                    </div>
+                    {groupRo ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                            <button
+                                onClick={onExitGroupRo}
+                                style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '1rem', padding: 0 }}
+                                title="Retour à mon RO"
+                            >
+                                <i className="fa-solid fa-chevron-left" />
+                            </button>
+                            <div>
+                                <h2 style={{ margin: 0, fontSize: '1rem' }}>
+                                    <i className="fa-solid fa-user-group" style={{ marginRight: 8, color: '#dc2829' }} />
+                                    {groupRo.name}
+                                </h2>
+                                <div style={{ fontSize: '0.72rem', color: '#666', marginTop: 2 }}>
+                                    {groupRo.members.length} membre{groupRo.members.length > 1 ? 's' : ''} · favoris combinés
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setHighlightMyFavs(v => !v)}
+                                title={highlightMyFavs ? 'Afficher tout' : 'Mettre en avant mes favoris'}
+                                style={{
+                                    marginLeft: 4,
+                                    background: highlightMyFavs ? '#dc2829' : 'rgba(255,255,255,0.08)',
+                                    border: `1px solid ${highlightMyFavs ? '#dc2829' : 'rgba(255,255,255,0.2)'}`,
+                                    borderRadius: 12,
+                                    color: 'white',
+                                    padding: '3px 10px',
+                                    cursor: 'pointer',
+                                    fontSize: '0.72rem',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 5,
+                                }}
+                            >
+                                <i className="fa-solid fa-star" style={{ fontSize: '0.65rem' }} />
+                                Mes favoris
+                            </button>
+                        </div>
+                    ) : (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                            <h2>Résumé Semaine</h2>
+                            <button
+                                className="export-pdf-btn"
+                                onClick={() => setShowPdfModal(true)}
+                            >
+                                <i className="fa-solid fa-file-pdf"></i>
+                                <span>PDF</span>
+                            </button>
+                        </div>
+                    )}
                 </div>
 
-                {/* Center: Scene Filters */}
-                <div className="weekly-header-center">
-                    <button
-                        className="scene-filter-tiny-btn all"
-                        onClick={toggleAllScenes}
-                        title={selectedScenes.length >= Object.keys(STAGE_CONFIG).length ? "Tout masquer" : "Tout afficher"}
-                    >
-                        {selectedScenes.length >= Object.keys(STAGE_CONFIG).length ? <i className="fa-solid fa-eye-slash"></i> : <i className="fa-solid fa-eye"></i>}
-                    </button>
-                    {Object.entries(STAGE_CONFIG).map(([key, config]) => (
+                {/* Center: Scene Filters Dropdown */}
+                <div className="weekly-header-center" style={{ position: 'relative' }} ref={sceneDropdownRef}>
+                    <div className="weekly-filter-btn" style={{ display: 'flex', alignItems: 'center', padding: 0, overflow: 'hidden', gap: 0 }}>
                         <button
-                            key={key}
-                            className={`scene-filter-tiny-btn ${selectedScenes.includes(key) ? 'active' : ''}`}
-                            onClick={() => toggleScene(key)}
-                            style={{
-                                '--scene-color': config.themeColor,
-                                opacity: selectedScenes.includes(key) ? 1 : 0.4
-                            }}
-                            title={config.name}
+                            onClick={toggleAllScenes}
+                            title={selectedScenes.length >= Object.keys(STAGE_CONFIG).length ? 'Tout masquer' : 'Tout afficher'}
+                            style={{ background: 'none', border: 'none', borderRight: '1px solid #555', color: 'inherit', cursor: 'pointer', padding: '5px 10px', display: 'flex', alignItems: 'center' }}
                         >
-                            <img src={config.icon} alt={config.name} className="mini-icon" />
+                            <i className={`fa-solid ${selectedScenes.length >= Object.keys(STAGE_CONFIG).length ? 'fa-eye-slash' : 'fa-eye'}`} />
                         </button>
-                    ))}
-                    {/* CUSTOM EVENTS TOGGLE */}
-                    <button
-                        className={`scene-filter-tiny-btn ${selectedScenes.includes('CUSTOM') ? 'active' : ''}`}
-                        onClick={() => toggleScene('CUSTOM')}
-                        style={{
-                            '--scene-color': '#adb5bd', // Grey for generic custom
-                            opacity: selectedScenes.includes('CUSTOM') ? 1 : 0.4,
-                            marginLeft: '8px'
-                        }}
-                        title="Créneaux perso"
-                    >
-                        <span style={{ fontSize: '1.2em' }}>👤</span>
-                    </button>
+                        <button
+                            onClick={() => setShowSceneDropdown(v => !v)}
+                            style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', padding: '5px 10px', display: 'flex', alignItems: 'center', gap: 6 }}
+                            title="Filtrer les scènes"
+                        >
+                            Scènes
+                            {selectedScenes.length < Object.keys(STAGE_CONFIG).length && (
+                                <span style={{ background: '#e74c3c', borderRadius: '10px', fontSize: '0.75em', padding: '1px 6px', color: 'white' }}>
+                                    {selectedScenes.length}
+                                </span>
+                            )}
+                            <i className={`fa-solid fa-chevron-${showSceneDropdown ? 'up' : 'down'}`} style={{ fontSize: '0.7rem', opacity: 0.6 }} />
+                        </button>
+                    </div>
+
+                    {showSceneDropdown && (
+                        <div style={{
+                            position: 'absolute',
+                            top: 'calc(100% + 8px)',
+                            left: '50%',
+                            transform: 'translateX(-50%)',
+                            background: '#1e1e1e',
+                            border: '1px solid #333',
+                            borderRadius: '10px',
+                            padding: '10px',
+                            zIndex: 200,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '8px',
+                            boxShadow: '0 6px 20px rgba(0,0,0,0.5)',
+                        }}>
+                            {/* Rangée 1 : scènes principales */}
+                            <div style={{ display: 'flex', gap: '6px' }}>
+                                {MAIN_STAGES.map(key => {
+                                    const config = STAGE_CONFIG[key];
+                                    return (
+                                        <button key={key} className={`scene-filter-tiny-btn ${selectedScenes.includes(key) ? 'active' : ''}`}
+                                            onClick={() => toggleScene(key)}
+                                            style={{ '--scene-color': config.themeColor, opacity: selectedScenes.includes(key) ? 1 : 0.4 }}
+                                            title={config.name}
+                                        >
+                                            <img src={config.icon} alt={config.name} className="mini-icon" />
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                            {/* Rangée 2 : scènes annexes */}
+                            <div style={{ display: 'flex', gap: '6px' }}>
+                                {SIDE_STAGES.map(key => {
+                                    const config = STAGE_CONFIG[key];
+                                    return (
+                                        <button key={key} className={`scene-filter-tiny-btn ${selectedScenes.includes(key) ? 'active' : ''}`}
+                                            onClick={() => toggleScene(key)}
+                                            style={{ '--scene-color': config.themeColor, opacity: selectedScenes.includes(key) ? 1 : 0.4 }}
+                                            title={config.name}
+                                        >
+                                            <img src={config.icon} alt={config.name} className="mini-icon" />
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Right: View Mode Filters */}
@@ -286,6 +496,19 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
                             Couleurs Scènes
                         </button>
                     </div>
+
+                    {isGuestMode && (
+                        <div className="weekly-filters">
+                            <button
+                                className={`weekly-filter-btn ${dimNonCommon ? 'active' : ''}`}
+                                onClick={() => setDimNonCommon(v => !v)}
+                                title={dimNonCommon ? 'Afficher tous les groupes' : 'Réduire les groupes non communs'}
+                            >
+                                <i className="fa-solid fa-people-arrows" style={{ marginRight: 5 }} />
+                                En commun
+                            </button>
+                        </div>
+                    )}
 
                     {filterMode === 'favorites' && (
                         <div className="weekly-filters-categories">
@@ -333,7 +556,7 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
                     filterMode !== 'favorites' || (dayColumns[day] && dayColumns[day].length > 0)
                 );
                 const effectiveCols = Math.max(1, Math.min(colCount, displayedDays.length));
-                return (
+                return (<>
                 <div className="weekly-grid" style={{
                     gridTemplateColumns: `repeat(${effectiveCols}, minmax(0, 500px))`,
                     justifyContent: 'center'
@@ -376,8 +599,8 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
                         <div className="weekly-day-header">
                             <span>{day}</span>
                             {DAYS_WITH_BOTH.includes(day) && (
-                                filterMode === 'all' ||
-                                (filterMode === 'favorites' && dayFavoritesAnalysis[day]?.showSwitch)
+                                (!groupTaggedBandsMap && filterMode === 'all') ||
+                                dayFavoritesAnalysis[day]?.showSwitch
                             ) && (
                                 <button
                                     onClick={() => toggleDaySceneMode(day)}
@@ -406,13 +629,21 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
                             {dayColumns[day].map((item, idx) => {
                                 const stageColor = STAGE_CONFIG[item.band.SCENE]?.themeColor || '#555';
                                 const tagData = getBandTag(item.band.id);
-                                const isTagged = !!tagData;
-
-                                // Dynamic Color Logic
-                                const interestColor = isTagged && tagData.interest
+                                const isTagged = groupTaggedBandsMap
+                                    ? !!groupTaggedBandsMap[item.band.id]
+                                    : !!tagData;
+                                const interestColor = !groupTaggedBandsMap && isTagged && tagData.interest
                                     ? getInterestColor(tagData.interest)
-                                    : 'white'; // Fallback to white if no specific color? Or default Gold? 
-                                // Actually original was "white". But if interest logic works, getInterestColor returns hex.
+                                    : 'white';
+
+                                const isOwnFav = !!(userState?.taggedBands?.[item.band.id]);
+                                const isCommon = isGuestMode && isTagged && isOwnFav;
+                                const dimmed = (isGuestMode && dimNonCommon && !isCommon)
+                                    || (groupTaggedBandsMap && highlightMyFavs && !isOwnFav);
+                                const baseShadow = colorMode === 'scene' ? '0 2px 8px rgba(0,0,0,0.4)' : '0 2px 4px rgba(0,0,0,0.4)';
+                                const cardBoxShadow = isCommon
+                                    ? `inset 0 0 0 2px rgba(255,255,255,0.9), 0 0 10px 2px rgba(255,255,255,0.35), ${baseShadow}`
+                                    : baseShadow;
 
                                 return (
                                     <div
@@ -428,7 +659,9 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
                                             border: isTagged ? '0px solid white' : (colorMode === 'scene' ? `1px solid ${chroma(stageColor).darken(1.5).hex()}` : '1px solid rgba(255,255,255,0.1)'),
                                             borderLeft: `4px solid ${colorMode === 'scene' ? chroma(stageColor).darken(1.5).hex() : stageColor}`,
                                             color: '#fff',
-                                            boxShadow: colorMode === 'scene' ? '0 2px 8px rgba(0,0,0,0.4)' : '0 2px 4px rgba(0,0,0,0.4)'
+                                            boxShadow: cardBoxShadow,
+                                            opacity: dimmed ? 0.2 : 1,
+                                            transition: 'opacity 0.2s',
                                         }}
                                         onClick={() => onGroupClick(item.band)}
                                         onContextMenu={(e) => handleContextMenu(e, item.band)}
@@ -440,17 +673,23 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
                                             <div className="weekly-band-info">
                                                 <span>{item.band.DEBUT}-{item.band.FIN}</span>
                                             </div>
-                                            {isTagged && (
-                                                <div
-                                                    className="weekly-band-tag-indicator"
-                                                    style={{ color: interestColor }}
-                                                >
-                                                    {tagData.interest ? (
-                                                        <i className="fa-solid fa-star" style={{ fontSize: '0.7rem' }}></i>
-                                                    ) : (
-                                                        <span style={{ fontSize: '0.7rem' }}>{CONTEXT_TAGS[tagData.context]?.icon}</span>
-                                                    )}
-                                                </div>
+                                            {groupTaggedBandsMap ? (
+                                                groupTaggedBandsMap[item.band.id] && (
+                                                    <MemberBadges taggers={groupTaggedBandsMap[item.band.id]} />
+                                                )
+                                            ) : (
+                                                isTagged && (
+                                                    <div
+                                                        className="weekly-band-tag-indicator"
+                                                        style={{ color: interestColor }}
+                                                    >
+                                                        {tagData.interest ? (
+                                                            <i className="fa-solid fa-star" style={{ fontSize: '0.7rem' }}></i>
+                                                        ) : (
+                                                            <span style={{ fontSize: '0.7rem' }}>{CONTEXT_TAGS[tagData.context]?.icon}</span>
+                                                        )}
+                                                    </div>
+                                                )
                                             )}
                                         </div>
                                     </div>
@@ -458,82 +697,22 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
                             })}
 
                             {/* CUSTOM EVENTS LAYER (Filtered) */}
-                            {selectedScenes.includes('CUSTOM') && (customEvents || []).filter(e => e.day === day).map(event => {
-                                // Time Parsing & Position Logic matching WeeklyView layout
-                                if (typeof event.startTime !== 'string' || typeof event.endTime !== 'string') return null;
-
-                                const [startH, startM] = event.startTime.split(':').map(Number);
-                                const [endH, endM] = event.endTime.split(':').map(Number);
-
-                                let sH = startH;
-                                let eH = endH;
-
-                                // Adjust for night hours (< 6h) to match DayView/Band logic
-                                if (sH < 6) sH += 24;
-                                if (eH < 6) eH += 24;
-                                if (eH < sH) eH += 24; // Handle wrap around
-
-                                const start = sH * 60 + startM;
-                                const end = eH * 60 + endM;
-                                const duration = end - start;
-
-                                const height = Math.max(20, duration * PIXELS_PER_MINUTE);
-                                const originalTop = (start - (START_HOUR * 60)) * PIXELS_PER_MINUTE;
-                                const TOTAL_MINUTES = 18 * 60;
-                                const MAX_HEIGHT = TOTAL_MINUTES * PIXELS_PER_MINUTE;
-
-                                const top = state.reverse
-                                    ? originalTop
-                                    : MAX_HEIGHT - (originalTop + height);
-
-                                return (
-                                    <div
-                                        key={event.id}
-                                        className="weekly-custom-event"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            if (onEditCustomEvent) onEditCustomEvent(event);
-                                        }}
-                                        style={{
-                                            position: 'absolute',
-                                            top: `${top}px`,
-                                            height: `${height}px`,
-                                            left: '2%',
-                                            width: '96%',
-                                            zIndex: 50,
-                                            backgroundColor: 'rgba(255, 255, 255, 0.45)', // Matching DayView opacity
-                                            border: '1px solid rgba(255, 255, 255, 0.5)',
-                                            borderRadius: '6px',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            color: '#fff',
-                                            backdropFilter: 'blur(2px)',
-                                            cursor: 'pointer',
-                                            boxShadow: '0 2px 5px rgba(0,0,0,0.3)',
-                                            textShadow: '0 1px 2px rgba(0,0,0,0.8)',
-                                            overflow: 'hidden'
-                                        }}
-                                        title={`${event.title} (${event.startTime} - ${event.endTime})`}
-                                    >
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', overflow: 'hidden', padding: '0 5px' }}>
-                                            <span style={{ fontSize: '1.2rem' }}>{ICONS[event.type] || '📍'}</span>
-                                            {/* Only show title if height allows (event > 20min approx so >20px height) */}
-                                            {height > 25 && (
-                                                <span style={{ fontSize: '0.85rem', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                                    {event.title}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-                                );
-                            })}
+                            {selectedScenes.includes('CUSTOM') && (customEvents || []).filter(e => e.day === day).map(event => (
+                                <WeeklyCustomEvent key={event.id} event={event} onEdit={onEditCustomEvent} />
+                            ))}
                         </div>
                     </div>
                 );
                 })}
                 </div>
-                );
+                {displayedDays.length === 0 && (
+                    <div style={{ textAlign: 'center', color: '#555', padding: '60px 20px', fontSize: '1rem', fontStyle: 'italic' }}>
+                        {groupRo
+                            ? 'Aucun groupe mis en favori par les membres du groupe.'
+                            : 'Aucun groupe mis en favori.'}
+                    </div>
+                )}
+                </>);
             })()}
 
             {tagMenuState.open && (

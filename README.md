@@ -36,10 +36,11 @@ VITE_API_URL=http://localhost:3001/running-order/api
 ### Running Order
 - Visualisation dynamique du planning par jour et vue semaine
 - Système de tags personnalisés (niveau d'intérêt + contexte)
-- Gestion de créneaux personnels
+- Gestion de créneaux personnels (avec boutons masquer/modifier dans la vue semaine)
 - Statistiques festivalier ("Hellfest DNA")
 - Export de playlists Spotify/Deezer
 - Partage de RO entre utilisateurs
+- WeeklyView : dropdown de filtres scènes (split-button œil/scènes), message état vide, switch scènes annexes en mode groupe
 
 ### Carte interactive (MapView)
 - Image du site Hellfest (`hf-map.png`, 1376×768px)
@@ -57,6 +58,15 @@ VITE_API_URL=http://localhost:3001/running-order/api
 - Précision affichée en temps réel (`±Xm`), fallback automatique en manuel si permission refusée
 - Polling membres 30s, positions expirées après 2h
 - Panel dans le menu principal
+
+### RO Collaboratif de groupe
+- **"RO du groupe"** : WeeklyView fusionnant les favoris de tous les membres avec pastilles colorées (initiales + niveau d'intérêt)
+- Favoris encodés LZString dans `data/anon/{member_id}.json`, synchronisés automatiquement (debounce 1500ms) dès que l'utilisateur est dans ≥1 groupe
+- **Mode invité** : contour lumineux sur les groupes communs, toggle pour estomper les groupes non communs
+- **Mode RO partagé** : toggle "Mes favoris" pour mettre en avant ses propres favoris parmi le RO du groupe
+- **Onglet "Présents"** dans GroupCard (MapView/WeeklyView) : liste des membres du groupe actif qui ont tagué ce groupe, avec leur niveau d'intérêt — visible uniquement quand un groupe est actif
+- Par membre dans le panel Groupes : bouton RO individuel (bascule WeeklyView en mode invité) et bouton Position (zoom MapView sur le membre)
+- Message de consentement affiché à la création/adhésion d'un groupe
 
 ### Sync serveur (utilisateurs Discourse)
 - Sauvegarde automatique du RO sur le serveur

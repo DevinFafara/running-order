@@ -477,6 +477,39 @@
     font-size: 1rem;
 }
 
+/* Group RO — member badges */
+.weekly-member-badges {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    display: flex;
+    gap: 1px;
+    align-items: center;
+}
+
+.weekly-member-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    font-size: 0.42rem;
+    font-weight: bold;
+    color: #fff;
+    background-color: #555;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    flex-shrink: 0;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.weekly-member-badge--extra {
+    background-color: #444;
+    font-size: 0.38rem;
+    width: 16px;
+    border-radius: 6px;
+}
+
 /* Print Styles */
 @media print {
     @page {

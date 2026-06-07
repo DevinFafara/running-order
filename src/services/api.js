@@ -131,4 +131,11 @@ export const api = {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ member_id: memberId, position }),
         }).then(handleResponse),
+
+    updateFavorites: (memberId, favorites) =>
+        fetch(`${API_BASE}/anon/favorites`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ member_id: memberId, favorites }),
+        }).then(handleResponse),
 };
