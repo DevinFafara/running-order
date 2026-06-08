@@ -9,13 +9,13 @@ const ProfileModal = ({ isOpen, onClose, onOpenPanel, onShare, isInstallable, is
 
     const MENU_ITEMS = [
         { id: 'stats', label: 'Mes Stats', icon: 'fa-solid fa-chart-pie', color: '#FFD700' },
-        { id: 'contacts', label: 'Mes Contacts', icon: 'fa-solid fa-address-book', color: '#2196F3' },
-        ...(isAuthenticated ? [{ id: 'community', label: 'Communauté', icon: 'fa-solid fa-users', color: '#FF6B35' }] : []),
+        { id: 'groups', label: 'Crew', icon: 'fa-solid fa-user-group', color: '#dd7d24' },
+        { id: 'contacts', label: 'Mes Contacts', icon: 'fa-solid fa-address-book', color: '#79624f' },
         { id: 'share', label: 'Partager', icon: 'fa-solid fa-share-nodes', color: '#9C27B0' },
+        ...(isAuthenticated ? [{ id: 'community', label: 'Communauté', icon: 'fa-solid fa-users', color: 'white' }] : []),
         { id: 'install', label: isInstalled ? 'Installée' : 'Installer', icon: 'fa-solid fa-download', color: isInstalled ? '#555' : '#00b894', disabled: isInstalled },
         { id: 'settings', label: 'Paramètres', icon: 'fa-solid fa-gear', color: '#aaa' },
-        { id: 'groups', label: 'Crew', icon: 'fa-solid fa-user-group', color: '#4CAF50' },
-        { id: 'playlists', label: 'Playlists', icon: 'fa-solid fa-music', color: '#1DB954' },
+        { id: 'playlists', label: 'Playlists', icon: 'fa-solid fa-music', color: '#2196F3' },
         { id: 'credits', label: 'Crédits', icon: 'fa-solid fa-heart', color: '#ff6b6b' },
     ];
 

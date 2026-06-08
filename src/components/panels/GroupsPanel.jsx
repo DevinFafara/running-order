@@ -1,21 +1,53 @@
 import React, { useState, useCallback } from 'react';
-import { STAGE_CONFIG } from '../../constants';
+import { STAGES, STAGE_CONFIG, MAP_POIS } from '../../constants';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function nearestStageName(position) {
+const OFF_STAGE_KEYS = new Set([STAGES.LE_OFF1, STAGES.LE_OFF2]);
+const M_PER_PCT_X = 6.7;
+const M_PER_PCT_Y = 6.5;
+const MAX_NEAREST_M = 70;
+const CAMPING_POI = MAP_POIS.find(p => p.id === 'poi-tents');
+const MAX_CAMPING_M = 500;
+
+function nearestLandmark(position) {
     if (!position) return null;
     const x = parseFloat(position.x);
     const y = parseFloat(position.y);
-    let min = Infinity, nearest = null;
-    Object.values(STAGE_CONFIG).forEach(cfg => {
-        if (!cfg.mapPosition) return;
-        const dx = x - parseFloat(cfg.mapPosition.left);
-        const dy = y - parseFloat(cfg.mapPosition.top);
+    if (x <= 0 || x >= 100 || y <= 0 || y >= 100) return null;
+    let minDsq = Infinity, nearest = null, bestDx = 0, bestDy = 0;
+    const check = (name, left, top) => {
+        const dx = x - parseFloat(left);
+        const dy = y - parseFloat(top);
         const d = dx * dx + dy * dy;
-        if (d < min) { min = d; nearest = cfg.name; }
+        if (d < minDsq) { minDsq = d; nearest = name; bestDx = dx; bestDy = dy; }
+    };
+    Object.entries(STAGE_CONFIG).forEach(([key, cfg]) => {
+        if (OFF_STAGE_KEYS.has(key) || !cfg.mapPosition) return;
+        check(cfg.name, cfg.mapPosition.left, cfg.mapPosition.top);
     });
-    return nearest;
+    MAP_POIS.forEach(poi => {
+        if (!poi.mapPosition) return;
+        check(poi.name, poi.mapPosition.left, poi.mapPosition.top);
+    });
+    if (!nearest) return null;
+    const distanceM = Math.sqrt((bestDx * M_PER_PCT_X) ** 2 + (bestDy * M_PER_PCT_Y) ** 2);
+    return { name: nearest, distanceM };
+}
+
+function nearestLabel(position) {
+    const landmark = nearestLandmark(position);
+    if (landmark && landmark.distanceM <= MAX_NEAREST_M) return landmark.name;
+    if (CAMPING_POI?.mapPosition && position) {
+        const cx = parseFloat(position.x), cy = parseFloat(position.y);
+        if (cx > 0 && cx < 100 && cy > 0 && cy < 100) {
+            const dx = cx - parseFloat(CAMPING_POI.mapPosition.left);
+            const dy = cy - parseFloat(CAMPING_POI.mapPosition.top);
+            if (Math.sqrt((dx * M_PER_PCT_X) ** 2 + (dy * M_PER_PCT_Y) ** 2) <= MAX_CAMPING_M)
+                return CAMPING_POI.name;
+        }
+    }
+    return null;
 }
 
 function positionAge(updatedAt) {
@@ -46,10 +78,10 @@ function PositionLabel({ position, updatedAt }) {
     const age = positionAge(updatedAt);
     if (age === null) return <span style={{ color: '#666', fontSize: '0.78rem' }}>Position inconnue</span>;
     if (age > 7200000) return <span style={{ color: '#666', fontSize: '0.78rem' }}>Hors ligne</span>;
-    const stageName = nearestStageName(position);
+    const label = nearestLabel(position);
     return (
         <span style={{ color: '#999', fontSize: '0.78rem' }}>
-            {stageName ? `Près de ${stageName}` : 'Position connue'} · {formatAge(age)}
+            {label ? `Près de ${label}` : 'Position connue'} · {formatAge(age)}
         </span>
     );
 }
