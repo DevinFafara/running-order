@@ -353,15 +353,8 @@
 .map-view__clock-area {
     display: flex;
     align-items: center;
-    justify-content: flex-end;
     gap: 8px;
-    padding: 5px 16px;
-    background: rgba(0, 0, 0, 0.45);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-    flex-shrink: 0;
-    z-index: 20;
-/* --- A commenter en developpement --- */
-    /* display: none; */
+    margin-left: auto;
 }
 
 .map-preview-btn {
@@ -410,11 +403,6 @@
     pointer-events: none;
 }
 
-.map-view__clock--sim {
-    background: rgba(255, 200, 0, 0.15);
-    border-color: rgba(255, 200, 0, 0.3);
-    color: #ffc800;
-}
 
 .map-sim-select {
     background: rgba(255, 255, 255, 0.08);

@@ -903,17 +903,14 @@ const MapView = ({
     useEffect(() => {
         const measure = () => {
             const header = document.querySelector('.map-view__header');
-            const clock = document.querySelector('.map-view__clock-area');
             const appNav = 50;
-            const h = appNav + (header?.offsetHeight ?? 0) + (clock?.offsetHeight ?? 0);
+            const h = appNav + (header?.offsetHeight ?? 0);
             document.documentElement.style.setProperty('--map-top-area', `${h}px`);
         };
         measure();
         const obs = new ResizeObserver(measure);
-        ['.map-view__header', '.map-view__clock-area'].forEach(sel => {
-            const el = document.querySelector(sel);
-            if (el) obs.observe(el);
-        });
+        const el = document.querySelector('.map-view__header');
+        if (el) obs.observe(el);
         return () => { obs.disconnect(); document.documentElement.style.removeProperty('--map-top-area'); };
     }, []);
 
@@ -1122,6 +1119,32 @@ const MapView = ({
                     <span className="map-zoom-level">{Math.round(view.zoom * 100)}%</span>
                     <button className="map-zoom-btn" onClick={() => changeZoom(ZOOM_STEP)} disabled={view.zoom >= MAX_ZOOM} title="Zoom avant"><i className="fa-solid fa-plus" /></button>
                 </div>
+                <div className="map-view__clock-area">
+                    {new Date() < new Date('2026-06-15') && (<>
+                    <select
+                        className={`map-sim-select ${isSimMode ? 'map-sim-select--active' : ''}`}
+                        value={simDate ?? ''}
+                        onChange={e => setSimDate(e.target.value || null)}
+                    >
+                        <option value="">Heure réelle</option>
+                        {SIM_DATE_OPTIONS.map(opt => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                    </select>
+                    {isSimMode && (
+                        <select
+                            className="map-sim-select map-sim-select--active"
+                            value={simHour}
+                            onChange={e => setSimHour(Number(e.target.value))}
+                        >
+                            {Array.from({ length: 24 }, (_, i) => (
+                                <option key={i} value={i}>{String(i).padStart(2, '0')}h00</option>
+                            ))}
+                        </select>
+                    )}
+                    </>)}
+                    {!isSimMode && <LiveClock isPreviewActive={isPreviewActive} isFestivalLive={isFestivalLive} simDay={null} simTimeLabel={null} />}
+                </div>
             </div>
 
             {positionMode && (
@@ -1137,31 +1160,6 @@ const MapView = ({
                     >Annuler</button>
                 </div>
             )}
-
-            <div className="map-view__clock-area">
-                <select
-                    className={`map-sim-select ${isSimMode ? 'map-sim-select--active' : ''}`}
-                    value={simDate ?? ''}
-                    onChange={e => setSimDate(e.target.value || null)}
-                >
-                    <option value="">Heure réelle</option>
-                    {SIM_DATE_OPTIONS.map(opt => (
-                        <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                </select>
-                {isSimMode && (
-                    <select
-                        className="map-sim-select map-sim-select--active"
-                        value={simHour}
-                        onChange={e => setSimHour(Number(e.target.value))}
-                    >
-                        {Array.from({ length: 24 }, (_, i) => (
-                            <option key={i} value={i}>{String(i).padStart(2, '0')}h00</option>
-                        ))}
-                    </select>
-                )}
-                <LiveClock isPreviewActive={isPreviewActive} isFestivalLive={isFestivalLive} simDay={isSimMode ? activeDayName : null} simTimeLabel={simTimeLabel} />
-            </div>
 
             {/* Map viewport */}
             <div
@@ -1306,7 +1304,7 @@ const LiveClock = ({ isPreviewActive, isFestivalLive, simDay, simTimeLabel }) =>
         : timeStr;
 
     return (
-        <div className={`map-view__clock ${isSimDisplay ? 'map-view__clock--sim' : ''}`}>
+        <div className="map-view__clock">
             <i className="fa-solid fa-clock" /> {label}
         </div>
     );
