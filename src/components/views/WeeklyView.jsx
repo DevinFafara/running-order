@@ -709,6 +709,8 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
                                             <div className="weekly-band-info">
                                                 <span>{item.band.DEBUT}-{item.band.FIN}</span>
                                             </div>
+                                        </div>
+                                        <div style={{ position: 'absolute', top: 2, right: 2, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1, pointerEvents: 'none' }}>
                                             {groupTaggedBandsMap ? (
                                                 groupTaggedBandsMap[item.band.id] && (
                                                     <MemberBadges taggers={groupTaggedBandsMap[item.band.id]} />
@@ -724,7 +726,7 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
                                                         <MemberBadges taggers={[{ pseudo: guestName, interest: tagData.interest, context: tagData.context }]} />
                                                     )}
                                                     {ownTag && (
-                                                        <div className="weekly-band-tag-indicator" style={{ color: ownTag.interest ? getInterestColor(ownTag.interest) : 'white' }}>
+                                                        <div style={{ color: ownTag.interest ? getInterestColor(ownTag.interest) : 'white', display: 'flex', alignItems: 'center' }}>
                                                             {ownTag.interest
                                                                 ? <i className="fa-solid fa-star" style={{ fontSize: '0.7rem' }} />
                                                                 : <span style={{ fontSize: '0.7rem' }}>{CONTEXT_TAGS[ownTag.context]?.icon}</span>
@@ -734,15 +736,11 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
                                                 </>);
                                             })() : (
                                                 isTagged && (
-                                                    <div
-                                                        className="weekly-band-tag-indicator"
-                                                        style={{ color: interestColor }}
-                                                    >
-                                                        {tagData.interest ? (
-                                                            <i className="fa-solid fa-star" style={{ fontSize: '0.7rem' }}></i>
-                                                        ) : (
-                                                            <span style={{ fontSize: '0.7rem' }}>{CONTEXT_TAGS[tagData.context]?.icon}</span>
-                                                        )}
+                                                    <div style={{ color: interestColor, display: 'flex', alignItems: 'center' }}>
+                                                        {tagData.interest
+                                                            ? <i className="fa-solid fa-star" style={{ fontSize: '0.7rem' }} />
+                                                            : <span style={{ fontSize: '0.7rem' }}>{CONTEXT_TAGS[tagData.context]?.icon}</span>
+                                                        }
                                                     </div>
                                                 )
                                             )}

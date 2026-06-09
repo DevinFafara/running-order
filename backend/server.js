@@ -615,8 +615,8 @@ app.post('/running-order/api/groups', (req, res) => {
     if (!name || !member_id || !pseudo) {
         return res.status(400).json({ error: 'Champs name, member_id et pseudo requis' });
     }
-    const sanitizedName = String(name).trim().slice(0, 50);
-    const sanitizedPseudo = String(pseudo).trim().slice(0, 30);
+    const sanitizedName = String(name).trim().slice(0, 20);
+    const sanitizedPseudo = String(pseudo).trim().slice(0, 15);
     const sanitizedMemberId = sanitizeMemberId(member_id);
     if (!sanitizedName || !sanitizedPseudo || !sanitizedMemberId) {
         return res.status(400).json({ error: 'Données invalides' });
@@ -650,17 +650,18 @@ app.get('/running-order/api/groups/:code', (req, res) => {
         const group = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
         const members = group.members.map(m => {
             const anonPath = path.join(ANON_DIR, `${m.member_id}.json`);
-            let position = null, position_updated_at = null, favorites = null, favorites_updated_at = null;
+            let position = null, position_updated_at = null, position_comment = null, favorites = null, favorites_updated_at = null;
             if (fs.existsSync(anonPath)) {
                 try {
                     const anon = JSON.parse(fs.readFileSync(anonPath, 'utf-8'));
                     position = anon.position || null;
                     position_updated_at = anon.position_updated_at || null;
+                    position_comment = anon.position_comment || null;
                     favorites = anon.favorites || null;
                     favorites_updated_at = anon.favorites_updated_at || null;
                 } catch {}
             }
-            return { ...m, position, position_updated_at, favorites, favorites_updated_at };
+            return { ...m, position, position_updated_at, position_comment, favorites, favorites_updated_at };
         });
         res.json({ ...group, members });
     } catch (err) {
@@ -675,7 +676,7 @@ app.post('/running-order/api/groups/:code/join', async (req, res) => {
     const { member_id, pseudo, username } = req.body;
     if (!member_id || !pseudo) return res.status(400).json({ error: 'Champs member_id et pseudo requis' });
     const sanitizedMemberId = sanitizeMemberId(member_id);
-    const sanitizedPseudo = String(pseudo).trim().slice(0, 30);
+    const sanitizedPseudo = String(pseudo).trim().slice(0, 15);
     const filePath = path.join(GROUPS_DIR, `${code}.json`);
     if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Groupe introuvable' });
     let groupName;
@@ -801,9 +802,9 @@ app.put('/running-order/api/anon/favorites', async (req, res) => {
     }
 });
 
-// PUT /running-order/api/anon/position — Mettre à jour sa position
+// PUT /running-order/api/anon/position — Mettre à jour sa position et/ou son commentaire
 app.put('/running-order/api/anon/position', async (req, res) => {
-    const { member_id, position } = req.body;
+    const { member_id, position, comment } = req.body;
     if (!member_id) return res.status(400).json({ error: 'member_id requis' });
     const sanitizedMemberId = sanitizeMemberId(member_id);
     if (!sanitizedMemberId) return res.status(400).json({ error: 'member_id invalide' });
@@ -814,12 +815,14 @@ app.put('/running-order/api/anon/position', async (req, res) => {
             if (fs.existsSync(filePath)) {
                 try { existing = JSON.parse(fs.readFileSync(filePath, 'utf-8')); } catch {}
             }
-            const data = {
-                ...existing,
-                member_id: sanitizedMemberId,
-                position: position || null,
-                position_updated_at: new Date().toISOString(),
-            };
+            const data = { ...existing, member_id: sanitizedMemberId };
+            if ('position' in req.body) {
+                data.position = position || null;
+                data.position_updated_at = new Date().toISOString();
+            }
+            if ('comment' in req.body) {
+                data.position_comment = typeof comment === 'string' ? comment.slice(0, 50).trim() || null : null;
+            }
             atomicWriteFile(filePath, JSON.stringify(data, null, 2));
         });
         res.json({ success: true });

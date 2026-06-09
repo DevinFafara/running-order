@@ -113,8 +113,8 @@ export function useGroups(username = null, taggedBands = {}) {
         if (activeGroupCode === code) fetchGroup(code);
     }, [memberId, activeGroupCode, fetchGroup]);
 
-    const updatePosition = useCallback(async (position) => {
-        await api.updatePosition(memberId, position);
+    const updatePosition = useCallback(async (position, comment) => {
+        await api.updatePosition(memberId, position, comment);
         if (activeGroupCode) fetchGroup(activeGroupCode);
     }, [memberId, activeGroupCode, fetchGroup]);
 
