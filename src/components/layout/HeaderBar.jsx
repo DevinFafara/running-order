@@ -117,36 +117,6 @@ const HeaderBar = ({
                             </span>
                         )}
                     </div>
-                    {isGuestMode && (
-                        <div style={{
-                            fontSize: '0.8rem',
-                            color: '#FFD700',
-                            marginLeft: '10px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '5px'
-                        }}>
-                            <i className="fa-solid fa-eye"></i>
-                            <span>{guestName}</span>
-                            <button
-                                onClick={onExitGuestMode}
-                                style={{
-                                    background: 'rgba(255,255,255,0.1)',
-                                    border: 'none',
-                                    borderRadius: '50%',
-                                    width: '20px',
-                                    height: '20px',
-                                    color: '#fff',
-                                    cursor: 'pointer',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center'
-                                }}
-                            >
-                                ×
-                            </button>
-                        </div>
-                    )}
                 </div>
 
                 <div className="toolbar">
