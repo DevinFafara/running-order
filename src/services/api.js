@@ -132,12 +132,16 @@ export const api = {
             body: JSON.stringify({ member_id: requesterMemberId }),
         }).then(handleResponse),
 
-    updatePosition: (memberId, position) =>
-        fetch(`${API_BASE}/anon/position`, {
+    updatePosition: (memberId, position, comment) => {
+        const body = { member_id: memberId };
+        if (position !== undefined) body.position = position;
+        if (comment !== undefined) body.comment = comment;
+        return fetch(`${API_BASE}/anon/position`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ member_id: memberId, position }),
-        }).then(handleResponse),
+            body: JSON.stringify(body),
+        }).then(handleResponse);
+    },
 
     updateFavorites: (memberId, favorites) =>
         fetch(`${API_BASE}/anon/favorites`, {

@@ -233,6 +233,15 @@
     cursor: crosshair;
 }
 
+.map-view__container--position .poi-marker,
+.map-view__container--position .poi-marker *,
+.map-view__container--position .stage-marker,
+.map-view__container--position .stage-marker *,
+.map-view__container--position .member-marker,
+.map-view__container--position .member-marker * {
+    pointer-events: none !important;
+}
+
 /* ── Position mode banner ─────────────────────────────────────────────────── */
 .map-position-banner {
     background: rgba(21, 101, 192, 0.15);
@@ -289,6 +298,22 @@
     padding: 2px 5px;
     border-radius: 3px;
     white-space: nowrap;
+    pointer-events: none;
+}
+
+.member-marker__comment-badge {
+    position: absolute;
+    top: -4px;
+    right: -5px;
+    background: #1565C0;
+    color: #fff;
+    border-radius: 50%;
+    width: 13px;
+    height: 13px;
+    font-size: 0.45rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     pointer-events: none;
 }
 
@@ -1311,6 +1336,15 @@
     flex-shrink: 0;
 }
 
+.map-member-comment {
+    font-size: 0.68rem;
+    color: #7e9ab5;
+    font-style: italic;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .map-member-row--zoomable:hover .map-member-zoom-icon {
     color: #FFD700;
 }
@@ -1351,6 +1385,125 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     flex: 1;
+}
+
+/* ── Comment modal ───────────────────────────────────────────────────────────── */
+
+.comment-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(3px);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    /* Ancré en haut : reste visible même quand le clavier mobile réduit la viewport */
+    padding-top: 15vh;
+}
+
+.comment-modal {
+    background: #1a1a2e;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 16px;
+    padding: 20px;
+    width: calc(100% - 40px);
+    max-width: 360px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.comment-modal__title {
+    color: #e0e0e0;
+    font-size: 0.92rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.comment-modal__input {
+    width: 100%;
+    background: #252535;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    color: #e0e0e0;
+    font-size: 0.9rem;
+    font-family: inherit;
+    padding: 10px 12px;
+    resize: none;
+    outline: none;
+    box-sizing: border-box;
+    line-height: 1.5;
+    transition: border-color 0.15s;
+}
+
+.comment-modal__input:focus {
+    border-color: rgba(100, 160, 255, 0.5);
+}
+
+.comment-modal__count {
+    color: #555;
+    font-size: 0.7rem;
+    text-align: right;
+    margin-top: -6px;
+}
+
+.comment-modal__actions {
+    display: flex;
+    gap: 8px;
+}
+
+.comment-modal__btn {
+    flex: 1;
+    padding: 10px 16px;
+    border-radius: 10px;
+    border: none;
+    font-size: 0.88rem;
+    font-family: inherit;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.15s;
+}
+
+.comment-modal__btn--primary {
+    background: #dc2829;
+    color: #fff;
+}
+
+.comment-modal__btn--primary:hover {
+    background: #e83030;
+}
+
+.comment-modal__btn--secondary {
+    background: rgba(255, 255, 255, 0.06);
+    color: #aaa;
+    border: 1px solid #333;
+}
+
+.comment-modal__btn--secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.comment-modal__btn--clear {
+    flex: 0;
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.04);
+    color: #555;
+    border: 1px solid #2a2a2a;
+}
+
+.comment-modal__btn--clear:not(:disabled):hover {
+    color: #e57373;
+    border-color: #4a2020;
+    background: rgba(220, 40, 41, 0.08);
+}
+
+.comment-modal__btn--clear:disabled {
+    opacity: 0.3;
+    cursor: default;
 }
 
 /* Mobile: map no longer shrinks when GroupCard is open — GroupCard sits above the grid instead */

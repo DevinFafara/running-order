@@ -566,7 +566,7 @@ function formatAge(ms) {
 const GroupsTabContent = ({
     myGroups, activeGroupCode, setActiveGroupCode, activeGroupData,
     memberId, positionSource, setPositionSource, positionMode, setPositionMode, onFlyToMember, onViewMemberRO,
-    gpsAccuracy, gpsInBounds, gpsRawPosition, gpsError,
+    gpsAccuracy, gpsInBounds, gpsRawPosition, gpsError, onOpenCommentModal,
 }) => {
     const selectedGroup = myGroups.find(g => g.code === activeGroupCode);
     const rawMembers = activeGroupData?.code === activeGroupCode ? activeGroupData.members : [];
@@ -626,6 +626,15 @@ const GroupsTabContent = ({
                         {positionMode ? 'Annuler' : 'Changer ma position'}
                     </button>
                 )}
+                {positionSource === 'gps' && onOpenCommentModal && (
+                    <button
+                        className="map-switch-btn"
+                        onClick={onOpenCommentModal}
+                        style={{ marginLeft: 'auto' }}
+                    >
+                        <i className="fa-solid fa-comment" style={{ marginRight: 5 }} />Message
+                    </button>
+                )}
             </div>
 
             {/* Liste groupes ou membres */}
@@ -680,6 +689,9 @@ const GroupsTabContent = ({
                                             {m.pseudo}{isMe && <span className="map-member-me"> (moi)</span>}
                                         </span>
                                         <span className="map-member-pos">{posText}</span>
+                                        {m.position_comment && (
+                                            <span className="map-member-comment">« {m.position_comment} »</span>
+                                        )}
                                     </div>
                                     {!isMe && m.favorites && onViewMemberRO && (
                                         <button
@@ -750,6 +762,42 @@ const MemberMarker = ({ member, isMe, counterTransform }) => {
     );
 };
 
+const CommentModal = ({ draft, setDraft, onSave, onSkip, isGPS }) => createPortal(
+    <div className="comment-modal-overlay" onClick={onSkip}>
+        <div className="comment-modal" onClick={e => e.stopPropagation()}>
+            <div className="comment-modal__title">
+                <i className="fa-solid fa-comment" style={{ marginRight: 8 }} />Message de position
+            </div>
+            <textarea
+                className="comment-modal__input"
+                autoFocus
+                maxLength={50}
+                rows={2}
+                value={draft}
+                onChange={e => setDraft(e.target.value)}
+                placeholder="Devant la scène, côté gauche…"
+            />
+            <div className="comment-modal__count">{draft.length}/50</div>
+            <div className="comment-modal__actions">
+                <button className="comment-modal__btn comment-modal__btn--primary" onClick={onSave}>
+                    Enregistrer
+                </button>
+                <button className="comment-modal__btn comment-modal__btn--secondary" onClick={onSkip}>
+                    {isGPS ? 'Annuler' : 'Passer'}
+                </button>
+                <button
+                    className="comment-modal__btn comment-modal__btn--clear"
+                    onClick={() => setDraft('')}
+                    disabled={draft.length === 0}
+                >
+                    <i className="fa-solid fa-circle-xmark" />
+                </button>
+            </div>
+        </div>
+    </div>,
+    document.body
+);
+
 const MapView = ({
     groups, onGroupSelect,
     myGroups = [], activeGroupCode = null, setActiveGroupCode = null,
@@ -785,8 +833,17 @@ const MapView = ({
     }, [myGroups.length]);
 
     const [positionMode, setPositionMode] = useState(false);
+    const [pendingPosition, setPendingPosition] = useState(null);
+    const [commentModalOpen, setCommentModalOpen] = useState(false);
+    const [commentDraft, setCommentDraft] = useState('');
 
     const groupMembers = activeGroupData?.members || [];
+
+    const myCommentRef = useRef('');
+    myCommentRef.current = useMemo(() => {
+        if (!activeGroupData || !memberId) return '';
+        return activeGroupData.members.find(m => m.member_id === memberId)?.position_comment || '';
+    }, [activeGroupData, memberId]);
 
     // Simulation — null = heure réelle
     const [simDate, setSimDate] = useState(null); // ex: '2026-06-21'
@@ -1074,8 +1131,10 @@ const MapView = ({
         const y = Math.max(0.1, Math.min(99.9, (e.clientY - rect.top) / rect.height * 100)).toFixed(1);
 
         if (positionMode && updatePosition) {
-            updatePosition({ x: `${x}%`, y: `${y}%` });
+            setPendingPosition({ x: `${x}%`, y: `${y}%` });
+            setCommentDraft(myCommentRef.current);
             setPositionMode(false);
+            setCommentModalOpen(true);
             return;
         }
 
@@ -1087,6 +1146,30 @@ const MapView = ({
     const handleGPSPosition = useCallback((mapPos) => {
         if (updatePosition) updatePosition(mapPos);
     }, [updatePosition]);
+
+    const openCommentModal = useCallback(() => {
+        setPendingPosition(null);
+        setCommentDraft(myCommentRef.current);
+        setCommentModalOpen(true);
+    }, []);
+
+    const handleCommentSave = useCallback(() => {
+        if (!updatePosition) return;
+        const comment = commentDraft.trim() || null;
+        if (pendingPosition === null) {
+            updatePosition(undefined, comment);
+        } else {
+            updatePosition(pendingPosition, comment);
+        }
+        setCommentModalOpen(false);
+    }, [updatePosition, pendingPosition, commentDraft]);
+
+    const handleCommentSkip = useCallback(() => {
+        if (pendingPosition !== null && updatePosition) {
+            updatePosition(pendingPosition);
+        }
+        setCommentModalOpen(false);
+    }, [updatePosition, pendingPosition]);
 
     const { accuracy: gpsAccuracy, inBounds: gpsInBounds, rawPosition: gpsRawPosition, error: gpsError } = useGPS({
         active: positionSource === 'gps',
@@ -1111,6 +1194,7 @@ const MapView = ({
 
 
     return (
+        <>
         <div className="map-view">
             {/* Header */}
             <div className="map-view__header">
@@ -1151,7 +1235,7 @@ const MapView = ({
                 <div className="map-position-banner">
                     <i className="fa-solid fa-hand-pointer" style={{ marginRight: 6 }} />Tap sur la carte pour te localiser
                     <button
-                        onClick={() => { updatePosition(null); setPositionMode(false); }}
+                        onClick={() => { updatePosition(null, null); setPositionMode(false); }}
                         style={{ background: 'none', border: 'none', color: '#ef9a9a', cursor: 'pointer', fontSize: '0.8rem', padding: 0, marginLeft: 'auto' }}
                     >Retirer ma position</button>
                     <button
@@ -1280,11 +1364,22 @@ const MapView = ({
                             gpsInBounds={gpsInBounds}
                             gpsRawPosition={gpsRawPosition}
                             gpsError={gpsError}
+                            onOpenCommentModal={openCommentModal}
                         />
                     )}
                 </div>
             </div>
         </div>
+        {commentModalOpen && (
+            <CommentModal
+                draft={commentDraft}
+                setDraft={setCommentDraft}
+                onSave={handleCommentSave}
+                onSkip={handleCommentSkip}
+                isGPS={pendingPosition === null}
+            />
+        )}
+        </>
     );
 };
 
