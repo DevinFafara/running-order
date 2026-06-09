@@ -615,8 +615,8 @@ app.post('/running-order/api/groups', (req, res) => {
     if (!name || !member_id || !pseudo) {
         return res.status(400).json({ error: 'Champs name, member_id et pseudo requis' });
     }
-    const sanitizedName = String(name).trim().slice(0, 50);
-    const sanitizedPseudo = String(pseudo).trim().slice(0, 30);
+    const sanitizedName = String(name).trim().slice(0, 20);
+    const sanitizedPseudo = String(pseudo).trim().slice(0, 15);
     const sanitizedMemberId = sanitizeMemberId(member_id);
     if (!sanitizedName || !sanitizedPseudo || !sanitizedMemberId) {
         return res.status(400).json({ error: 'Données invalides' });
@@ -675,7 +675,7 @@ app.post('/running-order/api/groups/:code/join', async (req, res) => {
     const { member_id, pseudo, username } = req.body;
     if (!member_id || !pseudo) return res.status(400).json({ error: 'Champs member_id et pseudo requis' });
     const sanitizedMemberId = sanitizeMemberId(member_id);
-    const sanitizedPseudo = String(pseudo).trim().slice(0, 30);
+    const sanitizedPseudo = String(pseudo).trim().slice(0, 15);
     const filePath = path.join(GROUPS_DIR, `${code}.json`);
     if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Groupe introuvable' });
     let groupName;

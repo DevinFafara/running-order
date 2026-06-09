@@ -378,12 +378,12 @@ const GroupsPanel = ({
                     <div>
                         <label style={S.label}>Nom du crew</label>
                         <input style={S.input} placeholder="Les Zinzins du 56…" value={createName}
-                            onChange={e => setCreateName(e.target.value)} maxLength={50} autoFocus />
+                            onChange={e => setCreateName(e.target.value)} maxLength={20} autoFocus />
                     </div>
                     <div>
                         <label style={S.label}>Ton pseudo dans ce crew</label>
                         <input style={S.input} placeholder=" Metalhead42, Roger…" value={createPseudo}
-                            onChange={e => setCreatePseudo(e.target.value)} maxLength={30}
+                            onChange={e => setCreatePseudo(e.target.value)} maxLength={15}
                             onKeyDown={e => e.key === 'Enter' && handleCreate()} />
                     </div>
                     {formError && <div style={S.errorBox}>{formError}</div>}
@@ -416,7 +416,7 @@ const GroupsPanel = ({
                     <div>
                         <label style={S.label}>Ton pseudo dans ce crew</label>
                         <input style={S.input} placeholder="La Bête, Metalhead42…" value={joinPseudo}
-                            onChange={e => setJoinPseudo(e.target.value)} maxLength={30}
+                            onChange={e => setJoinPseudo(e.target.value)} maxLength={15}
                             onKeyDown={e => e.key === 'Enter' && handleJoin()} />
                     </div>
                     {formError && <div style={S.errorBox}>{formError}</div>}
