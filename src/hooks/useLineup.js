@@ -67,6 +67,7 @@ export const useLineup = () => {
 
     useEffect(() => {
         loadData().catch(console.error);
+        checkForUpdates();
         const intervalId = setInterval(checkForUpdates, 60000);
         return () => clearInterval(intervalId);
     }, [loadData, checkForUpdates]);

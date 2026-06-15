@@ -5,6 +5,13 @@ const PlaylistPanel = ({ isOpen, onClose }) => {
 
     const playlists = [
         {
+            id: 'qobuz',
+            name: 'Qobuz',
+            icon: 'fa-solid fa-music',
+            color: '#0054A6',
+            url: 'https://open.qobuz.com/playlist/44121825'
+        },
+        {
             id: 'spotify',
             name: 'Spotify',
             icon: 'fa-brands fa-spotify',
