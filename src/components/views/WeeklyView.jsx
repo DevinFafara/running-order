@@ -726,21 +726,17 @@ const WeeklyView = ({ groups, onGroupClick, customEvents = [], onEditCustomEvent
                                                         <MemberBadges taggers={[{ pseudo: guestName, interest: tagData.interest, context: tagData.context }]} />
                                                     )}
                                                     {ownTag && (
-                                                        <div style={{ color: ownTag.interest ? getInterestColor(ownTag.interest) : 'white', display: 'flex', alignItems: 'center' }}>
-                                                            {ownTag.interest
-                                                                ? <i className="fa-solid fa-star" style={{ fontSize: '0.7rem' }} />
-                                                                : <span style={{ fontSize: '0.7rem' }}>{CONTEXT_TAGS[ownTag.context]?.icon}</span>
-                                                            }
+                                                        <div style={{ color: ownTag.interest ? getInterestColor(ownTag.interest) : 'white', display: 'flex', alignItems: 'center', gap: '2px' }}>
+                                                            {ownTag.interest && <i className="fa-solid fa-star" style={{ fontSize: '0.7rem' }} />}
+                                                            {ownTag.context && <span style={{ fontSize: '0.7rem' }}>{CONTEXT_TAGS[ownTag.context]?.icon}</span>}
                                                         </div>
                                                     )}
                                                 </>);
                                             })() : (
                                                 isTagged && (
-                                                    <div style={{ color: interestColor, display: 'flex', alignItems: 'center' }}>
-                                                        {tagData.interest
-                                                            ? <i className="fa-solid fa-star" style={{ fontSize: '0.7rem' }} />
-                                                            : <span style={{ fontSize: '0.7rem' }}>{CONTEXT_TAGS[tagData.context]?.icon}</span>
-                                                        }
+                                                    <div style={{ color: interestColor, display: 'flex', alignItems: 'center', gap: '2px' }}>
+                                                        {tagData.interest && <i className="fa-solid fa-star" style={{ fontSize: '0.7rem' }} />}
+                                                        {tagData.context && <span style={{ fontSize: '0.7rem' }}>{CONTEXT_TAGS[tagData.context]?.icon}</span>}
                                                     </div>
                                                 )
                                             )}
