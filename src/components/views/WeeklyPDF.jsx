@@ -5,6 +5,12 @@ import { timeToMinutes } from '../../utils/statsUtils';
 import { calculateWeeklyLayout } from '../../utils/pdfLayout';
 import chroma from 'chroma-js';
 
+const CONTEXT_PDF = {
+    with_friend: { char: '+', color: '#4A90D9' },
+    strategic:   { char: '~', color: '#FF8C00' },
+    skip:        { char: 'x', color: '#dc2829' },
+};
+
 const PIXELS_PER_MINUTE_PDF = 0.51;
 const START_HOUR = 10;
 const TOTAL_MINUTES = 18 * 60;
@@ -220,6 +226,11 @@ const styles = StyleSheet.create({
         top: 1,
         right: 2,
     },
+    tagContext: {
+        position: 'absolute',
+        bottom: 1,
+        right: 2,
+    },
     // Légende Mardi
     legend: {
         position: 'absolute',
@@ -361,7 +372,8 @@ const FavDayColumn = ({ day, bands, flex, isLast, colorMode, taggedBands, revers
                         const textColor = colorMode === 'scene' ? '#ffffff' : '#000000';
                         const interestColor = tagInfo?.interest
                             ? (interestColors[tagInfo.interest] ?? INTEREST_LEVELS[tagInfo.interest]?.defaultColor ?? '#d4af37')
-                            : '#d4af37';
+                            : null;
+                        const contextIndicator = tagInfo?.context ? CONTEXT_PDF[tagInfo.context] : null;
                         return (
                             <View
                                 key={item.band.id || idx}
@@ -386,9 +398,14 @@ const FavDayColumn = ({ day, bands, flex, isLast, colorMode, taggedBands, revers
                                         {item.band.DEBUT}-{item.band.FIN}
                                     </Text>
                                 )}
-                                {isTagged && (
+                                {isTagged && interestColor && (
                                     <Text style={[styles.tagStar, { color: interestColor, fontSize: isCompact ? 9 : 13, fontFamily: 'Helvetica-Bold' }]}>
                                         *
+                                    </Text>
+                                )}
+                                {isTagged && contextIndicator && (
+                                    <Text style={[interestColor ? styles.tagContext : styles.tagStar, { color: contextIndicator.color, fontSize: isCompact ? 7 : 10, fontFamily: 'Helvetica-Bold' }]}>
+                                        {contextIndicator.char}
                                     </Text>
                                 )}
                             </View>
@@ -478,7 +495,8 @@ const DayColumn = ({ day, type, flex, isLast, groups, colorMode, taggedBands, re
                     const textColor = colorMode === 'scene' ? '#ffffff' : '#000000';
                     const interestColor = tagInfo?.interest
                         ? (interestColors[tagInfo.interest] ?? INTEREST_LEVELS[tagInfo.interest]?.defaultColor ?? '#d4af37')
-                        : '#d4af37';
+                        : null;
+                    const contextIndicator = tagInfo?.context ? CONTEXT_PDF[tagInfo.context] : null;
 
                     return (
                         <View
@@ -506,12 +524,19 @@ const DayColumn = ({ day, type, flex, isLast, groups, colorMode, taggedBands, re
                                     {item.band.DEBUT}-{item.band.FIN}
                                 </Text>
                             )}
-                            {isTagged && (
+                            {isTagged && interestColor && (
                                 <Text style={[styles.tagStar, {
                                     color: interestColor,
                                     fontSize: isCompact ? 9 : 13,
                                     fontFamily: 'Helvetica-Bold',
                                 }]}>*</Text>
+                            )}
+                            {isTagged && contextIndicator && (
+                                <Text style={[interestColor ? styles.tagContext : styles.tagStar, {
+                                    color: contextIndicator.color,
+                                    fontSize: isCompact ? 7 : 10,
+                                    fontFamily: 'Helvetica-Bold',
+                                }]}>{contextIndicator.char}</Text>
                             )}
                         </View>
                     );
@@ -576,7 +601,7 @@ const WeeklyPDF = ({ groups, customEvents, selectedScenes, colorMode, taggedBand
             let dayBands = groups.filter(g =>
                 (g.JOUR === day || g.DAY === day) && selectedScenes.includes(g.SCENE)
             );
-            dayBands = dayBands.filter(g => taggedBands[g.id]);
+            dayBands = dayBands.filter(g => taggedBands[g.id] && taggedBands[g.id].context !== 'skip');
             return { day, bands: dayBands };
         }).filter(d => d.bands.length > 0);
 
