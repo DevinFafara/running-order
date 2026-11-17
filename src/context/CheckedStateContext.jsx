@@ -285,7 +285,9 @@ export const CheckedStateProvider = ({ children, user }) => {
                     contacts: encodeContacts(contactsForSync),
                     community_opt_in: consentChoice === 'full',
                     favorites_count: Object.keys(state.taggedBands).length,
-                    current_favorites_count: Object.keys(state.taggedBands).filter(isCurrentEditionId).length
+                    current_favorites_count: Object.keys(state.taggedBands).filter(isCurrentEditionId).length,
+                    // Édition à laquelle se rapporte current_favorites_count (un compteur d'une autre édition n'est pas affiché)
+                    current_edition: EDITION.year
                 });
 
                 lastSavedEncodedRef.current = encoded;

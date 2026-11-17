@@ -187,6 +187,7 @@ function updateIndexEntry(userData) {
             community_opt_in: userData.community_opt_in || false,
             favorites_count: userData.favorites_count || 0,
             current_favorites_count: userData.current_favorites_count ?? null,
+            current_edition: userData.current_edition ?? null,
             updated_at: userData.updated_at
         };
 
@@ -457,6 +458,10 @@ app.post('/running-order/api/ro/:username', verifyAuth, async (req, res) => {
         community_opt_in:        req.body.community_opt_in        ?? existingData.community_opt_in        ?? false,
         favorites_count:         req.body.favorites_count         ?? existingData.favorites_count         ?? 0,
         current_favorites_count: req.body.current_favorites_count ?? existingData.current_favorites_count ?? null,
+        // Édition du compteur : toujours prise avec lui (un ancien client qui envoie un compteur sans édition l'invalide)
+        current_edition: req.body.current_favorites_count !== undefined
+            ? (req.body.current_edition ?? null)
+            : (existingData.current_edition ?? null),
         updated_at: new Date().toISOString()
     };
 
@@ -523,6 +528,8 @@ app.get('/running-order/api/admin/rebuild-index', async (req, res) => {
                     avatar_url: data.avatar_url || null,
                     community_opt_in: data.community_opt_in || false,
                     favorites_count: data.favorites_count || 0,
+                    current_favorites_count: data.current_favorites_count ?? null,
+                    current_edition: data.current_edition ?? null,
                     updated_at: data.updated_at || null
                 });
             } catch (parseErr) {

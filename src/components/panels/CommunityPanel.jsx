@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../../services/api';
 import { decodeROFromServer } from '../../utils/sharingUtils';
+import { EDITION } from '../../editions';
 
 /**
  * CommunityPanel — Lists opt-in community members.
@@ -260,7 +261,7 @@ const CommunityPanel = ({ isOpen, onClose, onViewUserRO, onSaveContact, currentU
                                             {user.username}
                                         </div>
                                         <div style={{ fontSize: '0.75rem', color: '#888', display: 'flex', gap: '10px' }}>
-                                            <span>{user.current_favorites_count ?? 0} groupes</span>
+                                            <span>{user.current_edition === EDITION.year ? (user.current_favorites_count ?? 0) : 0} groupes</span>
                                             {user.updated_at && (
                                                 <span style={{ opacity: 0.8 }}>
                                                     · {formatDate(user.updated_at)}
