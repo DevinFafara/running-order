@@ -61,7 +61,11 @@ const edition = {
         { id: 'MS', name: 'Mainstages', short: 'MS', stages: ['MAINSTAGE 1', 'MAINSTAGE 2'], colorMix: 0.25, texture: 'plate' },
         { id: 'WR', name: 'Warzone / Riot', short: 'WZ/RT', stages: ['WARZONE', 'RIOT'], texture: 'camo' },
         { id: 'VA', name: 'Valley / Abyss', short: 'VY/AB', stages: ['VALLEY', 'ABYSS'], texture: 'psyche' },
-        { id: 'AF', name: 'Altar / Forge', short: 'AL/FG', stages: ['ALTAR', 'FORGE'], texture: 'magma' },
+        {
+            id: 'AF', name: 'Altar / Forge', short: 'AL/FG', stages: ['ALTAR', 'FORGE'], texture: 'magma',
+            // Intensité propre à une texture (remplace textures.intensity) : la lave est plus belle discrète
+            textureIntensity: { magma: 0.25 },
+        },
         { id: 'TC', name: 'Temple / Crypt', short: 'TP/CR', stages: ['TEMPLE', 'CRYPT'], texture: 'stained' },
     ],
 

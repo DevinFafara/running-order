@@ -8,7 +8,7 @@ import chroma from 'chroma-js';
  *  - plate    : tôle larmée (acier antidérapant)     (Mainstages)
  *  - camo     : treillis militaire « woodland »      (Warzone / Riot)
  *  - psyche   : vagues psychédéliques années 70      (Valley / Abyss)
- *  - magma    : surface de coulée de lave            (Altar / Forge)
+ *  - magma    : lac de lave, croûte et fissures      (Altar / Forge)
  *  - stained  : vitrail gothique                      (Temple / Crypt)
  *
  * Toutes les couleurs sont tirées vers la couleur du pôle : `tone(couleur, a)` donne
@@ -161,72 +161,110 @@ const psyche = (base, c1, c2, seed, k) => {
     return toBackground(svg, W, H, base);
 };
 
+// ─── Outils pour les textures à filtres SVG (lave) ───────────────────────────
+/**
+ * Ces textures utilisent les filtres SVG (bruit de Perlin feTurbulence, flou, déformation)
+ * pour un rendu plus naturel que des formes pleines. Le bruit est « cousu » sur la tuile
+ * (stitchTiles) et la région de filtre déborde de la tuile : le raccord reste invisible.
+ */
+const PAD = 24;
+const filterOpen = (id, W, H) =>
+    `<filter id="${id}" x="${-PAD}" y="${-PAD}" width="${W + 2 * PAD}" height="${H + 2 * PAD}" filterUnits="userSpaceOnUse" primitiveUnits="userSpaceOnUse" color-interpolation-filters="sRGB">`;
+/** Bruit périodique sur la tuile (W × H). */
+const noise = (W, H, { type = 'fractalNoise', freq, octaves = 3, seed = 1, result = 'n' }) =>
+    `<feTurbulence x="0" y="0" width="${W}" height="${H}" type="${type}" baseFrequency="${freq}" numOctaves="${octaves}" seed="${seed}" stitchTiles="stitch" result="${result}"/>`;
+/**
+ * Calque de grain : rectangle plein de `color` dont l'opacité suit le bruit
+ * (alpha = gain × bruit + biais, puis exposant pour durcir le contraste).
+ */
+const grainLayer = (id, W, H, color, { freq, octaves = 3, seed = 1, gain = 1, bias = 0, exponent = 1, opacity = 1, type = 'fractalNoise' }) =>
+    `<defs>${filterOpen(id, W, H)}${noise(W, H, { type, freq, octaves, seed })}`
+    + `<feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  ${gain} 0 0 0 ${bias}" result="a"/>`
+    + `<feComponentTransfer in="a" result="b"><feFuncA type="gamma" amplitude="1" exponent="${exponent}" offset="0"/></feComponentTransfer>`
+    + `<feFlood flood-color="${color}"/><feComposite in2="b" operator="in"/></filter></defs>`
+    + `<rect width="${W}" height="${H}" fill="#000" filter="url(#${id})" opacity="${opacity}"/>`;
+
+/** Ligne brisée irrégulière (fissure) : marche aléatoire avec dérive d'angle et ramifications. */
+const crackPaths = (rand, { count, steps, len, spread, branch, W, H }) => {
+    const paths = [];
+    const walk = (x, y, angle, n, width) => {
+        let d = `M${r1(x)} ${r1(y)}`;
+        for (let i = 0; i < n; i++) {
+            angle += (rand() - 0.5) * spread;
+            const l = len * (0.6 + rand() * 0.8);
+            x += Math.cos(angle) * l;
+            y += Math.sin(angle) * l;
+            d += `L${r1(x)} ${r1(y)}`;
+            if (rand() < branch && n - i > 3) walk(x, y, angle + (rand() < 0.5 ? 1 : -1) * (0.6 + rand() * 0.7), Math.floor((n - i) * 0.6), width * 0.6);
+        }
+        paths.push({ d, width });
+    };
+    for (let c = 0; c < count; c++) walk(rand() * W, rand() * H, rand() * Math.PI * 2, steps, 1);
+    return paths;
+};
+
 // ─── Lave ──────────────────────────────────────────────────────────────────
 /**
- * Surface de coulée de lave : croûte noire refroidie en plaques aux bords arrondis,
- * séparées par des fissures où la lave affleure. Chaque fissure a un dégradé de chaleur :
- * cœur jaune-orangé, halo orange, bord rouge sombre contre la croûte.
- * Les plaques viennent d'une grille de sommets décalés (décalage périodique → raccord parfait),
- * avec des points intermédiaires bruités pour des contours organiques.
+ * Lac de lave vu du dessus : croûte noire figée, découpée en plaques par un réseau
+ * de fissures où la lave affleure. Les bords des plaques sont déformés par du bruit
+ * (pas de formes trop régulières), la chaleur rayonne autour des fissures (halo flou),
+ * quelques plaques fines laissent transparaître la lueur, et la croûte a un grain rocheux.
  */
 const magma = (base, c1, c2, seed, k) => {
     const tone = toner(base, k);
-    const COLS = 4, ROWS = 6, W = 168, H = 228;
+    const COLS = 3, ROWS = 5, W = 210, H = 290;
     const cw = W / COLS, ch = H / ROWS;
     const rand = rng(seed * 6007 + 5);
 
-    const core = tone('#ffcf6b', 0.5);                 // lave à nu, la plus chaude
-    const halo = tone(mix(c2, '#ff7a1f', 0.6), 0.5);    // orange
-    const rim = tone(mix(c1, '#5a0b05', 0.55), 0.6);   // rouge sombre au contact de la croûte
-    const crusts = [
-        tone(mix(c1, '#1a0706', 0.72), 0.72),
-        tone(mix(c1, '#241008', 0.66), 0.68),
-        tone(mix(base, '#120505', 0.64), 0.72),
-    ];
-    const ash = tone(mix(base, '#6b5a52', 0.5), 0.3);   // reflets cendrés sur la croûte
+    const crust = tone(mix(c1, '#0a0504', 0.9), 2);
+    const crustHi = tone(mix(c1, '#3b2a24', 0.78), 1.7);
+    const glow = tone(mix(c1, '#c81d06', 0.5), 1.8);
+    const hot = tone(mix(c2, '#ff6a00', 0.75), 1.9);
+    const core = tone('#ffd56a', 2);
 
-    // Décalage de chaque sommet de la grille, périodique sur la tuile
+    // Réseau de fissures = arêtes d'une grille de sommets décalés (périodique sur la tuile)
     const jit = Array.from({ length: ROWS }, () => Array.from({ length: COLS }, () =>
-        [(rand() - 0.5) * cw * 0.6, (rand() - 0.5) * ch * 0.6]));
+        [(rand() - 0.5) * cw * 0.85, (rand() - 0.5) * ch * 0.85]));
+    // Rangées décalées d'une demi-plaque une fois sur deux : pas d'alignement en grille
     const vertex = (c, r) => {
         const [jx, jy] = jit[((r % ROWS) + ROWS) % ROWS][((c % COLS) + COLS) % COLS];
-        return [c * cw + jx, r * ch + jy];
+        return [c * cw + jx + (((r % 2) + 2) % 2) * cw * 0.5, r * ch + jy];
     };
-
-    // Contour organique : points intermédiaires bruités entre les sommets, puis lissage
-    const organic = (pts) => pts.flatMap((p, i) => {
-        const q = pts[(i + 1) % pts.length];
-        const nx = -(q[1] - p[1]), ny = q[0] - p[0];
-        const len = Math.hypot(nx, ny) || 1;
-        const bump = (rand() - 0.5) * 0.18 * len;
-        return [p, [(p[0] + q[0]) / 2 + (nx / len) * bump, (p[1] + q[1]) / 2 + (ny / len) * bump]];
-    });
-    const scaled = (pts, f) => {
-        const cx = pts.reduce((s0, p) => s0 + p[0], 0) / pts.length;
-        const cy = pts.reduce((s0, p) => s0 + p[1], 0) / pts.length;
-        return pts.map(([x, y]) => [cx + (x - cx) * f, cy + (y - cy) * f]);
-    };
-
-    let halos = '', rims = '', plates = '', glints = '';
+    let edges = '', warm = '';
     for (let r = 0; r < ROWS; r++) {
         for (let c = 0; c < COLS; c++) {
-            const a = vertex(c, r), b = vertex(c + 1, r), d = vertex(c + 1, r + 1), e = vertex(c, r + 1);
-            const polys = rand() < 0.35
-                ? (rand() < 0.5 ? [[a, b, d], [a, d, e]] : [[a, b, e], [b, d, e]])
-                : [[a, b, d, e]];
-            polys.forEach(poly => {
-                const shape = organic(poly);
-                // Couches emboîtées : halo (fissure large) → bord sombre → croûte
-                halos += `<path d="${smoothClosed(scaled(shape, 0.95))}"/>`;
-                rims += `<path d="${smoothClosed(scaled(shape, 0.89))}"/>`;
-                plates += `<path fill="${crusts[Math.floor(rand() * crusts.length)]}" d="${smoothClosed(scaled(shape, 0.84))}"/>`;
-                if (rand() < 0.5) glints += `<path d="${smoothClosed(scaled(shape, 0.32 + rand() * 0.2))}"/>`;
-            });
+            const a = vertex(c, r), b = vertex(c + 1, r), e = vertex(c, r + 1), d = vertex(c + 1, r + 1);
+            edges += `M${r1(a[0])} ${r1(a[1])}L${r1(b[0])} ${r1(b[1])}M${r1(a[0])} ${r1(a[1])}L${r1(e[0])} ${r1(e[1])}`;
+            // Plaques redécoupées par une diagonale, une fois sur trois
+            if (rand() < 0.5) edges += rand() < 0.5 ? `M${r1(a[0])} ${r1(a[1])}L${r1(d[0])} ${r1(d[1])}` : `M${r1(b[0])} ${r1(b[1])}L${r1(e[0])} ${r1(e[1])}`;
+            // Plaque fine : la lueur transparaît au centre
+            if (rand() < 0.22) {
+                const cx = (a[0] + b[0] + d[0] + e[0]) / 4, cy = (a[1] + b[1] + d[1] + e[1]) / 4;
+                warm += `<ellipse cx="${r1(cx)}" cy="${r1(cy)}" rx="${r1(cw * 0.32)}" ry="${r1(ch * 0.3)}"/>`;
+            }
         }
     }
+    const net = tiled(W, H, `<path d="${edges}"/>`);
+    const warmTiled = tiled(W, H, warm);
+    // Fines craquelures secondaires à l'intérieur des plaques
+    const fine = tiled(W, H, crackPaths(rand, { count: 6, steps: 5, len: 9, spread: 1.1, branch: 0.25, W, H })
+        .map(p => `<path d="${p.d}"/>`).join(''));
 
-    const inner = `<g fill="${halo}">${halos}</g><g fill="${rim}">${rims}</g>${plates}<g fill="${ash}" opacity="0.55">${glints}</g>`;
-    const svg = svgOpen(W, H) + `<rect width="${W}" height="${H}" fill="${core}"/>` + tiled(W, H, inner) + '</svg>';
+    const svg = svgOpen(W, H)
+        + `<defs>${filterOpen('wob', W, H)}${noise(W, H, { freq: '0.04', octaves: 3, seed })}`
+        + `<feDisplacementMap in="SourceGraphic" in2="n" scale="16" xChannelSelector="R" yChannelSelector="G"/></filter>`
+        + `${filterOpen('blur', W, H)}<feGaussianBlur stdDeviation="7"/></filter>`
+        + `${filterOpen('soft', W, H)}<feGaussianBlur stdDeviation="2.2"/></filter></defs>`
+        + `<rect width="${W}" height="${H}" fill="${crust}"/>`
+        + grainLayer('mottle', W, H, crustHi, { freq: '0.02', octaves: 3, seed: seed + 3, gain: 1.6, bias: -0.55, exponent: 1.4, opacity: 0.9 })
+        + `<g filter="url(#blur)" fill="${glow}" opacity="0.4">${warmTiled}</g>`
+        + `<g filter="url(#wob)" fill="none" stroke-linecap="round" stroke-linejoin="round">`
+        + `<g filter="url(#blur)" stroke="${glow}" stroke-width="9" opacity="0.75">${net}</g>`
+        + `<g filter="url(#soft)" stroke="${hot}" stroke-width="3.6">${net}</g>`
+        + `<g stroke="${core}" stroke-width="1.2">${net}</g>`
+        + `<g stroke="${core}" stroke-width="0.6" opacity="0.8">${fine}</g></g>`
+        + grainLayer('grain', W, H, '#000', { freq: '0.9', octaves: 1, seed: seed + 7, gain: 1.2, bias: -0.35, exponent: 1, opacity: 0.35 * Math.min(1, k * 2) })
+        + '</svg>';
     return toBackground(svg, W, H, base);
 };
 

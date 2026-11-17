@@ -67,7 +67,9 @@ export const poleTexture = (stageKeys, intensity = EDITION.textures?.intensity ?
     const pole = EDITION.poles.find((p) => p.stages.includes(stageKeys[0]));
     // Graine dérivée de la 1re scène : chaque colonne a son propre dessin
     const seed = EDITION.stages.findIndex((st) => st.key === stageKeys[0]) + 1;
-    return textureBackground(pole?.texture, base, colors[0], colors[1] ?? colors[0], seed, intensity);
+    const kind = pole?.texture;
+    const k = pole?.textureIntensity?.[kind] ?? intensity;
+    return textureBackground(kind, base, colors[0], colors[1] ?? colors[0], seed, k);
 };
 
 export const isCurrentEditionId = (id) => {
