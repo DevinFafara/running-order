@@ -454,7 +454,7 @@ const DisplayPanel = ({ position, onClose, view = 'day', sceneFilter = null, wee
                                         icon="fa-solid fa-arrows-left-right-to-line"
                                         title="Aligner les cartes sur leur scène"
                                         desc="À gauche pour la 1re scène, à droite pour la 2e"
-                                        checked={state.stageSnap !== false}
+                                        checked={!!state.stageSnap}
                                         onChange={(v) => set('stageSnap', v)}
                                     />
                                 </>

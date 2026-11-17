@@ -29,7 +29,8 @@ const INITIAL_STATE = {
     // Intensité des textures de fond des colonnes (Paramètres → Affichage) ; null = valeur de l'édition
     textureIntensity: null,
     stageEdge: true,      // vue compacte : liseré à la couleur de la scène sur les cartes
-    stageSnap: true,      // vue compacte : cartes collées au bord de colonne de leur scène
+    stageSnap: false,     // vue compacte : cartes collées au bord de colonne de leur scène
+    dimPastBands: true,   // concerts terminés estompés (DayView et WeeklyView)
     favoriteStyle: 'star', // mise en avant des favoris : 'star' | 'marker' | 'spotlight'
     notes: {},
     myRo: {

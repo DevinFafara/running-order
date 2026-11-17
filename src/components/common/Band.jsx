@@ -68,7 +68,7 @@ const Band = ({ group, selectGroup, selectedGroupId, onTagClick, dayStartMinutes
         && Object.values(state.taggedBands || {}).some(t => t?.interest);
     // Repères de scène (vue compacte) : liseré sur le bord de la carte, carte collée au bord de colonne de sa scène
     const showEdge = !!stageEdge && state.stageEdge !== false;
-    const snap = !!stageEdge && state.stageSnap !== false;
+    const snap = !!stageEdge && !!state.stageSnap;
     const snapStyle = snap
         ? {
             width: halfWidth ? '48%' : '92%',

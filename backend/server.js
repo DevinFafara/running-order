@@ -839,25 +839,91 @@ app.put('/running-order/api/anon/position', async (req, res) => {
     }
 });
 
-// GET /running-order/api/admin/cleanup-groups — Purge anon/ et groups/ post-festival
+// GET /running-order/api/admin/stats — Statistiques d'usage (comptes, crews, push), sans données personnelles
+app.get('/running-order/api/admin/stats', (req, res) => {
+    if (process.env.NODE_ENV === 'production') {
+        if (!ADMIN_SECRET || req.query.secret !== ADMIN_SECRET) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+    }
+    const load = (dir) => {
+        try {
+            return fs.readdirSync(dir).filter(f => f.endsWith('.json')).map(f => {
+                try { return JSON.parse(fs.readFileSync(path.join(dir, f), 'utf-8')); } catch { return null; }
+            }).filter(Boolean);
+        } catch { return []; }
+    };
+    const sum = (a) => a.reduce((s, x) => s + x, 0);
+    const avg = (a) => (a.length ? Math.round((sum(a) / a.length) * 10) / 10 : 0);
+    const byMonth = (arr, key) => arr.reduce((acc, x) => {
+        const m = (x[key] || 'inconnu').slice(0, 7);
+        acc[m] = (acc[m] || 0) + 1;
+        return acc;
+    }, {});
+
+    const users = load(DATA_DIR), groups = load(GROUPS_DIR), anon = load(ANON_DIR), subs = load(SUBS_DIR);
+    const fav = users.map(u => u.favorites_count || 0);
+    const sizes = groups.map(g => (g.members || []).length);
+    const alarms = subs.map(s => (s.alarms || []).length);
+
+    res.json({
+        users: {
+            total: users.length,
+            community_opt_in: users.filter(u => u.community_opt_in).length,
+            with_favorites: fav.filter(n => n > 0).length,
+            favorites_avg: avg(fav),
+            favorites_max: Math.max(0, ...fav),
+            favorites_total: sum(fav),
+            with_contacts: users.filter(u => (u.contacts || []).length).length,
+            contacts_total: sum(users.map(u => (u.contacts || []).length)),
+            last_sync_by_month: byMonth(users, 'updated_at'),
+        },
+        crews: {
+            total: groups.length,
+            members_total: sum(sizes),
+            members_avg: avg(sizes),
+            members_max: Math.max(0, ...sizes),
+            single_member: sizes.filter(n => n === 1).length,
+            members_with_discourse_account: sum(groups.map(g => (g.members || []).filter(m => m.username).length)),
+            created_by_month: byMonth(groups, 'created_at'),
+        },
+        anon_members: {
+            total: anon.length,
+            shared_position: anon.filter(a => a.position).length,
+            shared_favorites: anon.filter(a => a.favorites).length,
+        },
+        push: {
+            subscriptions: subs.length,
+            with_alarms: alarms.filter(n => n > 0).length,
+            alarms_total: sum(alarms),
+            last_update_by_month: byMonth(subs, 'updated_at'),
+        },
+    });
+});
+
+// GET /running-order/api/admin/cleanup-groups — Retire anon/ et groups/ post-festival.
+// Les fichiers ne sont pas supprimés : ils sont déplacés dans data/archive-<date>/ (récupérables sur le serveur).
 app.get('/running-order/api/admin/cleanup-groups', (req, res) => {
     if (process.env.NODE_ENV === 'production') {
         if (!ADMIN_SECRET || req.query.secret !== ADMIN_SECRET) {
             return res.status(401).json({ error: 'Unauthorized' });
         }
     }
-    let deleted = 0;
+    const archiveDir = path.join(__dirname, 'data', `archive-${new Date().toISOString().slice(0, 10)}`);
+    let moved = 0;
     const errors = [];
     for (const dir of [ANON_DIR, GROUPS_DIR]) {
         try {
+            const target = path.join(archiveDir, path.basename(dir));
+            fs.mkdirSync(target, { recursive: true });
             const files = fs.readdirSync(dir).filter(f => f.endsWith('.json'));
             for (const file of files) {
-                try { fs.unlinkSync(path.join(dir, file)); deleted++; }
+                try { fs.renameSync(path.join(dir, file), path.join(target, file)); moved++; }
                 catch (e) { errors.push(file); }
             }
         } catch (e) { errors.push(`Erreur lecture ${dir}`); }
     }
-    res.json({ success: true, deleted, errors });
+    res.json({ success: true, moved, archive: path.basename(archiveDir), errors });
 });
 
 // ─── Health check ───────────────────────────────────────────────────────────

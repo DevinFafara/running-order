@@ -31,7 +31,8 @@ Le serveur écoute sur le port `3001` par défaut (configurable via `PORT`).
 | `POST` | `/api/ro/:username` | Sauvegarder le RO (auth requise) |
 | `DELETE` | `/api/ro/:username` | Supprimer le RO (auth requise) |
 | `GET` | `/api/admin/rebuild-index` | Reconstruire l'index depuis les fichiers |
-| `GET` | `/api/admin/cleanup-groups` | Purger tous les fichiers anon/ et groups/ (post-festival) |
+| `GET` | `/api/admin/stats?secret=…` | Statistiques d'usage (comptes, crews, push), sans données personnelles |
+| `GET` | `/api/admin/cleanup-groups?secret=…` | Retirer anon/ et groups/ (post-festival) : fichiers déplacés dans `data/archive-<date>/` |
 | `POST` | `/api/groups` | Créer un crew |
 | `GET` | `/api/groups/:code` | Lire un crew (membres + positions) |
 | `POST` | `/api/groups/:code/join` | Rejoindre un crew |
