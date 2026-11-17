@@ -1,6 +1,7 @@
 import React from 'react';
 import { Document, Page, View, Text, StyleSheet } from '@react-pdf/renderer';
-import { STAGE_CONFIG, INTEREST_LEVELS, CONTEXT_TAGS } from '../../constants';
+import { STAGE_CONFIG, INTEREST_LEVELS, CONTEXT_TAGS, POLES, DAYS } from '../../constants';
+import { EDITION, buildStageTheme } from '../../editions';
 import { timeToMinutes } from '../../utils/statsUtils';
 import { calculateWeeklyLayout } from '../../utils/pdfLayout';
 import chroma from 'chroma-js';
@@ -17,60 +18,31 @@ const TOTAL_MINUTES = 18 * 60;
 const GRID_HEIGHT = TOTAL_MINUTES * PIXELS_PER_MINUTE_PDF;
 
 const normalizeScene = s => s ? s.toUpperCase().trim() : '';
+// Thème par défaut : couleurs de l'édition (le PDF est rendu hors du contexte React, le thème arrive en prop)
+const DEFAULT_THEME = buildStageTheme();
+
 const doTimesOverlap = (s1, e1, s2, e2) => s1 < e2 && e1 > s2;
 
 // ─── Column definitions per day type ────────────────────────────────────────
+// 2027 : une colonne par pôle (les 2 scènes d'un pôle alternent), pas de scènes annexes
+const POLE_COLUMNS = POLES.map(p => ({
+    scenes: p.stages,
+    label: p.stages.map(s => STAGE_CONFIG[s]?.name || s).join('\n'),
+}));
+
 const PRINT_COLUMNS = {
-    // Jeudi / Vendredi / Samedi / Dimanche  →  3 couples principaux + 4 annexes individuelles
-    main: [
-        { scenes: ['MAINSTAGE 1', 'MAINSTAGE 2'], label: 'Mainstage 1\nMainstage 2' },
-        { scenes: ['WARZONE', 'VALLEY'],           label: 'Warzone\nValley' },
-        { scenes: ['ALTAR', 'TEMPLE'],             label: 'Altar\nTemple' },
-        { scenes: ['HELLSTAGE'],                   label: 'Hellstage' },
-        { scenes: ['HELLCITY_STAGE'],              label: 'Hellcity\nBrewpub' },
-        { scenes: ['PURPLE_HOUSE'],                label: 'Purple House' },
-        { scenes: ['METAL_CORNER'],                label: 'Metal Corner' },
-    ],
-    // Mercredi  →  3 couples d'annexes (avec sous-colonnes si chevauchement)
-    mercredi: [
-        { scenes: ['HELLSTAGE', 'HELLCITY_STAGE'],   label: 'Hellstage\nHellcity Brewpub' },
-        { scenes: ['PURPLE_HOUSE', 'METAL_CORNER'],  label: 'Purple House\nMetal Corner' },
-        { scenes: ['LE_OFF1', 'LE_OFF2'],            label: 'Le Off 1\nLe Off 2' },
-    ],
-    // Mardi  →  1 seule colonne Le Off 1 + 2 (pas de chevauchement → empilement)
-    mardi: [
-        { scenes: ['LE_OFF1', 'LE_OFF2'], label: 'Le Off 1 & Le Off 2' },
-    ],
-    // L'Essentiel  →  3 couples principaux uniquement
-    essential: [
-        { scenes: ['MAINSTAGE 1', 'MAINSTAGE 2'], label: 'Mainstage 1\nMainstage 2' },
-        { scenes: ['WARZONE', 'VALLEY'],           label: 'Warzone\nValley' },
-        { scenes: ['ALTAR', 'TEMPLE'],             label: 'Altar\nTemple' },
-    ],
+    main: POLE_COLUMNS,
+    essential: POLE_COLUMNS,
 };
 
-// Page 1 : Mercredi – Jeudi – Vendredi
-// Page 2 : Samedi – Dimanche – Mardi
+// RO complet : 2 pages de 2 jours
 const PAGE_CONFIGS = [
-    [
-        { day: 'Mercredi', type: 'mercredi', flex: 2 },
-        { day: 'Jeudi',    type: 'main',     flex: 3 },
-        { day: 'Vendredi', type: 'main',     flex: 3 },
-    ],
-    [
-        { day: 'Samedi',   type: 'main',     flex: 3 },
-        { day: 'Dimanche', type: 'main',     flex: 3 },
-        { day: 'Mardi',    type: 'mardi',    flex: 2 },
-    ],
+    DAYS.slice(0, 2).map(day => ({ day, type: 'main', flex: 1 })),
+    DAYS.slice(2).map(day => ({ day, type: 'main', flex: 1 })),
 ];
 
-// L'Essentiel : 1 page, 4 jours principaux, 3 couples mainstage
-const ESSENTIAL_PAGE_CONFIG = [
-    { day: 'Jeudi',    type: 'essential', flex: 1 },
-    { day: 'Vendredi', type: 'essential', flex: 1 },
-    { day: 'Samedi',   type: 'essential', flex: 1 },
-    { day: 'Dimanche', type: 'essential', flex: 1 },
-];
+// L'Essentiel : 1 page, tous les jours
+const ESSENTIAL_PAGE_CONFIG = DAYS.map(day => ({ day, type: 'essential', flex: 1 }));
 
 // ─── Layout algorithm for fixed print columns ────────────────────────────────
 const positionBandsForPrint = (dayBands, columns, reverse) => {
@@ -291,7 +263,7 @@ const DayTimeRuler = ({ reverse }) => (
 );
 
 // ─── Helpers mode favoris ────────────────────────────────────────────────────
-const ALL_DAYS_ORDER = ['Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+const ALL_DAYS_ORDER = DAYS;
 
 export const computeMaxSim = (dayBands) => {
     if (dayBands.length === 0) return 0;
@@ -312,16 +284,9 @@ export const computeMaxSim = (dayBands) => {
 };
 
 // ─── Légende pour Mardi — paires de scènes ──────────────────────────────────
-const LEGEND_PAIRS = [
-    ['MAINSTAGE 1',  'MAINSTAGE 2'],
-    ['WARZONE',      'VALLEY'],
-    ['ALTAR',        'TEMPLE'],
-    ['HELLSTAGE',    'HELLCITY_STAGE'],
-    ['PURPLE_HOUSE', 'METAL_CORNER'],
-    ['LE_OFF1',      'LE_OFF2'],
-];
+const LEGEND_PAIRS = POLES.map(p => p.stages);
 
-const MardiLegend = () => (
+const MardiLegend = ({ stageTheme }) => (
     <View style={styles.legend}>
         <Text style={styles.legendTitle}>LÉGENDE DES SCÈNES</Text>
         {LEGEND_PAIRS.map(([leftKey, rightKey]) => {
@@ -332,8 +297,8 @@ const MardiLegend = () => (
                 <View key={leftKey} style={styles.legendRow}>
                     <Text style={[styles.legendLabel, { textAlign: 'right' }]}>{lc.name}</Text>
                     <View style={styles.legendSwatchPair}>
-                        <View style={[styles.legendSwatch, { backgroundColor: lc.themeColor || '#555' }]} />
-                        <View style={[styles.legendSwatch, { backgroundColor: rc.themeColor || '#555' }]} />
+                        <View style={[styles.legendSwatch, { backgroundColor: stageTheme[leftKey]?.themeColor || '#555' }]} />
+                        <View style={[styles.legendSwatch, { backgroundColor: stageTheme[rightKey]?.themeColor || '#555' }]} />
                     </View>
                     <Text style={[styles.legendLabel, { textAlign: 'left' }]}>{rc.name}</Text>
                 </View>
@@ -343,7 +308,7 @@ const MardiLegend = () => (
 );
 
 // ─── Colonne journée mode Favoris (layout dynamique Strategy A) ──────────────
-const FavDayColumn = ({ day, bands, flex, isLast, colorMode, taggedBands, reverse, customEvents, selectedScenes, interestColors = {} }) => {
+const FavDayColumn = ({ day, bands, flex, isLast, colorMode, taggedBands, reverse, customEvents, selectedScenes, interestColors = {}, stageTheme = DEFAULT_THEME }) => {
     const rawItems = calculateWeeklyLayout(bands, PIXELS_PER_MINUTE_PDF, reverse, 'favorites', []);
     const layoutItems = rawItems.map(item => {
         const duration = item.end - item.start;
@@ -363,7 +328,7 @@ const FavDayColumn = ({ day, bands, flex, isLast, colorMode, taggedBands, revers
                 <DayTimeRuler reverse={reverse} />
                 <View style={styles.gridContent}>
                     {layoutItems.map((item, idx) => {
-                        const stageColor = STAGE_CONFIG[item.band.SCENE]?.themeColor || '#555555';
+                        const stageColor = stageTheme[item.band.SCENE]?.themeColor || '#555555';
                         const cardBg = colorMode === 'scene' ? stageColor : '#f9f9f9';
                         const tagInfo = taggedBands[item.band.id];
                         const isTagged = !!tagInfo;
@@ -445,7 +410,7 @@ const FavDayColumn = ({ day, bands, flex, isLast, colorMode, taggedBands, revers
 };
 
 // ─── Day Column ──────────────────────────────────────────────────────────────
-const DayColumn = ({ day, type, flex, isLast, groups, colorMode, taggedBands, reverse, customEvents, selectedScenes, interestColors = {} }) => {
+const DayColumn = ({ day, type, flex, isLast, groups, colorMode, taggedBands, reverse, customEvents, selectedScenes, interestColors = {}, stageTheme = DEFAULT_THEME }) => {
     const columns = PRINT_COLUMNS[type];
     const numCols = columns.length;
 
@@ -486,7 +451,7 @@ const DayColumn = ({ day, type, flex, isLast, groups, colorMode, taggedBands, re
                 ))}
 
                 {layoutItems.map((item, idx) => {
-                    const stageColor = STAGE_CONFIG[item.band.SCENE]?.themeColor || '#555555';
+                    const stageColor = stageTheme[item.band.SCENE]?.themeColor || '#555555';
                     const cardBg = colorMode === 'scene' ? stageColor : '#f9f9f9';
                     const tagInfo = taggedBands[item.band.id];
                     const isTagged = !!tagInfo;
@@ -583,7 +548,7 @@ const DayColumn = ({ day, type, flex, isLast, groups, colorMode, taggedBands, re
                     );
                 })}
 
-                {type === 'mardi' && <MardiLegend />}
+                {type === 'mardi' && <MardiLegend stageTheme={stageTheme} />}
             </View>
             </View>
             </View>
@@ -593,7 +558,7 @@ const DayColumn = ({ day, type, flex, isLast, groups, colorMode, taggedBands, re
 
 // ─── Main component ──────────────────────────────────────────────────────────
 // pdfMode: 'full' | 'essential' | 'favorites'
-const WeeklyPDF = ({ groups, customEvents, selectedScenes, colorMode, taggedBands, reverse, pdfMode = 'full', interestColors = {} }) => {
+const WeeklyPDF = ({ groups, customEvents, selectedScenes, colorMode, taggedBands, reverse, pdfMode = 'full', interestColors = {}, stageTheme = DEFAULT_THEME }) => {
 
     // ── Mode Favoris : 1 page, largeur égale par journée ────────────────────
     if (pdfMode === 'favorites') {
@@ -607,7 +572,7 @@ const WeeklyPDF = ({ groups, customEvents, selectedScenes, colorMode, taggedBand
 
         if (dayData.length === 0) {
             return (
-                <Document title="Hellfest 2026 - Mes Favoris">
+                <Document title={`${EDITION.label} - Mes Favoris`}>
                     <Page size="A4" orientation="landscape" style={styles.page}>
                         <Text style={{ margin: 'auto', fontSize: 12, color: '#888888' }}>
                             Aucun favori sélectionné
@@ -618,7 +583,7 @@ const WeeklyPDF = ({ groups, customEvents, selectedScenes, colorMode, taggedBand
         }
 
         return (
-            <Document title="Hellfest 2026 - Mes Favoris">
+            <Document title={`${EDITION.label} - Mes Favoris`}>
                 <Page size="A4" orientation="landscape" style={styles.page}>
                     {dayData.map((dayInfo, idx) => (
                         <FavDayColumn
@@ -633,6 +598,7 @@ const WeeklyPDF = ({ groups, customEvents, selectedScenes, colorMode, taggedBand
                             customEvents={customEvents}
                             selectedScenes={selectedScenes}
                             interestColors={interestColors}
+                            stageTheme={stageTheme}
                         />
                     ))}
                 </Page>
@@ -643,7 +609,7 @@ const WeeklyPDF = ({ groups, customEvents, selectedScenes, colorMode, taggedBand
     // ── Mode L'Essentiel : 1 page, 4 jours principaux, mainstages seulement ──
     if (pdfMode === 'essential') {
         return (
-            <Document title="Hellfest 2026 - L'Essentiel">
+            <Document title={`${EDITION.label} - L'Essentiel`}>
                 <Page size="A4" orientation="landscape" style={styles.page}>
                     {ESSENTIAL_PAGE_CONFIG.map((dayConfig, idx) => (
                         <DayColumn
@@ -657,6 +623,7 @@ const WeeklyPDF = ({ groups, customEvents, selectedScenes, colorMode, taggedBand
                             customEvents={customEvents}
                             selectedScenes={selectedScenes}
                             interestColors={interestColors}
+                            stageTheme={stageTheme}
                         />
                     ))}
                 </Page>
@@ -666,7 +633,7 @@ const WeeklyPDF = ({ groups, customEvents, selectedScenes, colorMode, taggedBand
 
     // ── Mode RO Complet : 2 pages, tous les jours, toutes les scènes ─────────
     return (
-        <Document title="Hellfest 2026 - Running Order">
+        <Document title={`${EDITION.label} - Running Order`}>
             {PAGE_CONFIGS.map((pageLayout, pageIdx) => (
                 <Page key={pageIdx} size="A4" orientation="landscape" style={styles.page}>
                     {pageLayout.map((dayConfig, idx) => (
@@ -681,6 +648,7 @@ const WeeklyPDF = ({ groups, customEvents, selectedScenes, colorMode, taggedBand
                             customEvents={customEvents}
                             selectedScenes={selectedScenes}
                             interestColors={interestColors}
+                            stageTheme={stageTheme}
                         />
                     ))}
                 </Page>

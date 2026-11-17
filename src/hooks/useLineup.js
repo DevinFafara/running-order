@@ -1,10 +1,22 @@
 import { useState, useEffect, useCallback } from 'react';
-import { fetchAndParseGoogleSheetsCSV, extractTimestamp } from '../utils/parseCSVToJSON';
+import { fetchAndParseGoogleSheetsCSV } from '../utils/parseCSVToJSON';
 import { GOOGLE_SHEETS_URL } from '../constants';
+import { EDITION, isCurrentEditionId } from '../editions';
 
-const CACHE_KEY = 'lineup-data';
-const TIMESTAMP_KEY = 'lineup-timestamp';
-const FALLBACK_URL = `${import.meta.env.BASE_URL}lineup.json`;
+// Cache lié à l'édition : la programmation d'une année n'est jamais servie l'année suivante
+const CACHE_KEY = `lineup-data-${EDITION.year}`;
+const TIMESTAMP_KEY = `lineup-timestamp-${EDITION.year}`;
+const LOCAL_URL = `${import.meta.env.BASE_URL}${EDITION.lineup.localFile}`;
+
+// Lignes vides, incomplètes ou d'une autre édition ignorées (le Sheet peut contenir plusieurs éditions)
+const cleanRows = (rows) => (rows || []).filter(r =>
+    r && r.id && r.GROUPE && r.SCENE && r.DAY && isCurrentEditionId(r.id)
+);
+
+const fetchLocal = async () => {
+    const response = await fetch(LOCAL_URL);
+    return cleanRows(await response.json());
+};
 
 export const useLineup = () => {
     const [data, setData] = useState([]);
@@ -12,20 +24,14 @@ export const useLineup = () => {
     const [error, setError] = useState(null);
 
     const checkForUpdates = useCallback(async () => {
+        if (!GOOGLE_SHEETS_URL) return;
         try {
-            const cacheBuster = Date.now();
-            const url = `${GOOGLE_SHEETS_URL}&_cb=${cacheBuster}`;
-
-            const result = await fetchAndParseGoogleSheetsCSV(url);
-
+            const result = await fetchAndParseGoogleSheetsCSV(`${GOOGLE_SHEETS_URL}&_cb=${Date.now()}`);
             if (!result || !result.data) return;
-
-            const cachedDataStr = localStorage.getItem(CACHE_KEY);
-            const newDataStr = JSON.stringify(result.data);
-
-            if (cachedDataStr !== newDataStr) {
-                console.log('🔄 Data content has changed, refreshing...');
-                setData(result.data);
+            const fresh = cleanRows(result.data);
+            const newDataStr = JSON.stringify(fresh);
+            if (localStorage.getItem(CACHE_KEY) !== newDataStr) {
+                setData(fresh);
                 localStorage.setItem(CACHE_KEY, newDataStr);
                 localStorage.setItem(TIMESTAMP_KEY, result.timestamp);
             }
@@ -36,41 +42,45 @@ export const useLineup = () => {
 
     const loadData = useCallback(async (forceRefresh = false) => {
         try {
-            const cachedData = localStorage.getItem(CACHE_KEY);
-            const cachedTimestamp = localStorage.getItem(TIMESTAMP_KEY);
+            // Sans Sheet (prototype) : programmation locale uniquement
+            if (!GOOGLE_SHEETS_URL) {
+                setData(await fetchLocal());
+                setLoading(false);
+                return;
+            }
 
-            if (cachedData && cachedTimestamp && !forceRefresh) {
+            const cachedData = localStorage.getItem(CACHE_KEY);
+            if (cachedData && !forceRefresh) {
                 setData(JSON.parse(cachedData));
                 setLoading(false);
-            } else {
-                let url = GOOGLE_SHEETS_URL;
-                if (forceRefresh) url += `&_cb=${Date.now()}`;
-
-                try {
-                    const result = await fetchAndParseGoogleSheetsCSV(url);
-                    setData(result.data);
-                    localStorage.setItem(CACHE_KEY, JSON.stringify(result.data));
-                    localStorage.setItem(TIMESTAMP_KEY, result.timestamp);
-                } catch (fetchErr) {
-                    console.warn('Google Sheets fetch failed, falling back to local JSON', fetchErr);
-                    const response = await fetch(FALLBACK_URL);
-                    const localData = await response.json();
-                    setData(localData);
-                }
-                setLoading(false);
+                return;
             }
+
+            try {
+                const url = forceRefresh ? `${GOOGLE_SHEETS_URL}&_cb=${Date.now()}` : GOOGLE_SHEETS_URL;
+                const result = await fetchAndParseGoogleSheetsCSV(url);
+                const fresh = cleanRows(result.data);
+                setData(fresh);
+                localStorage.setItem(CACHE_KEY, JSON.stringify(fresh));
+                localStorage.setItem(TIMESTAMP_KEY, result.timestamp);
+            } catch (fetchErr) {
+                console.warn('Google Sheets fetch failed, falling back to local JSON', fetchErr);
+                setData(await fetchLocal());
+            }
+            setLoading(false);
         } catch (err) {
             setError(err);
             setLoading(false);
         }
     }, []);
 
-    useEffect(() => {
-        loadData().catch(console.error);
-        checkForUpdates();
-        const intervalId = setInterval(checkForUpdates, 60000);
-        return () => clearInterval(intervalId);
-    }, [loadData, checkForUpdates]);
+useEffect(() => {
+    loadData().catch(console.error);
+    if (!GOOGLE_SHEETS_URL) return undefined;
+    checkForUpdates();
+    const intervalId = setInterval(checkForUpdates, 60000);
+    return () => clearInterval(intervalId);
+}, [loadData, checkForUpdates]);
 
     return {
         data,

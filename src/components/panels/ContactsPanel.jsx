@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import ImportModal from '../modals/ImportModal';
 import { parseShareData } from '../../utils/sharingUtils';
+import { isCurrentEditionId } from '../../editions';
 
 const ContactsPanel = ({ isOpen, onClose, contacts, onDeleteContact, onCheckContact, onSaveContact }) => {
     const [selectedContactData, setSelectedContactData] = useState(null);
@@ -169,7 +170,7 @@ const ContactsPanel = ({ isOpen, onClose, contacts, onDeleteContact, onCheckCont
                                             {contact.username}
                                         </div>
                                         <div style={{ fontSize: '0.75rem', color: '#888', display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                                            <span>{Object.keys(contact.data.bands).length} groupes</span>
+                                            <span>{Object.keys(contact.data.bands).filter(isCurrentEditionId).length} groupes</span>
                                             {contact.importedAt && (
                                                 <span style={{ fontSize: '0.7rem', opacity: 0.8 }}>
                                                     Importé le {new Date(contact.importedAt).toLocaleDateString('fr-FR')} à {new Date(contact.importedAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}

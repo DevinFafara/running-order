@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useCheckedState } from '../../context/CheckedStateContext';
+import { SIDE_STAGES } from '../../constants';
+import { EDITION } from '../../editions';
 
 const FilterPanel = ({ isOpen, onClose }) => {
-    const { state, toggleScene, setScenes, setState } = useCheckedState();
+    const { state, toggleScene, setScenes, setState, stageTheme } = useCheckedState();
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
     useEffect(() => {
@@ -11,37 +13,18 @@ const FilterPanel = ({ isOpen, onClose }) => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    const mainScenes = [
-        { id: 'mainstage1', name: 'Mainstage 1', color: '#0055a5' },
-        { id: 'mainstage2', name: 'Mainstage 2', color: '#a6a19b' },
-        { id: 'warzone', name: 'Warzone', color: '#949b1a' },
-        { id: 'valley', name: 'Valley', color: '#ce7c19' },
-        { id: 'temple', name: 'Temple', color: '#93a7b0' },
-        { id: 'altar', name: 'Altar', color: '#dc2829' }
-    ];
-
-    const sideScenesList = [
-        { id: 'hellstage', name: 'Hellstage', color: '#239c60' },
-        { id: 'hellcity_stage', name: 'Hellcity Stage', color: '#c45c00' },
-        { id: 'purple_house', name: 'Purple House', color: '#9500c6' },
-        { id: 'metal_corner', name: 'Metal Corner', color: '#9f9c78' },
-        { id: 'le_off1', name: 'Le Off 1', color: '#7a1a1a' },
-        { id: 'le_off2', name: 'Le Off 2', color: '#3a3a3a' }
-    ];
+    // Scènes de l'édition, dans l'ordre des pôles (2 par ligne = 1 pôle par ligne)
+    const toItem = (st) => ({ id: st.slug, name: st.name, color: stageTheme[st.key]?.themeColor ?? st.color });
+    const mainScenes = EDITION.stages.map(toItem);
+    const sideScenesList = EDITION.stages.filter(st => SIDE_STAGES.includes(st.key)).map(toItem);
+    const hasSideStages = SIDE_STAGES.length > 0;
 
     const isSmallScreen = windowWidth < 1200;
 
     let scenesList;
-    if (state.sideScenes) {
-        if (isSmallScreen) {
-            // Mobile + SideScenes = Annexes only
-            scenesList = sideScenesList;
-        } else {
-            // Desktop + SideScenes = All
-            scenesList = [...mainScenes, ...sideScenesList];
-        }
+    if (hasSideStages && state.sideScenes) {
+        scenesList = isSmallScreen ? sideScenesList : [...mainScenes, ...sideScenesList];
     } else {
-        // SideScenes OFF = Main only
         scenesList = mainScenes;
     }
 
@@ -84,7 +67,7 @@ const FilterPanel = ({ isOpen, onClose }) => {
                 <div className="filter-section">
 
                     {/* Toggle global Scènes Annexes — masqué sur mobile (accessible via bouton nav) */}
-                    {!isSmallScreen && (
+                    {hasSideStages && !isSmallScreen && (
                         <div style={{ marginBottom: '20px', paddingBottom: '15px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
                             <label className="settings-option">
                                 <div className="settings-option-info">

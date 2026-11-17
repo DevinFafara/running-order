@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, useContext, useRef, useCallback } from 'react';
-import { DEFAULT_COLORS, INTEREST_LEVELS, CONTEXT_TAGS } from '../constants';
+import { DEFAULT_COLORS, INTEREST_LEVELS, CONTEXT_TAGS, DAYS, DEFAULT_DAY } from '../constants';
+import { EDITION, isCurrentEditionId, buildStageTheme } from '../editions';
 import { migrateOldData } from '../utils/migrationUtils';
 import { encodeROForServer, decodeROFromServer, encodeContacts, decodeContacts } from '../utils/sharingUtils';
 import { api } from '../services/api';
@@ -15,26 +16,21 @@ const getDefaultInterestColors = () => {
 };
 
 const INITIAL_STATE = {
-    scenes: {
-        mainstage1: true,
-        mainstage2: true,
-        warzone: true,
-        valley: true,
-        altar: true,
-        temple: true,
-        hellstage: true,
-        purple_house: true,
-        metal_corner: true,
-        hellcity_stage: true,
-        le_off1: true,
-        le_off2: true,
-    },
+    // Une entrée par scène de l'édition, toutes visibles par défaut
+    scenes: Object.fromEntries(EDITION.stages.map(st => [st.slug, true])),
     color: 'nocolor',
     ...DEFAULT_COLORS,
     taggedBands: {},
     interestColors: getDefaultInterestColors(),
+    // Couleurs de scène choisies par l'utilisateur (clé SCENE → hex) ; absentes = couleur de l'édition
+    stageColors: {},
     reverse: false,
     compact: true,
+    // Intensité des textures de fond des colonnes (Paramètres → Affichage) ; null = valeur de l'édition
+    textureIntensity: null,
+    stageEdge: true,      // vue compacte : liseré à la couleur de la scène sur les cartes
+    stageSnap: true,      // vue compacte : cartes collées au bord de colonne de leur scène
+    favoriteStyle: 'star', // mise en avant des favoris : 'star' | 'marker' | 'spotlight'
     notes: {},
     myRo: {
         color1: "full",
@@ -42,8 +38,12 @@ const INITIAL_STATE = {
         color3: "full",
         others: "none",
     },
-    day: "Jeudi",
+    day: DEFAULT_DAY,
     sideScenes: false,
+    // Position de la fenêtre de pôles en mobile portrait (index du premier pôle visible)
+    poleOffset: 0,
+    // Idem en vue étendue (index de la première scène visible)
+    sceneOffset: 0,
     language: "fr",
 };
 
@@ -65,10 +65,14 @@ export const CheckedStateProvider = ({ children, user }) => {
                 const mergedState = {
                     ...INITIAL_STATE,
                     ...migrated,
-                    scenes: {
-                        ...INITIAL_STATE.scenes,
-                        ...(migrated.scenes || {})
-                    },
+                    // Seules les scènes de l'édition courante sont conservées
+                    scenes: Object.fromEntries(Object.keys(INITIAL_STATE.scenes).map(slug => [
+                        slug, migrated.scenes?.[slug] !== false
+                    ])),
+                    // Jour mémorisé d'une autre édition (ex. Mardi) → jour par défaut
+                    day: DAYS.includes(migrated.day) ? migrated.day : DEFAULT_DAY,
+                    // Plus de scènes annexes en 2027
+                    sideScenes: false,
                     interestColors: {
                         ...getDefaultInterestColors(),
                         ...(migrated.interestColors || {})
@@ -280,7 +284,7 @@ export const CheckedStateProvider = ({ children, user }) => {
                     contacts: encodeContacts(contactsForSync),
                     community_opt_in: consentChoice === 'full',
                     favorites_count: Object.keys(state.taggedBands).length,
-                    current_favorites_count: Object.keys(state.taggedBands).filter(id => Number(id) >= 26000).length
+                    current_favorites_count: Object.keys(state.taggedBands).filter(isCurrentEditionId).length
                 });
 
                 lastSavedEncodedRef.current = encoded;
@@ -422,6 +426,17 @@ export const CheckedStateProvider = ({ children, user }) => {
         }));
     };
 
+    // Couleurs de scène : thème dérivé (couleur de scène + pastel des cartes), recalculé quand l'utilisateur les change
+    const stageTheme = React.useMemo(() => buildStageTheme(state.stageColors), [state.stageColors]);
+
+    const setStageColor = (stageKey, color) => {
+        setState(prev => ({ ...prev, stageColors: { ...prev.stageColors, [stageKey]: color } }));
+    };
+
+    const setStageColors = (colors) => {
+        setState(prev => ({ ...prev, stageColors: { ...colors } }));
+    };
+
     const updateNote = (groupId, note) => {
         setState(prev => ({
             ...prev,
@@ -475,6 +490,9 @@ export const CheckedStateProvider = ({ children, user }) => {
             getInterestColor,
             setInterestColor,
             resetInterestColors,
+            stageTheme,
+            setStageColor,
+            setStageColors,
             updateNote,
             toggleScene,
             setScenes,

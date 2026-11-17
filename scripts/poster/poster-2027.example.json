@@ -1,0 +1,401 @@
+{
+  "edition": 2027,
+  "_comment": "Exemple de transcription d'affiche : pour chaque jour et chaque scène, les groupes dans l'ordre de l'affiche (le plus gros nom en premier). Un groupe peut être un objet { name, start, end, style, country, lastVisit }.",
+  "days": {
+    "Jeudi": {
+      "MAINSTAGE 1": [
+        "Mainstage 1 Jeu #1",
+        "Mainstage 1 Jeu #2",
+        "Mainstage 1 Jeu #3",
+        "Mainstage 1 Jeu #4",
+        "Mainstage 1 Jeu #5"
+      ],
+      "MAINSTAGE 2": [
+        "Mainstage 2 Jeu #1",
+        "Mainstage 2 Jeu #2",
+        "Mainstage 2 Jeu #3",
+        "Mainstage 2 Jeu #4",
+        "Mainstage 2 Jeu #5"
+      ],
+      "WARZONE": [
+        "Warzone Jeu #1",
+        "Warzone Jeu #2",
+        "Warzone Jeu #3",
+        "Warzone Jeu #4",
+        "Warzone Jeu #5"
+      ],
+      "RIOT": [
+        "Riot Jeu #1",
+        "Riot Jeu #2",
+        "Riot Jeu #3",
+        "Riot Jeu #4",
+        "Riot Jeu #5"
+      ],
+      "VALLEY": [
+        "Valley Jeu #1",
+        "Valley Jeu #2",
+        "Valley Jeu #3",
+        "Valley Jeu #4",
+        "Valley Jeu #5"
+      ],
+      "ABYSS": [
+        "Abyss Jeu #1",
+        "Abyss Jeu #2",
+        "Abyss Jeu #3",
+        "Abyss Jeu #4",
+        "Abyss Jeu #5"
+      ],
+      "ALTAR": [
+        "Altar Jeu #1",
+        "Altar Jeu #2",
+        "Altar Jeu #3",
+        "Altar Jeu #4",
+        "Altar Jeu #5"
+      ],
+      "FORGE": [
+        "Forge Jeu #1",
+        "Forge Jeu #2",
+        "Forge Jeu #3",
+        "Forge Jeu #4",
+        "Forge Jeu #5"
+      ],
+      "TEMPLE": [
+        "Temple Jeu #1",
+        "Temple Jeu #2",
+        "Temple Jeu #3",
+        "Temple Jeu #4",
+        "Temple Jeu #5"
+      ],
+      "CRYPT": [
+        "Crypt Jeu #1",
+        "Crypt Jeu #2",
+        "Crypt Jeu #3",
+        "Crypt Jeu #4",
+        "Crypt Jeu #5"
+      ]
+    },
+    "Vendredi": {
+      "MAINSTAGE 1": [
+        "Mainstage 1 Ven #1",
+        "Mainstage 1 Ven #2",
+        "Mainstage 1 Ven #3",
+        "Mainstage 1 Ven #4",
+        "Mainstage 1 Ven #5",
+        "Mainstage 1 Ven #6",
+        "Mainstage 1 Ven #7",
+        "Mainstage 1 Ven #8"
+      ],
+      "MAINSTAGE 2": [
+        "Mainstage 2 Ven #1",
+        "Mainstage 2 Ven #2",
+        "Mainstage 2 Ven #3",
+        "Mainstage 2 Ven #4",
+        "Mainstage 2 Ven #5",
+        "Mainstage 2 Ven #6",
+        "Mainstage 2 Ven #7",
+        "Mainstage 2 Ven #8"
+      ],
+      "WARZONE": [
+        "Warzone Ven #1",
+        "Warzone Ven #2",
+        "Warzone Ven #3",
+        "Warzone Ven #4",
+        "Warzone Ven #5",
+        "Warzone Ven #6",
+        "Warzone Ven #7",
+        "Warzone Ven #8",
+        "Warzone Ven #9"
+      ],
+      "RIOT": [
+        "Riot Ven #1",
+        "Riot Ven #2",
+        "Riot Ven #3",
+        "Riot Ven #4",
+        "Riot Ven #5",
+        "Riot Ven #6",
+        "Riot Ven #7",
+        "Riot Ven #8",
+        "Riot Ven #9"
+      ],
+      "VALLEY": [
+        "Valley Ven #1",
+        "Valley Ven #2",
+        "Valley Ven #3",
+        "Valley Ven #4",
+        "Valley Ven #5",
+        "Valley Ven #6",
+        "Valley Ven #7",
+        "Valley Ven #8",
+        "Valley Ven #9"
+      ],
+      "ABYSS": [
+        "Abyss Ven #1",
+        "Abyss Ven #2",
+        "Abyss Ven #3",
+        "Abyss Ven #4",
+        "Abyss Ven #5",
+        "Abyss Ven #6",
+        "Abyss Ven #7",
+        "Abyss Ven #8",
+        "Abyss Ven #9"
+      ],
+      "ALTAR": [
+        "Altar Ven #1",
+        "Altar Ven #2",
+        "Altar Ven #3",
+        "Altar Ven #4",
+        "Altar Ven #5",
+        "Altar Ven #6",
+        "Altar Ven #7",
+        "Altar Ven #8",
+        "Altar Ven #9"
+      ],
+      "FORGE": [
+        "Forge Ven #1",
+        "Forge Ven #2",
+        "Forge Ven #3",
+        "Forge Ven #4",
+        "Forge Ven #5",
+        "Forge Ven #6",
+        "Forge Ven #7",
+        "Forge Ven #8",
+        "Forge Ven #9"
+      ],
+      "TEMPLE": [
+        "Temple Ven #1",
+        "Temple Ven #2",
+        "Temple Ven #3",
+        "Temple Ven #4",
+        "Temple Ven #5",
+        "Temple Ven #6",
+        "Temple Ven #7",
+        "Temple Ven #8",
+        "Temple Ven #9"
+      ],
+      "CRYPT": [
+        "Crypt Ven #1",
+        "Crypt Ven #2",
+        "Crypt Ven #3",
+        "Crypt Ven #4",
+        "Crypt Ven #5",
+        "Crypt Ven #6",
+        "Crypt Ven #7",
+        "Crypt Ven #8",
+        "Crypt Ven #9"
+      ]
+    },
+    "Samedi": {
+      "MAINSTAGE 1": [
+        "Mainstage 1 Sam #1",
+        "Mainstage 1 Sam #2",
+        "Mainstage 1 Sam #3",
+        "Mainstage 1 Sam #4",
+        "Mainstage 1 Sam #5",
+        "Mainstage 1 Sam #6",
+        "Mainstage 1 Sam #7",
+        "Mainstage 1 Sam #8"
+      ],
+      "MAINSTAGE 2": [
+        "Mainstage 2 Sam #1",
+        "Mainstage 2 Sam #2",
+        "Mainstage 2 Sam #3",
+        "Mainstage 2 Sam #4",
+        "Mainstage 2 Sam #5",
+        "Mainstage 2 Sam #6",
+        "Mainstage 2 Sam #7",
+        "Mainstage 2 Sam #8",
+        "Mainstage 2 Sam #9"
+      ],
+      "WARZONE": [
+        "Warzone Sam #1",
+        "Warzone Sam #2",
+        "Warzone Sam #3",
+        "Warzone Sam #4",
+        "Warzone Sam #5",
+        "Warzone Sam #6",
+        "Warzone Sam #7",
+        "Warzone Sam #8",
+        "Warzone Sam #9"
+      ],
+      "RIOT": [
+        "Riot Sam #1",
+        "Riot Sam #2",
+        "Riot Sam #3",
+        "Riot Sam #4",
+        "Riot Sam #5",
+        "Riot Sam #6",
+        "Riot Sam #7",
+        "Riot Sam #8",
+        "Riot Sam #9"
+      ],
+      "VALLEY": [
+        "Valley Sam #1",
+        "Valley Sam #2",
+        "Valley Sam #3",
+        "Valley Sam #4",
+        "Valley Sam #5",
+        "Valley Sam #6",
+        "Valley Sam #7",
+        "Valley Sam #8",
+        "Valley Sam #9"
+      ],
+      "ABYSS": [
+        "Abyss Sam #1",
+        "Abyss Sam #2",
+        "Abyss Sam #3",
+        "Abyss Sam #4",
+        "Abyss Sam #5",
+        "Abyss Sam #6",
+        "Abyss Sam #7",
+        "Abyss Sam #8",
+        "Abyss Sam #9"
+      ],
+      "ALTAR": [
+        "Altar Sam #1",
+        "Altar Sam #2",
+        "Altar Sam #3",
+        "Altar Sam #4",
+        "Altar Sam #5",
+        "Altar Sam #6",
+        "Altar Sam #7",
+        "Altar Sam #8",
+        "Altar Sam #9"
+      ],
+      "FORGE": [
+        "Forge Sam #1",
+        "Forge Sam #2",
+        "Forge Sam #3",
+        "Forge Sam #4",
+        "Forge Sam #5",
+        "Forge Sam #6",
+        "Forge Sam #7",
+        "Forge Sam #8",
+        "Forge Sam #9"
+      ],
+      "TEMPLE": [
+        "Temple Sam #1",
+        "Temple Sam #2",
+        "Temple Sam #3",
+        "Temple Sam #4",
+        "Temple Sam #5",
+        "Temple Sam #6",
+        "Temple Sam #7",
+        "Temple Sam #8",
+        "Temple Sam #9"
+      ],
+      "CRYPT": [
+        "Crypt Sam #1",
+        "Crypt Sam #2",
+        "Crypt Sam #3",
+        "Crypt Sam #4",
+        "Crypt Sam #5",
+        "Crypt Sam #6",
+        "Crypt Sam #7",
+        "Crypt Sam #8",
+        "Crypt Sam #9"
+      ]
+    },
+    "Dimanche": {
+      "MAINSTAGE 1": [
+        "Mainstage 1 Dim #1",
+        "Mainstage 1 Dim #2",
+        "Mainstage 1 Dim #3",
+        "Mainstage 1 Dim #4",
+        "Mainstage 1 Dim #5",
+        "Mainstage 1 Dim #6",
+        "Mainstage 1 Dim #7",
+        "Mainstage 1 Dim #8"
+      ],
+      "MAINSTAGE 2": [
+        "Mainstage 2 Dim #1",
+        "Mainstage 2 Dim #2",
+        "Mainstage 2 Dim #3",
+        "Mainstage 2 Dim #4",
+        "Mainstage 2 Dim #5",
+        "Mainstage 2 Dim #6",
+        "Mainstage 2 Dim #7",
+        "Mainstage 2 Dim #8"
+      ],
+      "WARZONE": [
+        "Warzone Dim #1",
+        "Warzone Dim #2",
+        "Warzone Dim #3",
+        "Warzone Dim #4",
+        "Warzone Dim #5",
+        "Warzone Dim #6",
+        "Warzone Dim #7",
+        "Warzone Dim #8"
+      ],
+      "RIOT": [
+        "Riot Dim #1",
+        "Riot Dim #2",
+        "Riot Dim #3",
+        "Riot Dim #4",
+        "Riot Dim #5",
+        "Riot Dim #6",
+        "Riot Dim #7",
+        "Riot Dim #8"
+      ],
+      "VALLEY": [
+        "Valley Dim #1",
+        "Valley Dim #2",
+        "Valley Dim #3",
+        "Valley Dim #4",
+        "Valley Dim #5",
+        "Valley Dim #6",
+        "Valley Dim #7",
+        "Valley Dim #8"
+      ],
+      "ABYSS": [
+        "Abyss Dim #1",
+        "Abyss Dim #2",
+        "Abyss Dim #3",
+        "Abyss Dim #4",
+        "Abyss Dim #5",
+        "Abyss Dim #6",
+        "Abyss Dim #7",
+        "Abyss Dim #8"
+      ],
+      "ALTAR": [
+        "Altar Dim #1",
+        "Altar Dim #2",
+        "Altar Dim #3",
+        "Altar Dim #4",
+        "Altar Dim #5",
+        "Altar Dim #6",
+        "Altar Dim #7",
+        "Altar Dim #8"
+      ],
+      "FORGE": [
+        "Forge Dim #1",
+        "Forge Dim #2",
+        "Forge Dim #3",
+        "Forge Dim #4",
+        "Forge Dim #5",
+        "Forge Dim #6",
+        "Forge Dim #7",
+        "Forge Dim #8"
+      ],
+      "TEMPLE": [
+        "Temple Dim #1",
+        "Temple Dim #2",
+        "Temple Dim #3",
+        "Temple Dim #4",
+        "Temple Dim #5",
+        "Temple Dim #6",
+        "Temple Dim #7",
+        "Temple Dim #8"
+      ],
+      "CRYPT": [
+        "Crypt Dim #1",
+        "Crypt Dim #2",
+        "Crypt Dim #3",
+        "Crypt Dim #4",
+        "Crypt Dim #5",
+        "Crypt Dim #6",
+        "Crypt Dim #7",
+        "Crypt Dim #8"
+      ]
+    }
+  }
+}

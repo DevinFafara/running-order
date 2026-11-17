@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { STAGES, STAGE_CONFIG } from '../constants';
+import { useCheckedState } from '../context/CheckedStateContext';
 
 /**
  * Converts a "HH:MM" time string to minutes since midnight.
@@ -40,6 +41,7 @@ function getCurrentMinutes(simulatedMinutes = null) {
  */
 export function useCurrentBands(groups, simulatedMinutes = null) {
     const [stageStatus, setStageStatus] = useState({});
+    const { stageTheme } = useCheckedState();
 
     useEffect(() => {
         function compute() {
@@ -86,7 +88,8 @@ export function useCurrentBands(groups, simulatedMinutes = null) {
                     next,
                     lastPlayed,
                     status,
-                    config: STAGE_CONFIG[stageName],
+                    // Couleur de scène choisie par l'utilisateur (thème) par-dessus la config de l'édition
+                    config: STAGE_CONFIG[stageName] && { ...STAGE_CONFIG[stageName], ...stageTheme[stageName] },
                 };
             });
 
@@ -98,7 +101,7 @@ export function useCurrentBands(groups, simulatedMinutes = null) {
         // Refresh every 30 seconds
         const interval = setInterval(compute, 30000);
         return () => clearInterval(interval);
-    }, [groups, simulatedMinutes]);
+    }, [groups, simulatedMinutes, stageTheme]);
 
     return stageStatus;
 }

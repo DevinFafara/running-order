@@ -1,36 +1,47 @@
 
-import { STAGE_CONFIG } from '../constants';
+import { DAYS, POLES, MAIN_STAGES } from '../constants';
+import { toFestivalMinutes, bandRange } from './time';
 
-const DAILY_LIMITS = {
-    'Jeudi': 10,
-    'Vendredi': 18,
-    'Samedi': 18,
-    'Dimanche': 16
+// Module horaire unique (seuil de nuit commun à toute l'app)
+export const timeToMinutes = (timeStr) => toFestivalMinutes(timeStr);
+
+/** Scènes d'une journée ({ [SCENE]: nombre de groupes }), de la plus fréquentée à la moins fréquentée. */
+export const sortStagesByCount = (stages = {}) => MAIN_STAGES
+    .filter(stageKey => stages[stageKey] > 0)
+    .sort((a, b) => (stages[b] - stages[a]) || (MAIN_STAGES.indexOf(a) - MAIN_STAGES.indexOf(b)));
+
+/** Rangs, du plus haut au plus bas : seuil minimal du taux d'occupation moyen (%). */
+export const RANKS = [
+    { label: "Trve", min: 90 },
+    { label: "Hellbanger", min: 60 },
+    { label: "Amateur", min: 30 },
+    { label: "Touriste", min: 0 },
+];
+
+/**
+ * Fenêtre de chaque journée, calculée depuis la programmation : premier début et dernière fin.
+ */
+export const computeDayWindows = (lineup) => {
+    const windows = {};
+    DAYS.forEach(day => {
+        const ranges = (lineup || []).filter(b => b.DAY === day && b.DEBUT && b.FIN).map(bandRange);
+        windows[day] = ranges.length === 0 ? null : {
+            start: Math.min(...ranges.map(r => r.start)),
+            end: Math.max(...ranges.map(r => r.end)),
+        };
+    });
+    return windows;
 };
 
-export const timeToMinutes = (timeStr) => {
-    if (typeof timeStr !== 'string' || !timeStr) return 0;
-    const [h, m] = timeStr.replace('h', ':').split(':').map(Number);
-    let hours = h;
-    if (hours < 10) hours += 24;
-    return hours * 60 + (m || 0);
-};
-
-export const calculateStats = (lineup, taggedBands) => {
+export const calculateStats = (rawLineup, rawTaggedBands) => {
+    const lineup = rawLineup || [];
+    const taggedBands = rawTaggedBands || {};
     const stats = {
         totalBands: 0,
-        effectiveTotal: 0,
-        totalMinutes: 0,
-        days: {
-            'Jeudi': { count: 0, minutes: 0, stages: {} },
-            'Vendredi': { count: 0, minutes: 0, stages: {} },
-            'Samedi': { count: 0, minutes: 0, stages: {} },
-            'Dimanche': { count: 0, minutes: 0, stages: {} },
-        },
-        clashes: [],
+        days: Object.fromEntries(DAYS.map(day => [day, { count: 0, stages: {} }])),
     };
 
-    if (!lineup || !taggedBands) return stats;
+    const dayWindows = computeDayWindows(lineup);
 
     const myBands = lineup.filter(group => {
         const interest = taggedBands[group.id]?.interest;
@@ -40,44 +51,26 @@ export const calculateStats = (lineup, taggedBands) => {
     myBands.forEach(group => {
         stats.totalBands++;
 
-        const start = timeToMinutes(group.DEBUT);
-        const end = timeToMinutes(group.FIN);
-        const duration = end - start;
+        const duration = timeToMinutes(group.FIN) - timeToMinutes(group.DEBUT);
 
-        if (duration > 0) {
-            stats.totalMinutes += duration;
-            if (stats.days[group.DAY]) {
-                stats.days[group.DAY].count++;
-                stats.days[group.DAY].minutes += duration;
+        if (duration > 0 && stats.days[group.DAY]) {
+            stats.days[group.DAY].count++;
 
-                let stageName = group.SCENE;
-                if (stageName) {
-                    const normalized = stageName.toUpperCase();
-                    stats.days[group.DAY].stages[normalized] = (stats.days[group.DAY].stages[normalized] || 0) + 1;
-                }
+            const stageName = group.SCENE;
+            if (stageName) {
+                const normalized = stageName.toUpperCase();
+                stats.days[group.DAY].stages[normalized] = (stats.days[group.DAY].stages[normalized] || 0) + 1;
             }
         }
     });
 
-    Object.entries(stats.days).forEach(([day, data]) => {
-        const limit = DAILY_LIMITS[day] || 18;
-        stats.effectiveTotal += Math.min(data.count, limit);
-        data.intensity = Math.min(100, Math.round((data.count / limit) * 100));
-    });
-
-    const clashCandidates = myBands;
-
     const dayBuckets = {};
-    clashCandidates.forEach(b => {
+    myBands.forEach(b => {
         if (!dayBuckets[b.DAY]) dayBuckets[b.DAY] = [];
-        dayBuckets[b.DAY].push({
-            ...b,
-            _s: timeToMinutes(b.DEBUT),
-            _e: timeToMinutes(b.FIN)
-        });
+        const range = bandRange(b);
+        dayBuckets[b.DAY].push({ ...b, _s: range.start, _e: range.end });
     });
 
-    stats.clashCounts = { 2: 0, 3: 0, 4: 0, 5: 0 };
     stats.clashesExtended = [];
 
     Object.entries(dayBuckets).forEach(([day, bands]) => {
@@ -98,20 +91,14 @@ export const calculateStats = (lineup, taggedBands) => {
         let currentBands = [];
 
         const commitSegment = (end) => {
-            if (currentLevel >= 2) {
-                const duration = end - segmentStart;
-                if (duration >= 10) {
-                    if (!stats.clashCounts[currentLevel]) stats.clashCounts[currentLevel] = 0;
-                    stats.clashCounts[currentLevel]++;
-
-                    stats.clashesExtended.push({
-                        day,
-                        startTime: segmentStart,
-                        endTime: end,
-                        level: currentLevel,
-                        bands: [...new Set(currentBands)].sort((a, b) => a.GROUPE.localeCompare(b.GROUPE))
-                    });
-                }
+            if (currentLevel >= 2 && end - segmentStart >= 10) {
+                stats.clashesExtended.push({
+                    day,
+                    startTime: segmentStart,
+                    endTime: end,
+                    level: currentLevel,
+                    bands: [...new Set(currentBands)].sort((a, b) => a.GROUPE.localeCompare(b.GROUPE))
+                });
             }
         };
 
@@ -135,22 +122,11 @@ export const calculateStats = (lineup, taggedBands) => {
         }
     });
 
-    stats.clashes = [];
-
-    const DAILY_WINDOWS = {
-        'Jeudi': { start: '16:30', end: '02:05' },
-        'Vendredi': { start: '10:30', end: '02:10' },
-        'Samedi': { start: '10:30', end: '02:00' },
-        'Dimanche': { start: '10:30', end: '00:30' }
-    };
-
-    Object.entries(stats.days).forEach(([day, data]) => {
-        const window = DAILY_WINDOWS[day];
+    Object.keys(stats.days).forEach(day => {
+        const window = dayWindows[day];
         if (!window) return;
 
-        const windowStart = timeToMinutes(window.start);
-        const windowEnd = timeToMinutes(window.end);
-        const totalWindowMinutes = windowEnd - windowStart;
+        const totalWindowMinutes = window.end - window.start;
 
         const dailyBands = myBands.filter(b => b.DAY === day);
         if (dailyBands.length === 0) {
@@ -158,44 +134,31 @@ export const calculateStats = (lineup, taggedBands) => {
             return;
         }
 
-        const intervals = dailyBands.map(b => [timeToMinutes(b.DEBUT), timeToMinutes(b.FIN)]).sort((a, b) => a[0] - b[0]);
-        let mergedIntervals = [];
-        if (intervals.length > 0) {
-            let [currStart, currEnd] = intervals[0];
-            for (let i = 1; i < intervals.length; i++) {
-                const [nextStart, nextEnd] = intervals[i];
-                if (nextStart < currEnd) {
-                    currEnd = Math.max(currEnd, nextEnd);
-                } else {
-                    mergedIntervals.push([currStart, currEnd]);
-                    currStart = nextStart;
-                    currEnd = nextEnd;
-                }
+        const intervals = dailyBands.map(b => { const r = bandRange(b); return [r.start, r.end]; }).sort((a, b) => a[0] - b[0]);
+        const mergedIntervals = [];
+        let [currStart, currEnd] = intervals[0];
+        for (let i = 1; i < intervals.length; i++) {
+            const [nextStart, nextEnd] = intervals[i];
+            if (nextStart < currEnd) {
+                currEnd = Math.max(currEnd, nextEnd);
+            } else {
+                mergedIntervals.push([currStart, currEnd]);
+                currStart = nextStart;
+                currEnd = nextEnd;
             }
-            mergedIntervals.push([currStart, currEnd]);
         }
+        mergedIntervals.push([currStart, currEnd]);
 
         const occupiedMinutes = mergedIntervals.reduce((acc, [start, end]) => acc + (end - start), 0);
 
-        const favCount = stats.days[day]?.count || 0;
+        // Temps de déplacement entre deux concerts (5 min chacun), compté comme occupé
+        const favCount = stats.days[day].count;
         const dayClashes = stats.clashesExtended.filter(c => c.day === day).length;
         const transitionMalus = Math.max(0, (favCount - dayClashes) * 5);
 
         const freeMinutes = Math.max(0, totalWindowMinutes - occupiedMinutes - transitionMalus);
 
-        const completionRate = Math.round(((totalWindowMinutes - freeMinutes) / totalWindowMinutes) * 100);
-
-        // console.log(`[Stats DEBUG Day] ${day}:`, {
-        //     totalWindow: totalWindowMinutes,
-        //     occupied: occupiedMinutes,
-        //     transitions: transitionMalus,
-        //     freeTime: freeMinutes,
-        //     rate: completionRate
-        // });
-
-        stats.days[day].completionRate = completionRate;
-
-        stats.days[day].freeMinutes = freeMinutes;
+        stats.days[day].completionRate = Math.round(((totalWindowMinutes - freeMinutes) / totalWindowMinutes) * 100);
     });
 
     const activeDays = Object.values(stats.days).filter(d => d.count > 0);
@@ -207,7 +170,7 @@ export const calculateStats = (lineup, taggedBands) => {
     }
 
     const history = { noms: new Set(), adjs: new Set(), univs: new Set() };
-    Object.entries(stats.days).forEach(([day, data]) => {
+    Object.keys(stats.days).forEach(day => {
         const dailyBands = myBands.filter(b => b.DAY === day);
         const persona = calculateDayPersona(dailyBands, taggedBands, history);
 
@@ -220,111 +183,158 @@ export const calculateStats = (lineup, taggedBands) => {
         stats.days[day].persona = persona;
     });
 
-    if (stats.averageCompletion < 30) stats.rank = "Touriste";
-    else if (stats.averageCompletion < 60) stats.rank = "Amateur";
-    else if (stats.averageCompletion < 90) stats.rank = "Hellbanger";
-    else stats.rank = "Trve";
+    stats.rank = RANKS.find(r => stats.averageCompletion >= r.min).label;
 
-    stats.weeklyPersona = calculateDayPersona(myBands, taggedBands, history);
+    // Classe de la semaine : reflète tous les goûts, sans éviter les mots des titres du jour
+    stats.weeklyPersona = calculateDayPersona(myBands, taggedBands);
 
     return stats;
 };
 
+/**
+ * Styles reconnus dans la colonne STYLE (en minuscules) : `match` décide si un groupe relève du style.
+ * L'ordre des clés départage les égalités de score.
+ * Noms, adjectifs et univers épicènes : ils se combinent entre styles sans problème d'accord.
+ */
 const STYLE_PERSONA = {
     "sludge": {
+        "match": /sludge/,
         "noms": ["Prophète"],
         "adjectifs": ["Sale"],
         "univers": ["du Bayou"]
     },
     "death": {
+        "match": /death/,
         "noms": ["Goule"],
-        "adjectifs": ["Impitoyable"],
-        "univers": ["du Chaos"]
+        "adjectifs": ["Putride"],
+        "univers": ["des Catacombes"]
     },
     "metalcore": {
+        "match": /metalcore/,
         "noms": ["Adepte"],
         "adjectifs": ["Implacable"],
-        "univers": ["des Temps Modernes"]
+        "univers": ["de la Nouvelle Vague"]
     },
     "nu": {
+        "match": /\bnu\b|trap metal|modern metal/,
         "noms": ["Hybride"],
         "adjectifs": ["Instable"],
         "univers": ["de la Street"]
     },
     "heavy": {
+        "match": /heavy/,
         "noms": ["Sentinelle"],
-        "adjectifs": ["Immuable"],
+        "adjectifs": ["Inoxydable"],
         "univers": ["de la Forteresse"]
     },
     "punk": {
+        "match": /punk|crust|garage|(^|[^a-z])o[iï]!?($|[^a-z])/,
         "noms": ["Punk"],
-        "adjectifs": ["Irascible"],
-        "univers": ["des bas-fonds"]
+        "adjectifs": ["Anarchiste"],
+        "univers": ["des Bas-Fonds"]
     },
     "hardcore": {
+        "match": /hardcore|harcore|nyhc|mathcore|emocore/,
         "noms": ["Rebelle"],
-        "adjectifs": ["Insoumis"],
+        "adjectifs": ["Indomptable"],
         "univers": ["du Pit"]
     },
     "stoner": {
+        "match": /stoner/,
         "noms": ["Nomade"],
         "adjectifs": ["Cosmique"],
         "univers": ["du Désert"]
     },
     "post": {
-        "noms": ["Prodige"],
-        "adjectifs": ["Onirique"],
-        "univers": ["d'Autres Dimensions"]
+        "match": /post[\s-]?(metal|rock|black)/,
+        "noms": ["Esprit"],
+        "adjectifs": ["Atmosphérique"],
+        "univers": ["des Brumes"]
     },
     "rock": {
+        "match": /rock|grunge/,
         "noms": ["Icône"],
         "adjectifs": ["Électrique"],
-        "univers": ["des Salles Obscures"]
+        "univers": ["de la Route"]
     },
     "black": {
+        "match": /black/,
         "noms": ["Ombre"],
         "adjectifs": ["Funeste"],
         "univers": ["de la Forêt Noire"]
     },
     "folk": {
+        "match": /folk/,
         "noms": ["Barde"],
         "adjectifs": ["Antique"],
         "univers": ["des Tavernes"]
     },
     "indus": {
+        "match": /indus/,
         "noms": ["Cyborg"],
         "adjectifs": ["Mécanique"],
         "univers": ["de l'Usine"]
     },
     "thrash": {
+        "match": /thrash/,
         "noms": ["Bête"],
         "adjectifs": ["Féroce"],
         "univers": ["de la Tempête"]
     },
     "power": {
+        "match": /power(?!violence)/,
         "noms": ["Légende"],
         "adjectifs": ["Épique"],
-        "univers": ["de la Légende"]
+        "univers": ["du Royaume"]
     },
     "prog": {
-        "noms": ["Visionnaire"],
-        "adjectifs": ["Intello"],
-        "univers": ["du Fractal Infini"]
+        "match": /prog/,
+        "noms": ["Virtuose"],
+        "adjectifs": ["Complexe"],
+        "univers": ["du Labyrinthe"]
     },
     "alternatif": {
-        "noms": ["Guide"],
-        "adjectifs": ["Libre"],
-        "univers": ["des Horizons"]
+        "match": /alternatif/,
+        "noms": ["Électron Libre"],
+        "adjectifs": ["Inclassable"],
+        "univers": ["des Chemins de Traverse"]
     },
     "hard": {
+        "match": /\bhard\b|glam/,
         "noms": ["Star"],
-        "adjectifs": ["Intrépide"],
-        "univers": ["du Stade"]
+        "adjectifs": ["Glamour"],
+        "univers": ["des Projecteurs"]
+    },
+    "doom": {
+        "match": /doom|funeral/,
+        "noms": ["Ascète"],
+        "adjectifs": ["Lugubre"],
+        "univers": ["du Purgatoire"]
+    },
+    "grind": {
+        "match": /grind|powerviolence/,
+        "noms": ["Tronçonneuse"],
+        "adjectifs": ["Frénétique"],
+        "univers": ["de l'Abattoir"]
+    },
+    "psyche": {
+        "match": /psych/,
+        "noms": ["Mystique"],
+        "adjectifs": ["Hypnotique"],
+        "univers": ["des Songes"]
+    },
+    "goth": {
+        "match": /goth/,
+        "noms": ["Vampire"],
+        "adjectifs": ["Mélancolique"],
+        "univers": ["du Clair de Lune"]
     },
 };
 
+const DEFAULT_PERSONA = { title: "Âme Égarée" };
+
 export const calculateDayPersona = (dayBands, taggedBands, history = null) => {
-    if (!dayBands || dayBands.length === 0) return { title: "Simple Festivalier", testTitle: "Simple Festivalier", scores: {}, recipe: {} };
+    if (!dayBands || dayBands.length === 0) return DEFAULT_PERSONA;
 
     const stageCounts = {};
     dayBands.forEach(b => {
@@ -335,29 +345,36 @@ export const calculateDayPersona = (dayBands, taggedBands, history = null) => {
     const total = dayBands.length;
     const getS = (keys) => keys.reduce((sum, k) => sum + (stageCounts[k] || 0), 0);
 
-    const ms = getS(['MAINSTAGE 1', 'MAINSTAGE 2']);
-    const wz = getS(['WARZONE']);
-    const vy = getS(['VALLEY']);
-    const al = getS(['ALTAR']);
-    const te = getS(['TEMPLE']);
+    // Titres « priorité » : une scène (ou un pôle) qui concentre plus de 75 % de la journée.
+    // Ordre : pôle Mainstages, puis scène seule (sinon son pôle la masquerait toujours), puis autres pôles.
+    const STAGE_TITLES = {
+        'WARZONE': "Tête Brûlée de la Warzone",
+        'RIOT': "Anarchiste du Riot",
+        'VALLEY': "Ermite de la Valley",
+        'ABYSS': "Créature de l'Abyss",
+        'ALTAR': "Bourreau de l'Altar",
+        'FORGE': "Enclume de la Forge",
+        'TEMPLE': "Disciple du Temple",
+        'CRYPT': "Spectre de la Crypt",
+    };
+    const POLE_TITLES = {
+        MS: "Campeur des Mainstages",
+        WR: "Squatteur de Warzone/Riot",
+        VA: "Valley/Abyss Addict",
+        AF: "Inconditionnel d'Altar/Forge",
+        TC: "Fidèle de Temple/Crypt",
+    };
 
     let priorityTitle = null;
-    if (ms / total > 0.75) priorityTitle = "Campeur de Mainstage";
-    else if (wz / total > 0.75) priorityTitle = "Squatteur de Warzone";
-    else if (vy / total > 0.75) priorityTitle = "Ermite de la Valley";
-    else if ((wz + vy) / total > 0.75) priorityTitle = "Marginal sympathique";
-    else if (al / total > 0.75) priorityTitle = "Résident de l'Altar";
-    else if (te / total > 0.75) priorityTitle = "Disciple du Temple";
-    else if ((al + te) / total > 0.75) priorityTitle = "Adepte des Tentes";
-
-    if (priorityTitle) {
-        return {
-            title: priorityTitle,
-            testTitle: priorityTitle,
-            scores: {},
-            recipe: { isPriority: true, name: priorityTitle }
-        };
+    const stageHit = Object.keys(STAGE_TITLES).find(k => getS([k]) / total > 0.75);
+    if (getS(['MAINSTAGE 1', 'MAINSTAGE 2']) / total > 0.75) priorityTitle = POLE_TITLES.MS;
+    else if (stageHit) priorityTitle = STAGE_TITLES[stageHit];
+    else {
+        const poleHit = POLES.find(p => getS(p.stages) / total > 0.75);
+        if (poleHit) priorityTitle = POLE_TITLES[poleHit.id];
     }
+
+    if (priorityTitle) return { title: priorityTitle };
 
     const scores = {};
     Object.keys(STYLE_PERSONA).forEach(key => scores[key] = 0);
@@ -365,14 +382,11 @@ export const calculateDayPersona = (dayBands, taggedBands, history = null) => {
     dayBands.forEach(band => {
         const styleLow = (band.STYLE || "").toLowerCase();
         const interest = taggedBands[band.id]?.interest;
-        let weight = interest === 'must_see' ? 3 : interest === 'interested' ? 2 : interest === 'curious' ? 1 : 0;
+        const weight = interest === 'must_see' ? 3 : interest === 'interested' ? 2 : interest === 'curious' ? 1 : 0;
         if (weight === 0) return;
 
-        Object.keys(STYLE_PERSONA).forEach(keyword => {
-            if (styleLow.includes(keyword)) {
-                if (keyword === 'hard' && styleLow.includes('hardcore')) return;
-                scores[keyword] += weight;
-            }
+        Object.entries(STYLE_PERSONA).forEach(([keyword, { match }]) => {
+            if (match.test(styleLow)) scores[keyword] += weight;
         });
     });
 
@@ -380,7 +394,7 @@ export const calculateDayPersona = (dayBands, taggedBands, history = null) => {
         .filter(([, score]) => score > 0)
         .sort(([, a], [, b]) => b - a);
 
-    if (topKeywords.length === 0) return { title: "Simple Festivalier", testTitle: "Simple Festivalier", scores: {}, recipe: {} };
+    if (topKeywords.length === 0) return DEFAULT_PERSONA;
 
     const k1 = topKeywords[0][0];
     const k2 = topKeywords.length >= 2 ? topKeywords[1][0] : k1;
@@ -405,7 +419,6 @@ export const calculateDayPersona = (dayBands, taggedBands, history = null) => {
             nom: STYLE_PERSONA[styles[p[0]]].noms[0],
             adj: STYLE_PERSONA[styles[p[1]]].adjectifs[0],
             univ: STYLE_PERSONA[styles[p[2]]].univers[0],
-            formula: `${p[0] + 1}-${p[1] + 1}-${p[2] + 1}`
         };
 
         let dupeScore = 0;
@@ -413,13 +426,10 @@ export const calculateDayPersona = (dayBands, taggedBands, history = null) => {
             if (history.noms.has(candidate.nom)) dupeScore++;
             if (history.adjs.has(candidate.adj)) dupeScore++;
             if (history.univs.has(candidate.univ)) dupeScore++;
-        } else {
-            dupeScore = 0;
         }
 
         if (dupeScore === 0) {
             chosen = candidate;
-            bestScore = 0;
             break;
         }
 
@@ -429,22 +439,5 @@ export const calculateDayPersona = (dayBands, taggedBands, history = null) => {
         }
     }
 
-    const testTitle = `${chosen.nom} ${chosen.adj} ${chosen.univ}`;
-
-    return {
-        title: testTitle,
-        testTitle: testTitle,
-        scores: Object.fromEntries(topKeywords),
-        recipe: { nom: chosen.nom, adj: chosen.adj, univ: chosen.univ, formula: chosen.formula },
-        chosen
-    };
-};
-
-export const getLevelTitle = (count) => {
-    if (count === 0) return "Touriste";
-    if (count < 10) return "Découvreur";
-    if (count < 25) return "Amateur éclairé";
-    if (count < 40) return "Marathonien";
-    if (count < 60) return "Guerrier du Pit";
-    return "Légende du Hellfest";
+    return { title: `${chosen.nom} ${chosen.adj} ${chosen.univ}`, chosen };
 };

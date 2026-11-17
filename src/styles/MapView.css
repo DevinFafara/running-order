@@ -359,7 +359,7 @@
     position: relative;
     display: inline-block;
     transform-origin: center center;
-    will-change: transform;
+    /* Pas de will-change : le calque serait pixellisé à une seule échelle puis étiré au zoom (icônes floues) */
     user-select: none;
     top: 50%;
     left: 50%;
@@ -469,7 +469,6 @@
     top: 0;
     left: 0;
     transform-origin: 0 0;
-    will-change: transform;
 }
 
 /* The visual pill container */
@@ -521,16 +520,15 @@
 }
 
 .stage-marker__icon {
-    width: 80%;
-    height: 80%;
+    /* Les icônes 2027 vont jusqu'au bord de leur image : le logo remplit la pastille */
+    width: 100%;
+    height: 100%;
     object-fit: contain;
-    filter: brightness(0) invert(1);
-    opacity: 0.95;
+    /* Logo à sa couleur de scène, sur pastille blanche (comme la DayView) */
     position: relative;
     z-index: 1;
-    transform: translateZ(0);
-    image-rendering: -webkit-optimize-contrast;
-    image-rendering: crisp-edges;
+    /* Pas de crisp-edges ni de calque forcé (translateZ) : l'icône de 200 px réduite à ~30 px
+       était échantillonnée au plus proche voisin, d'où le flou crénelé */
 }
 
 /* ── Info chip structure ── */
@@ -1512,3 +1510,48 @@
         height: calc(100vh - 50px - var(--group-card-height, 300px));
     }
 } */
+/* Logo de l'en-tête sur pastille blanche (l'en-tête est à la couleur de la scène) */
+.map-schedule-panel__icon {
+    background: #fff;
+    border-radius: 50%;
+}
+
+/* Favoris dans le programme d'une scène (panneau Affichage → Favoris, réglage propre à la carte) */
+.map-schedule-item__star {
+    color: var(--fav-color);
+    margin-left: 6px;
+}
+
+.map-schedule-item--fav-marker .map-schedule-item__band {
+    overflow: visible;
+}
+
+.map-schedule-item--fav-spotlight {
+    box-shadow: inset 0 0 0 2px var(--fav-color), inset 0 0 12px color-mix(in srgb, var(--fav-color) 45%, transparent);
+}
+
+.map-schedule-item--dimmed {
+    opacity: 0.4;
+}
+
+/* Marqueur : texte noir sur le surlignage (le texte blanc de la liste y serait illisible) */
+.map-schedule-item--fav-marker .band-name-marker {
+    color: #111;
+}
+
+/* Liste des scènes : la zone du bas prend la hauteur des rangées affichées (filtre de scènes), sans vide.
+   La page « programme » (2e page du glisseur) sort du flux pour ne pas imposer sa hauteur. */
+.map-bottom-zone.map-bottom-zone--fit {
+    height: auto;
+}
+
+.map-scenes-content > .map-scenes-slider {
+    position: relative;
+}
+
+.map-scenes-content > .map-scenes-slider > .map-scenes-slider__page:nth-child(2) {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+}

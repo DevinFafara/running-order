@@ -65,24 +65,25 @@ function parseCookies(cookieHeader) {
     );
 }
 
+// Utilisateur Discourse de la requête (cookie de session `_t`), ou null si aucune session
+async function getDiscourseUsername(req) {
+    const sessionCookie = parseCookies(req.headers.cookie)['_t'];
+    if (!sessionCookie) return null;
+    const response = await fetch(`${DISCOURSE_URL}/session/current.json`, {
+        headers: { 'Cookie': `_t=${sessionCookie}` }
+    });
+    const data = await response.json();
+    return data?.current_user?.username || null;
+}
+
 async function verifyAuth(req, res, next) {
     if (process.env.NODE_ENV !== 'production') {
         req.authenticatedUser = req.params.username;
         return next();
     }
 
-    const cookies = parseCookies(req.headers.cookie);
-    const sessionCookie = cookies['_t'];
-    if (!sessionCookie) {
-        return res.status(401).json({ error: 'Non authentifié' });
-    }
-
     try {
-        const response = await fetch(`${DISCOURSE_URL}/session/current.json`, {
-            headers: { 'Cookie': `_t=${sessionCookie}` }
-        });
-        const data = await response.json();
-        const username = data?.current_user?.username;
+        const username = await getDiscourseUsername(req);
         if (!username) {
             return res.status(401).json({ error: 'Non authentifié' });
         }
@@ -294,51 +295,51 @@ const BROADCAST_NOTIFICATIONS = [
     // Avant le festival
     { 
         id: 'j-14',
-        scheduledAt: '2026-06-04T21:00:00+02:00', 
+        scheduledAt: '2027-06-03T21:00:00+02:00', 
         title: '🤘 J-14 — Plus que 2 semaines !',
         body: 'Le Hellfest approche. Fini de préparer ton Running Order ?' 
     },
     { 
         id: 'j-7',
-        scheduledAt: '2026-06-11T18:00:00+02:00',
+        scheduledAt: '2027-06-10T18:00:00+02:00',
         title: '🔥 J-7 — Plus qu\'une semaine à tenir',
         body: 'Les bagages sont prêts ? N\'oublie pas la crème solaire 😎' 
     },
     { 
         id: 'j-1',
-        scheduledAt: '2026-06-17T10:00:00+02:00',
+        scheduledAt: '2027-06-16T10:00:00+02:00',
         title: '🚗 J-1 — En voiture Simone',
         body: 'Prudence sur la route. Clisson peut attendre, on a besoin de toi en un seul morceau.'
     },
     { 
         id: 'd1',
-        scheduledAt: '2026-06-18T12:00:00+02:00',
+        scheduledAt: '2027-06-17T12:00:00+02:00',
         title: '🎸 Jour 1 — Début des hostilités', 
-        body: 'C\'est parti pour 4 jours, 10 scènes, + de 200 groupes. Et on n\'oublie pas les bouchons d\'oreilles'
+        body: 'C\'est parti pour 4 jours, 10 scènes, + de 300 groupes. Et on n\'oublie pas les bouchons d\'oreilles'
     },
     {
         id: 'd2',
-        scheduledAt: '2026-06-19T10:00:00+02:00',
+        scheduledAt: '2027-06-18T10:00:00+02:00',
         title: '🍔 Jour 2 — Conseil stratégique',
         body: 'Mange avant 11h ou après 15h. Les files d\'attente du food court aux heures des repas, c\'est comme un mosh pit, mais en moins fun.'
     },
     { 
         id: 'd3',
-        scheduledAt: '2026-06-20T10:00:00+02:00', 
+        scheduledAt: '2027-06-19T10:00:00+02:00', 
         title: '💧 Rappel hydratation — Jour 3', 
         body: 'Buvez de l\'eau. Pas que de la bière. (Bon ok, les deux. Mais de l\'eau quand même)' 
     },
     { 
         id: 'd4',
-        scheduledAt: '2026-06-21T10:00:00+02:00',
+        scheduledAt: '2027-06-20T10:00:00+02:00',
         title: '🔥 Dernier jour — On donne tout',
         body: 'Aujourd\'hui ça se termine. Économise pas ton énergie — t\'auras toute l\'année pour récupérer.'
     },
     { 
         id: 'end',
-        scheduledAt: '2026-06-22T12:00:00+02:00',
+        scheduledAt: '2027-06-21T12:00:00+02:00',
         title: '🥲 C\'est déjà fini',
-        body: 'Merci d\'avoir utilisé cette application. See you in 2027 🤘'
+        body: 'Merci d\'avoir utilisé cette application. See you in 2028 🤘'
     },
 ];
 
@@ -399,7 +400,7 @@ if (pushEnabled) {
 // ═══════════════════════════════════════════════════════════════════════════
 
 // GET /running-order/api/ro/:username — Lire le RO d'un utilisateur
-app.get('/running-order/api/ro/:username', (req, res) => {
+app.get('/running-order/api/ro/:username', async (req, res) => {
     const username = sanitizeUsername(req.params.username);
     const filePath = path.join(DATA_DIR, `${username}.json`);
 
@@ -410,13 +411,19 @@ app.get('/running-order/api/ro/:username', (req, res) => {
     try {
         const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
 
-        // If the user is not opt-in and the requester is not the owner,
-        // return only basic info (no favorites)
+        // RO privé : seul son propriétaire peut le lire (session Discourse vérifiée
+        // seulement dans ce cas, pour ne pas appeler Discourse à chaque lecture publique).
         // In dev mode, we skip this check
-        if (process.env.NODE_ENV === 'production' &&
-            !data.community_opt_in &&
-            req.authenticatedUser !== username) {
-            return res.status(403).json({ error: 'This user\'s RO is private' });
+        if (process.env.NODE_ENV === 'production' && !data.community_opt_in) {
+            let requester = null;
+            try {
+                requester = await getDiscourseUsername(req);
+            } catch (err) {
+                console.error('Auth verification error:', err);
+            }
+            if (!requester || sanitizeUsername(requester) !== username) {
+                return res.status(403).json({ error: 'This user\'s RO is private' });
+            }
         }
 
         res.json(data);

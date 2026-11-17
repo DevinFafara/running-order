@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import PlaylistPanel from '../panels/PlaylistPanel';
-import FilterPanel from '../panels/FilterPanel';
 import SettingsPanel from '../panels/SettingsPanel';
 import CreditsPanel from '../panels/CreditsPanel';
 import ContactsPanel from '../panels/ContactsPanel';
@@ -10,14 +9,17 @@ import ShareModal from '../modals/ShareModal';
 import { useCheckedState } from '../../context/CheckedStateContext';
 import StatsPanel from '../panels/StatsPanel';
 import PWAInstallModal from '../modals/PWAInstallModal';
+import { EDITION } from '../../editions';
+
+// Carte 2027 en pause : visible seulement en développement (emplacements de test)
+const MAP_AVAILABLE = EDITION.map.enabled || import.meta.env.DEV;
 
 const HeaderBar = ({
     viewMode, onViewChange, onInteraction, onAddCustomEvent,
     customEvents, contacts, onSaveContact, onDeleteContact, onCheckContact,
     isGuestMode, guestName, onExitGuestMode, onClearCustomEvents,
     isInstallable, isInstalled, installApp, hasPrompt, platform,
-    isAuthenticated, username, notif, onOpenGroups,
-    filterOpen = false, onCloseFilter
+    isAuthenticated, username, notif, onOpenGroups
 }) => {
     const { userState } = useCheckedState();
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
@@ -153,7 +155,7 @@ const HeaderBar = ({
                         <i className="fa-solid fa-calendar-day"></i>
                     </button>
 
-                    <button
+                    {MAP_AVAILABLE && <button
                         className={`toolbar-btn ${viewMode === 'map' ? 'active' : ''}`}
                         title="Carte du site"
                         onClick={() => {
@@ -165,7 +167,7 @@ const HeaderBar = ({
                         }}
                     >
                         <i className="fa-solid fa-map-location-dot"></i>
-                    </button>
+                    </button>}
 
                     <button
                         className={`toolbar-btn ${profileOpen ? 'active' : ''}`}
@@ -180,11 +182,6 @@ const HeaderBar = ({
                     </button>
                 </div>
             </header>
-
-            <FilterPanel
-                isOpen={filterOpen}
-                onClose={onCloseFilter}
-            />
 
             <PlaylistPanel
                 isOpen={playlistOpen}
@@ -217,7 +214,7 @@ const HeaderBar = ({
             {statsOpen && (
                 <StatsPanel
                     onClose={() => setStatsOpen(false)}
-                    customEvents={customEvents}
+                    username={username}
                 />
             )}
 

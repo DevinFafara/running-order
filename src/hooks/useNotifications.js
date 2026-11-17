@@ -1,15 +1,9 @@
 import { useState, useRef, useCallback } from 'react';
 import { api } from '../services/api';
+import { EDITION } from '../editions';
 
-// Dates absolues du festival 2026
-const FESTIVAL_DATES = {
-    'Mardi':    '2026-06-16',
-    'Mercredi': '2026-06-17',
-    'Jeudi':    '2026-06-18',
-    'Vendredi': '2026-06-19',
-    'Samedi':   '2026-06-20',
-    'Dimanche': '2026-06-21',
-};
+// Dates absolues des jours du festival, lues dans le fichier d'édition
+const FESTIVAL_DATES = Object.fromEntries(EDITION.days.map(d => [d.key, d.date]));
 
 function parseTime(timeStr) {
     const [h, m] = timeStr.replace('h', ':').split(':').map(Number);

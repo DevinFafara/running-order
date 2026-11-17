@@ -135,8 +135,16 @@ running-order2/
 
 L'app est hébergée sur les serveurs du forum Hellfest (même domaine que `forum.hellfest.fr`). L'auth Discourse utilise le cookie de session `_t` — aucune redirection OAuth.
 
-Le backend tourne dans un container Docker géré via Portainer. Variables d'environnement à configurer : `NODE_ENV`, `DISCOURSE_URL`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `ADMIN_SECRET`.
+Le backend tourne dans un container Docker géré via Portainer. Variables d'environnement à configurer : `NODE_ENV`, `DISCOURSE_URL`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `ADMIN_SECRET`. Procédure complète : `DEPLOY.md` (hors dépôt).
 
 ---
 
 *Développé pour les Hellbangers.* 🤘
+
+## Prototype édition 2027 (branche `proto-2027`)
+
+- Tout ce qui dépend de l'édition est dans `src/editions/2027.js` (jours, scènes, pôles, couleurs, source de la programmation, carte). `src/editions/index.js` choisit l'édition courante.
+- Programmation : onglet « 2027 » du Google Sheet (`lineup.sheetUrl`), avec `public/lineup-2027.json` en secours. En attendant l'affiche, les deux contiennent une programmation de démo (307 groupes « ??? », ids 27000–27306, bio Lorem ipsum).
+- Affiche → programmation : `scripts/poster/` (voir son README), produit le JSON de secours et le TSV à coller dans le Sheet.
+- DayView : 5 pôles côte à côte dès 800 px (ou en paysage), fenêtre de 3 pôles en mobile portrait avec glissement en boucle, onglets de jours, barre de pôles avec compteurs de favoris.
+- Module horaire unique : `src/utils/time.js` (seuil de nuit à 6 h).

@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { DAYS } from '../../constants';
+import { EDITION } from '../../editions';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import WeeklyPDF from '../views/WeeklyPDF';
 import { computeMaxSim } from '../views/WeeklyPDF';
@@ -6,11 +8,11 @@ import { timeToMinutes } from '../../utils/statsUtils';
 import { useCheckedState } from '../../context/CheckedStateContext';
 import './PDFModal.css';
 
-const ALL_DAYS_ORDER = ['Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+const ALL_DAYS_ORDER = DAYS;
 
 const PDFModal = ({ onClose, groups, customEvents, selectedScenes, colorMode, taggedBands, reverse }) => {
     const [selectedMode, setSelectedMode] = useState(null);
-    const { state } = useCheckedState();
+    const { state, stageTheme } = useCheckedState();
 
     const favBands = groups.filter(g => taggedBands[g.id]);
     const hasFavorites = favBands.length > 0;
@@ -30,14 +32,14 @@ const PDFModal = ({ onClose, groups, customEvents, selectedScenes, colorMode, ta
             icon: 'fa-calendar-days',
             title: 'RO Complet',
             desc: '2 pages A4 · Tous les groupes · 6 jours · Toutes les scènes',
-            fileName: 'Hellfest2026_RO_Complet.pdf',
+            fileName: `Hellfest${EDITION.year}_RO_Complet.pdf`,
         },
         {
             id: 'essential',
             icon: 'fa-guitar',
             title: "L'Essentiel",
             desc: '1 page A4 · Tous les groupes · Jeu / Ven / Sam / Dim · Mainstages uniquement',
-            fileName: 'Hellfest2026_RO_Essentiel.pdf',
+            fileName: `Hellfest${EDITION.year}_RO_Essentiel.pdf`,
         },
         {
             id: 'favorites',
@@ -46,7 +48,7 @@ const PDFModal = ({ onClose, groups, customEvents, selectedScenes, colorMode, ta
             desc: hasFavorites
                 ? `1 page A4 · ${favBands.length} favori${favBands.length !== 1 ? 's' : ''} · Largeur égale par journée`
                 : 'Aucun favori sélectionné',
-            fileName: 'Hellfest2026_Favoris.pdf',
+            fileName: `Hellfest${EDITION.year}_Favoris.pdf`,
             warning: favWarning ? `Plus de 3 concerts simultanés (max ${maxSimOverall}) — le rendu peut être serré` : null,
             disabled: !hasFavorites,
         },
@@ -106,6 +108,7 @@ const PDFModal = ({ onClose, groups, customEvents, selectedScenes, colorMode, ta
                                     reverse={reverse}
                                     pdfMode={selectedMode}
                                     interestColors={state.interestColors}
+                                    stageTheme={stageTheme}
                                 />
                             }
                             fileName={selectedOption.fileName}

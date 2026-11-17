@@ -1,4 +1,5 @@
 import React from 'react';
+import { EDITION, isCurrentEditionId } from '../../editions';
 
 const ImportModal = ({ isOpen, onClose, data, onReplace, onSave, onView, isContactView = false }) => {
     const [confirmMode, setConfirmMode] = React.useState('none'); // 'none', 'replace'
@@ -10,6 +11,12 @@ const ImportModal = ({ isOpen, onClose, data, onReplace, onSave, onView, isConta
     }, [isOpen, data]);
 
     if (!isOpen || !data) return null;
+
+    // Comptage par édition, fait ici : les contacts enregistrés avant le filtrage contiennent encore des ids d'autres éditions
+    const bandIds = Object.keys(data.bands || {});
+    const currentCount = bandIds.filter(isCurrentEditionId).length;
+    const otherCount = (data.otherEditionCount || 0) + bandIds.length - currentCount;
+    const isOtherEdition = currentCount === 0 && otherCount > 0;
 
     return (
         <div style={{
@@ -61,6 +68,35 @@ const ImportModal = ({ isOpen, onClose, data, onReplace, onSave, onView, isConta
                     <i className="fa-solid fa-xmark"></i>
                 </button>
 
+                {isOtherEdition ? (
+                    <>
+                        <div style={{
+                            background: 'rgba(255,255,255,0.05)',
+                            padding: '20px',
+                            borderRadius: '12px',
+                            color: '#ccc',
+                            fontSize: '1rem',
+                            lineHeight: '1.5'
+                        }}>
+                            <strong style={{ color: '#FFD700' }}>RO d'une autre édition</strong><br />
+                            Ce lien a été créé pour une édition précédente, il ne contient aucun groupe du {EDITION.label}.
+                        </div>
+                        <button
+                            onClick={onClose}
+                            style={{
+                                padding: '15px',
+                                borderRadius: '10px',
+                                border: '1px solid #555',
+                                background: 'transparent',
+                                color: '#ccc',
+                                fontSize: '1rem',
+                                cursor: 'pointer',
+                            }}
+                        >
+                            Fermer
+                        </button>
+                    </>
+                ) : (<>
                 <div style={{
                     background: 'rgba(255,255,255,0.05)',
                     padding: '20px',
@@ -69,7 +105,7 @@ const ImportModal = ({ isOpen, onClose, data, onReplace, onSave, onView, isConta
                     justifyContent: 'space-around'
                 }}>
                     <div>
-                        <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#FFD700' }}>{data.bandCount}</div>
+                        <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#FFD700' }}>{currentCount}</div>
                         <div style={{ fontSize: '0.9rem', color: '#aaa' }}>Groupes</div>
                     </div>
                     <div>
@@ -205,8 +241,7 @@ const ImportModal = ({ isOpen, onClose, data, onReplace, onSave, onView, isConta
                         </button>
                     </div>
                 )}
-
-
+                </>)}
 
             </div>
         </div>

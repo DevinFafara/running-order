@@ -1,6 +1,9 @@
 import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { STAGES, DAYS, MAP_POIS, INTEREST_LEVELS, INTEREST_ORDER, CONTEXT_TAGS, CONTEXT_ORDER, STAGE_CONFIG } from '../../constants';
+import { STAGES, DAYS, POLES, MAP_POIS, INTEREST_LEVELS, INTEREST_ORDER, CONTEXT_TAGS, CONTEXT_ORDER, STAGE_CONFIG } from '../../constants';
+import { EDITION } from '../../editions';
+import StageIcon from '../common/StageIcon';
+import { markerStroke } from '../../utils/marker';
 import bandLogos from '../../data/bandLogos.json';
 import { useCheckedState } from '../../context/CheckedStateContext';
 import { useCurrentBands } from '../../hooks/useCurrentBands';
@@ -8,6 +11,9 @@ import { useGPS } from '../../hooks/useGPS';
 import { gpsToMapPosition } from '../../utils/gpsToMap';
 import { decodeROFromServer } from '../../utils/sharingUtils';
 import StageMarker from '../map/StageMarker';
+import DisplayPanel from '../panels/DisplayPanel';
+import { useFestivalNow } from '../../context/FestivalClockContext';
+import { getFestivalDayName, localDateKey } from '../../utils/time';
 import '../../styles/MapView.css';
 
 const ALL_STAGE_KEYS = Object.keys(STAGES);
@@ -44,14 +50,8 @@ const PRE_PAIRS = [
     ['LE_OFF1', 'LE_OFF2'],
 ];
 
-// À partir de Jeudi 01:00 : toutes les scènes sauf les Off
-const MAIN_PAIRS = [
-    ['MAINSTAGE_1', 'MAINSTAGE_2'],
-    ['WARZONE', 'VALLEY'],
-    ['ALTAR', 'TEMPLE'],
-    ['HELLSTAGE', 'HELLCITY_STAGE'],
-    ['METAL_CORNER', 'PURPLE_HOUSE'],
-];
+// 2027 : un couple par pôle (clés de STAGES : espaces remplacés par _)
+const MAIN_PAIRS = POLES.map(p => p.stages.map(k => k.replace(' ', '_')));
 
 const MIN_ZOOM = 0.30;
 const MAX_ZOOM = 1.50;
@@ -59,42 +59,17 @@ const DEFAULT_ZOOM = 0.70;
 const ZOOM_STEP = 0.25;
 const ZOOM_WHEEL_STEP = 0.08;
 
-// Mapping date locale → nom du jour festival (tel que stocké dans les données)
-const FESTIVAL_DAY_MAP = {
-    '2026-06-16': 'Mardi',
-    '2026-06-17': 'Mercredi',
-    '2026-06-18': 'Jeudi',
-    '2026-06-19': 'Vendredi',
-    '2026-06-20': 'Samedi',
-    '2026-06-21': 'Dimanche',
-};
+// Lendemain du dernier jour (fin d'édition)
+const DAY_AFTER = (() => {
+    const [y, m, d] = EDITION.days[EDITION.days.length - 1].date.split('-').map(Number);
+    return localDateKey(new Date(y, m - 1, d + 1));
+})();
 
-// Options du sélecteur de simulation (inclut Lundi pour tester le post-minuit Dimanche)
-const SIM_DATE_OPTIONS = [
-    { value: '2026-06-16', label: 'Mar 16/06' },
-    { value: '2026-06-17', label: 'Mer 17/06' },
-    { value: '2026-06-18', label: 'Jeu 18/06' },
-    { value: '2026-06-19', label: 'Ven 19/06' },
-    { value: '2026-06-20', label: 'Sam 20/06' },
-    { value: '2026-06-21', label: 'Dim 21/06' },
-    { value: '2026-06-22', label: 'Lun 22/06' },
-];
-
-function localDateKey(date) {
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-}
-
-// Retourne le nom du jour festival pour une date donnée (gère la convention post-minuit)
-function getDayName(date) {
-    const h = date.getHours();
-    const adjusted = new Date(date);
-    if (h < 6) adjusted.setDate(adjusted.getDate() - 1);
-    return FESTIVAL_DAY_MAP[localDateKey(adjusted)] ?? null;
-}
+const getDayName = getFestivalDayName;
 
 // Retourne 'thanks' (00h30–01h00 le Lundi) ou 'done' (après 01h00 le Lundi), sinon null
 function getFestivalEndState(date) {
-    if (date.getFullYear() !== 2026 || date.getMonth() !== 5 || date.getDate() !== 22) return null;
+    if (localDateKey(date) !== DAY_AFTER) return null;
     const minutes = date.getHours() * 60 + date.getMinutes();
     if (minutes >= 60) return 'done';
     if (minutes >= 30) return 'thanks';
@@ -152,10 +127,10 @@ const StageGridItem = ({ stageKey, stageData, isLeft, onSelect, simMinutes }) =>
             onClick={handleClick}
         >
             <div className="stage-marker__wrap">
-                <div className="stage-marker__dot" style={{ backgroundColor: color }}>
+                <div className="stage-marker__dot" style={{ backgroundColor: '#fff', borderColor: color }}>
                     {/* TODO(feature/map-view): re-enable pulse ring before closing feature */}
                     {/* {isPlaying && <div className="stage-marker__pulse" style={{ borderColor: color }} />} */}
-                    <img src={config.icon} alt={config.name} className="stage-marker__icon" />
+                    <StageIcon stageKey={STAGES[stageKey]} src={config.icon} alt={config.name} className="stage-marker__icon" />
                     {tags && (
                         <div className="stage-marker__badges">
                             {tags.stars > 0 && (
@@ -195,7 +170,7 @@ const FestivalEndMessage = ({ state }) => (
         {state === 'thanks' ? (
             <span>🎆🎉 Merci d'avoir utilisé cette application — see you soon ! 🎉🎆</span>
         ) : (
-            <span>L'édition Hellfest 2026 est terminée 🥲 — RDV en 2027 !</span>
+            <span>L'édition {EDITION.label} est terminée 🥲 — RDV en {EDITION.year + 1} !</span>
         )}
     </div>
 );
@@ -207,7 +182,7 @@ const StageGridPanel = ({ stageStatus, onStageSelect, isPrePhase, simMinutes }) 
 
     return (
         <div className="map-stage-grid">
-            {pairs.map(([leftKey, rightKey]) => (
+            {pairs.filter(([l, r]) => stageStatus[l] || stageStatus[r]).map(([leftKey, rightKey]) => (
                 <div key={`${leftKey}-${rightKey}`} className="map-stage-grid__row">
                     {stageStatus[leftKey] && (
                         <StageGridItem stageKey={leftKey} stageData={stageStatus[leftKey]} isLeft={true} onSelect={onStageSelect} simMinutes={simMinutes} />
@@ -441,6 +416,10 @@ const BandDetailPanel = ({ group, stageColor, onClose, activeGroupData = null })
 const StageSchedulePanel = ({ stageKey, stageData, dayGroups, simMinutes, onClose, activeGroupData = null }) => {
     const { config, status } = stageData || {};
     const [selectedBand, setSelectedBand] = useState(null);
+    // Mise en avant des favoris (panneau Affichage → Favoris) : seulement dans ce programme, pas sur les icônes
+    const { state, getUserBandTag, getInterestColor } = useCheckedState();
+    const favoriteStyle = state.mapFavoriteStyle || 'star';
+    const hasAnyFav = Object.values(state.taggedBands || {}).some(t => t?.interest);
 
     useEffect(() => { setSelectedBand(null); }, [stageKey]);
 
@@ -458,7 +437,7 @@ const StageSchedulePanel = ({ stageKey, stageData, dayGroups, simMinutes, onClos
             <div className={`map-scenes-slider${selectedBand ? ' map-scenes-slider--detail' : ''}`}>
                 <div className="map-scenes-slider__page">
                     <div className="map-schedule-panel__header">
-                        <img src={config.icon} alt={config.name} className="map-schedule-panel__icon" />
+                        <StageIcon stageKey={stageName} src={config.icon} alt={config.name} className="map-schedule-panel__icon" />
                         <span className="map-schedule-panel__name">{config.name}</span>
                         <button className="map-schedule-panel__close" onClick={onClose} aria-label="Fermer">
                             <i className="fa-solid fa-xmark" />
@@ -472,17 +451,26 @@ const StageSchedulePanel = ({ stageKey, stageData, dayGroups, simMinutes, onClos
                                 const isFirst = idx === 0;
                                 const isLive = isFirst && status === 'playing';
                                 const isNextUp = isFirst && status === 'next';
+                                const interest = getUserBandTag(group.id)?.interest;
+                                const favColor = interest ? getInterestColor(interest) : null;
+                                const favClass = favColor
+                                    ? ` map-schedule-item--fav-${favoriteStyle}`
+                                    : (favoriteStyle === 'spotlight' && hasAnyFav ? ' map-schedule-item--dimmed' : '');
                                 return (
                                     <div
                                         key={group.id}
-                                        className={`map-schedule-item${isLive ? ' map-schedule-item--live' : isNextUp ? ' map-schedule-item--next' : ''}`}
+                                        className={`map-schedule-item${isLive ? ' map-schedule-item--live' : isNextUp ? ' map-schedule-item--next' : ''}${favClass}`}
+                                        style={favColor ? { '--fav-color': favColor } : undefined}
                                         onClick={() => setSelectedBand(group)}
                                     >
                                         <div className="map-schedule-item__time">
                                             {group.DEBUT?.replace('h', ':')}–{group.FIN?.replace('h', ':')}
                                         </div>
                                         <div className="map-schedule-item__band">
-                                            {group.GROUPE}
+                                            {favColor && favoriteStyle === 'marker'
+                                                ? <span className="band-name-marker" style={{ backgroundImage: markerStroke(favColor) }}>{group.GROUPE}</span>
+                                                : group.GROUPE}
+                                            {favColor && favoriteStyle === 'star' && <span className="map-schedule-item__star">★</span>}
                                         </div>
                                         {isLive && <span className="map-schedule-item__badge map-schedule-item__badge--live">● LIVE</span>}
                                         {isNextUp && <span className="map-schedule-item__badge map-schedule-item__badge--next">Prochain</span>}
@@ -804,6 +792,7 @@ const MapView = ({
     activeGroupData = null, memberId = null, updatePosition = null,
     flyTarget = null, onFlyComplete = null, onViewMemberRO = null,
 }) => {
+    const { state, setState } = useCheckedState();
     const [activePoiId, setActivePoiId] = useState(null);
     const [selectedStageKey, setSelectedStageKey] = useState(null);
 
@@ -845,21 +834,14 @@ const MapView = ({
         return activeGroupData.members.find(m => m.member_id === memberId)?.position_comment || '';
     }, [activeGroupData, memberId]);
 
-    // Simulation — null = heure réelle
-    const [simDate, setSimDate] = useState(null); // ex: '2026-06-21'
-    const [simHour, setSimHour] = useState(15);
-
-    // Timestamp simulé complet (identique à ce que new Date() retournerait pendant le festival)
-    const effectiveDate = useMemo(() => {
-        if (!simDate) return null;
-        const [y, m, d] = simDate.split('-').map(Number);
-        return new Date(y, m - 1, d, simHour, 0, 0);
-    }, [simDate, simHour]);
+    // Simulation (horloge partagée, réglée dans l'onglet Dev du panneau Affichage) — null = heure réelle
+    const { now: clockNow, isSim, festivalMinutes } = useFestivalNow();
+    const effectiveDate = isSim ? clockNow : null;
+    const [displayPanelPos, setDisplayPanelPos] = useState(null);
 
     // Même logique pour simulation et temps réel
     const isFestivalLive = getDayName(new Date()) !== null;
     const isSimMode = effectiveDate !== null;
-    const isPreviewActive = isSimMode || isFestivalLive;
 
     const activeDayName = useMemo(() => {
         if (isSimMode) return getDayName(effectiveDate);
@@ -873,16 +855,27 @@ const MapView = ({
     );
 
     // null = useCurrentBands utilise l'horloge réelle
-    const simMinutes = useMemo(() => {
-        if (!isSimMode) return null;
-        const h = effectiveDate.getHours();
-        return h * 60 + (h < 6 ? 24 * 60 : 0);
-    }, [isSimMode, effectiveDate]);
+    const simMinutes = isSimMode ? festivalMinutes : null;
 
-    const stageStatus = useCurrentBands(dayGroups, simMinutes);
+    const allStageStatus = useCurrentBands(dayGroups, simMinutes);
+
+    // Filtre de scènes propre à la carte (panneau Affichage → Filtres) : scènes masquées, par clé SCENE
+    const mapHiddenScenes = useMemo(() => state.mapHiddenScenes || [], [state.mapHiddenScenes]);
+    const stageStatus = useMemo(() => Object.fromEntries(
+        Object.entries(allStageStatus).filter(([key]) => !mapHiddenScenes.includes(STAGES[key]))
+    ), [allStageStatus, mapHiddenScenes]);
+    // Mises à jour fonctionnelles : plusieurs bascules à la suite (couple entier) ne s'écrasent pas
+    const updateMapHidden = (fn) => setState(prev => ({ ...prev, mapHiddenScenes: fn(prev.mapHiddenScenes || []) }));
+    const mapSceneFilter = {
+        isOn: (key) => !mapHiddenScenes.includes(key),
+        toggle: (key) => updateMapHidden(hidden => (hidden.includes(key) ? hidden.filter(k => k !== key) : [...hidden, key])),
+        setAll: (on) => updateMapHidden(() => (on ? [] : Object.keys(STAGE_CONFIG))),
+        polesOnly: true, // carte : on ne filtre que des couples entiers
+        extras: [],
+    };
 
     const simTimeLabel = isSimMode
-        ? `${String(simHour).padStart(2, '0')}h00`
+        ? `${String(effectiveDate.getHours()).padStart(2, '0')}:${String(effectiveDate.getMinutes()).padStart(2, '0')}`
         : null;
 
     // Mardi ou Mercredi du festival uniquement (pas avant le festival)
@@ -1198,36 +1191,19 @@ const MapView = ({
         <div className="map-view">
             {/* Header */}
             <div className="map-view__header">
-                <div className="map-zoom-btns">
-                    <button className="map-zoom-btn" onClick={() => changeZoom(-ZOOM_STEP)} disabled={view.zoom <= MIN_ZOOM} title="Zoom arrière"><i className="fa-solid fa-minus" /></button>
-                    <span className="map-zoom-level">{Math.round(view.zoom * 100)}%</span>
-                    <button className="map-zoom-btn" onClick={() => changeZoom(ZOOM_STEP)} disabled={view.zoom >= MAX_ZOOM} title="Zoom avant"><i className="fa-solid fa-plus" /></button>
-                </div>
                 <div className="map-view__clock-area">
-                    {new Date() < new Date('2026-06-15') && (<>
-                    <select
-                        className={`map-sim-select ${isSimMode ? 'map-sim-select--active' : ''}`}
-                        value={simDate ?? ''}
-                        onChange={e => setSimDate(e.target.value || null)}
+                    <LiveClock simDay={activeDayName ?? (isSimMode ? 'Hors festival' : null)} simTimeLabel={simTimeLabel} />
+                    <button
+                        className="map-zoom-btn map-zoom-btn--standalone"
+                        onClick={(e) => {
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            setDisplayPanelPos(displayPanelPos ? null : { x: rect.right - 380, y: rect.bottom + 8 });
+                        }}
+                        title="Affichage"
+                        aria-label="Affichage"
                     >
-                        <option value="">Heure réelle</option>
-                        {SIM_DATE_OPTIONS.map(opt => (
-                            <option key={opt.value} value={opt.value}>{opt.label}</option>
-                        ))}
-                    </select>
-                    {isSimMode && (
-                        <select
-                            className="map-sim-select map-sim-select--active"
-                            value={simHour}
-                            onChange={e => setSimHour(Number(e.target.value))}
-                        >
-                            {Array.from({ length: 24 }, (_, i) => (
-                                <option key={i} value={i}>{String(i).padStart(2, '0')}h00</option>
-                            ))}
-                        </select>
-                    )}
-                    </>)}
-                    {!isSimMode && <LiveClock isPreviewActive={isPreviewActive} isFestivalLive={isFestivalLive} simDay={null} simTimeLabel={null} />}
+                        <i className="fa-solid fa-gear" />
+                    </button>
                 </div>
             </div>
 
@@ -1287,7 +1263,7 @@ const MapView = ({
                     ))}
 
                     {/* POI Markers — visibles à partir de 70% de zoom (compris) */}
-                    {view.zoom >= DEFAULT_ZOOM && MAP_POIS.map((poi) => (
+                    {state.mapShowPOI !== false && view.zoom >= DEFAULT_ZOOM && MAP_POIS.map((poi) => (
                         <POIMarker
                             key={poi.id}
                             poi={poi}
@@ -1302,7 +1278,7 @@ const MapView = ({
             </div>
 
             {/* Zone tabulée bas */}
-            <div className="map-bottom-zone">
+            <div className={`map-bottom-zone${activeTab === 'scenes' && !selectedStageKey ? ' map-bottom-zone--fit' : ''}`}>
                 <div className="map-bottom-zone__tabs">
                     <button
                         className={`map-tab-btn${activeTab === 'scenes' ? ' map-tab-btn--active' : ''}`}
@@ -1379,11 +1355,28 @@ const MapView = ({
                 isGPS={pendingPosition === null}
             />
         )}
+        {displayPanelPos && (
+            <div className="group-card-container">
+                <DisplayPanel
+                    view="map"
+                    sceneFilter={mapSceneFilter}
+                    position={displayPanelPos}
+                    onClose={() => setDisplayPanelPos(null)}
+                    mapOptions={{
+                        zoom: view.zoom,
+                        canZoomOut: view.zoom > MIN_ZOOM,
+                        canZoomIn: view.zoom < MAX_ZOOM,
+                        zoomOut: () => changeZoom(-ZOOM_STEP),
+                        zoomIn: () => changeZoom(ZOOM_STEP),
+                    }}
+                />
+            </div>
+        )}
         </>
     );
 };
 
-const LiveClock = ({ isPreviewActive, isFestivalLive, simDay, simTimeLabel }) => {
+const LiveClock = ({ simDay, simTimeLabel }) => {
     const [time, setTime] = React.useState(new Date());
     React.useEffect(() => {
         const id = setInterval(() => setTime(new Date()), 1000);
@@ -1392,10 +1385,9 @@ const LiveClock = ({ isPreviewActive, isFestivalLive, simDay, simTimeLabel }) =>
     const pad = n => String(n).padStart(2, '0');
     const timeStr = `${pad(time.getHours())}:${pad(time.getMinutes())}:${pad(time.getSeconds())}`;
 
-    // During preview (not live festival), show simulated day + time
-    const isSimDisplay = isPreviewActive && !isFestivalLive;
-    const label = isSimDisplay && simDay
-        ? `⏱ ${simDay} ${simTimeLabel || ''}`
+    // Simulation : jour + heure simulés
+    const label = simTimeLabel
+        ? `⏱ ${simDay || ''} ${simTimeLabel}`
         : timeStr;
 
     return (

@@ -1,13 +1,25 @@
 import React, { useMemo, useState } from 'react';
 import { useCheckedState } from '../../context/CheckedStateContext';
 import { useLineup } from '../../hooks/useLineup';
-import { calculateStats } from '../../utils/statsUtils';
-import { STAGE_CONFIG, MAIN_STAGES } from '../../constants';
+import { calculateStats, sortStagesByCount, RANKS } from '../../utils/statsUtils';
+import { STAGE_CONFIG } from '../../constants';
+import { EDITION } from '../../editions';
 import html2canvas from 'html2canvas';
+import StatsShareCard from './StatsShareCard';
 import './StatsPanel.css';
 
-const StatsPanel = ({ onClose, customEvents = [] }) => {
-    const { state, userState } = useCheckedState();
+const APP_URL = window.location.origin + import.meta.env.BASE_URL;
+
+const readNickname = () => {
+    try {
+        return localStorage.getItem('myNickname') || '';
+    } catch {
+        return '';
+    }
+};
+
+const StatsPanel = ({ onClose, username }) => {
+    const { state, userState, stageTheme } = useCheckedState();
     const effectiveState = userState || state;
 
     const { data: groups } = useLineup();
@@ -15,39 +27,32 @@ const StatsPanel = ({ onClose, customEvents = [] }) => {
     const [gaugeHeight, setGaugeHeight] = useState(0);
     const [animatedTotal, setAnimatedTotal] = useState(0);
     const [isCapturing, setIsCapturing] = useState(false);
-    const panelRef = React.useRef(null);
+    const cardRef = React.useRef(null);
+    const nickname = username || readNickname();
 
     const stats = useMemo(() => {
         return calculateStats(groups, effectiveState.taggedBands);
     }, [groups, effectiveState.taggedBands]);
 
-    const hoursTotal = Math.round(stats.totalMinutes / 60);
-
     React.useEffect(() => {
-        const timer = setTimeout(() => {
+        const gaugeTimer = setTimeout(() => {
             setGaugeHeight(stats.averageCompletion);
         }, 300);
 
-        let start = 0;
         const end = stats.totalBands;
+        if (end === 0) return () => clearTimeout(gaugeTimer);
 
-        if (start === end) return;
+        let current = 0;
+        const counterTimer = setInterval(() => {
+            current += 1;
+            setAnimatedTotal(current);
+            if (current >= end) clearInterval(counterTimer);
+        }, Math.max((1500 / end) * 0.8, 20));
 
-        const duration = 1500;
-        const incrementTime = end > 0 ? (duration / end) * 0.8 : 0;
-
-        if (end > 0) {
-            const timerCounter = setInterval(() => {
-                start += 1;
-                setAnimatedTotal(start);
-                if (start >= end) clearInterval(timerCounter);
-            }, Math.max(incrementTime, 20));
-
-            return () => {
-                clearTimeout(timer);
-                clearInterval(timerCounter);
-            };
-        }
+        return () => {
+            clearTimeout(gaugeTimer);
+            clearInterval(counterTimer);
+        };
     }, [stats.averageCompletion, stats.totalBands]);
 
     const toggleDay = (day) => {
@@ -55,87 +60,70 @@ const StatsPanel = ({ onClose, customEvents = [] }) => {
     };
 
     const handleShare = async () => {
-        if (!panelRef.current) return;
+        if (!cardRef.current || isCapturing) return;
 
         setIsCapturing(true);
-        setTimeout(async () => {
-            try {
-                const canvas = await html2canvas(panelRef.current, {
-                    backgroundColor: '#1a1a1a',
-                    scale: 2,
-                    useCORS: true,
-                    logging: false,
-                    onclone: (clonedDoc) => {
-                        const clonedPanel = clonedDoc.querySelector('.stats-panel-container');
-                        if (clonedPanel) {
-                            clonedPanel.style.maxHeight = 'none';
-                            clonedPanel.style.overflow = 'visible';
-                            clonedPanel.style.borderRadius = '0';
-
-                            const counterVal = clonedPanel.querySelector('.stats-count-val');
-                            if (counterVal) counterVal.innerText = stats.totalBands;
-
-                            const gaugeFill = clonedPanel.querySelector('.rank-gauge-bar-fill');
-                            if (gaugeFill) gaugeFill.style.height = `${stats.averageCompletion}%`;
-                        }
-                    }
-                });
-
-                const image = canvas.toDataURL('image/png');
-
-                if (navigator.share && navigator.canShare) {
-                    const blob = await (await fetch(image)).blob();
-                    const file = new File([blob], 'my-hellfest-stats.png', { type: 'image/png' });
-
-                    const shareTitle = `🤘 Mon Profil Hellfest`;
-                    const appUrl = window.location.origin + import.meta.env.BASE_URL;
-                    const shareText = `Voici mon programme pour l'édition 2026 ! 🔥\n\n🤘 Groupes prévus : ${stats.totalBands}\n🏆 Grade : ${stats.rank}\n\nPrépare ton pèlerinage ici :\n${appUrl}\n\n#Hellfest #HellfestRunningOrder`;
-
-                    if (navigator.canShare({ files: [file] })) {
-                        await navigator.share({
-                            files: [file],
-                            title: shareTitle,
-                            text: shareText
-                        });
-                        setIsCapturing(false);
-                        return;
-                    }
+        try {
+            await document.fonts.ready;
+            const canvas = await html2canvas(cardRef.current, {
+                backgroundColor: '#1a1a1a',
+                scale: 1,
+                useCORS: true,
+                logging: false,
+                // La carte est rognée par son conteneur hors champ : on la libère dans la copie capturée
+                onclone: (clonedDoc) => {
+                    const holder = clonedDoc.querySelector('.share-card-holder');
+                    if (holder) holder.style.overflow = 'visible';
                 }
+            });
 
-                const link = document.createElement('a');
-                link.download = 'hellfest-stats.png';
-                link.href = image;
-                link.click();
-            } catch (err) {
-                console.error('Erreur lors de la capture :', err);
+            const image = canvas.toDataURL('image/png');
+
+            if (navigator.share && navigator.canShare) {
+                const blob = await (await fetch(image)).blob();
+                const file = new File([blob], 'my-hellfest-stats.png', { type: 'image/png' });
+
+                const shareTitle = `🤘 Mon Profil Hellfest`;
+                const shareText = `Voici mon programme pour l'édition ${EDITION.year} ! 🔥\n\n🤘 Groupes prévus : ${stats.totalBands}\n🏆 Grade : ${stats.rank}\n\nPrépare ton pèlerinage ici :\n${APP_URL}\n\n#Hellfest #HellfestRunningOrder`;
+
+                if (navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                        files: [file],
+                        title: shareTitle,
+                        text: shareText
+                    });
+                    return;
+                }
             }
+
+            const link = document.createElement('a');
+            link.download = 'hellfest-stats.png';
+            link.href = image;
+            link.click();
+        } catch (err) {
+            console.error('Erreur lors de la capture :', err);
+        } finally {
             setIsCapturing(false);
-        }, 100);
+        }
     };
 
-    const RANKS = [
-        { label: "Trve", bottom: "90%" },
-        { label: "Hellbanger", bottom: "60%" },
-        { label: "Amateur", bottom: "30%" },
-        { label: "Touriste", bottom: "0%" }
-    ];
-
     return (
-        <div className={`stats-panel-overlay ${isCapturing ? 'capturing' : ''}`} onClick={onClose}>
-            <div className="stats-panel-container" onClick={e => e.stopPropagation()} ref={panelRef}>
-                {!isCapturing && (
-                    <div className="stats-panel-actions">
-                        <button className="stats-share-btn" onClick={handleShare} title="Partager mon profil">
-                            <i className="fa-solid fa-share-nodes"></i>
-                        </button>
-                        <button
-                            onClick={onClose}
-                            className="stats-close-btn"
-                        >
-                            <i className="fa-solid fa-xmark"></i>
-                        </button>
-                    </div>
-                )}
+        <div className="stats-panel-overlay" onClick={onClose}>
+            <div className="share-card-holder" aria-hidden="true">
+                <StatsShareCard stats={stats} nickname={nickname} stageTheme={stageTheme} appUrl={APP_URL} cardRef={cardRef} />
+            </div>
+            <div className="stats-panel-container" onClick={e => e.stopPropagation()}>
+                <div className="stats-panel-actions">
+                    <button className="stats-share-btn" onClick={handleShare} disabled={isCapturing} title="Partager mon profil">
+                        <i className={`fa-solid ${isCapturing ? 'fa-spinner fa-spin' : 'fa-share-nodes'}`}></i>
+                    </button>
+                    <button
+                        onClick={onClose}
+                        className="stats-close-btn"
+                    >
+                        <i className="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
                     <h2 className="stats-panel-title" style={{ margin: 0 }}>Mon Profil</h2>
@@ -153,14 +141,14 @@ const StatsPanel = ({ onClose, customEvents = [] }) => {
 
                         <div className="rank-gauge-labels">
                             {RANKS.map((rank, i) => {
-                                const isActive = stats.averageCompletion >= parseInt(rank.bottom);
-                                const isPassed = stats.rank.toLowerCase() !== rank.label.toLowerCase() && isActive;
+                                const isActive = stats.averageCompletion >= rank.min;
+                                const isPassed = stats.rank !== rank.label && isActive;
 
                                 return (
                                     <div
                                         key={i}
                                         className={`rank-label ${isActive ? 'active' : ''} ${isPassed ? 'passed' : ''}`}
-                                        style={{ bottom: rank.bottom }}
+                                        style={{ bottom: `${rank.min}%` }}
                                     >
                                         {rank.label}
                                     </div>
@@ -171,23 +159,21 @@ const StatsPanel = ({ onClose, customEvents = [] }) => {
 
                     <div className="stats-panel-rank-info">
                         <div className="stats-main-counter">
-                            <span className="stats-count-val">{animatedTotal}</span>
+                            <span className="stats-count-val">{stats.totalBands === 0 ? 0 : animatedTotal}</span>
                             <span className="stats-count-label">Groupes prévus</span>
                         </div>
 
                         <div className="stats-rank-display">
-                            Rang : <span className="stats-rank-name">{stats.rank?.toUpperCase() || "TOURISTE"}</span>
+                            Rang : <span className="stats-rank-name">{stats.rank.toUpperCase()}</span>
                         </div>
                         {stats.weeklyPersona && (
                             <div className="stats-rank-display" style={{ fontSize: '1.2rem', marginTop: '5px' }}>
-                                Classe : <span className="stats-rank-name">{stats.weeklyPersona.testTitle}</span>
+                                Classe : <span className="stats-rank-name">{stats.weeklyPersona.title}</span>
                             </div>
                         )}
                     </div>
 
                 </div>
-
-                <div style={{ clear: 'both' }}></div>
 
                 <div className="stats-panel-section-title">MES STATS PAR JOUR</div>
                 <div className="stats-panel-intensity-grid">
@@ -195,7 +181,7 @@ const StatsPanel = ({ onClose, customEvents = [] }) => {
                         .filter(([, data]) => data.count > 0)
                         .map(([day, data]) => {
                             const percentage = data.completionRate || 0;
-                            const dayClashes = stats.clashesExtended ? stats.clashesExtended.filter(c => c.day === day) : [];
+                            const dayClashes = stats.clashesExtended.filter(c => c.day === day);
                             const hasClashes = dayClashes.length > 0;
                             const clashCount = dayClashes.length;
 
@@ -279,14 +265,7 @@ const StatsPanel = ({ onClose, customEvents = [] }) => {
                                     )}
 
                                     <div className="stats-panel-stage-logos-row">
-                                        {[...MAIN_STAGES]
-                                            .filter(stageKey => (data.stages && data.stages[stageKey]) > 0)
-                                            .sort((a, b) => {
-                                                const countA = (data.stages && data.stages[a]) || 0;
-                                                const countB = (data.stages && data.stages[b]) || 0;
-                                                if (countB !== countA) return countB - countA;
-                                                return MAIN_STAGES.indexOf(a) - MAIN_STAGES.indexOf(b);
-                                            })
+                                        {sortStagesByCount(data.stages)
                                             .map(stageKey => {
                                                 const count = data.stages[stageKey];
                                                 const config = STAGE_CONFIG[stageKey];
@@ -296,7 +275,7 @@ const StatsPanel = ({ onClose, customEvents = [] }) => {
                                                         className="stage-logo-item"
                                                         style={{
                                                             flex: count,
-                                                            backgroundColor: config.themeColor || 'rgba(255,255,255,0.1)'
+                                                            backgroundColor: stageTheme[stageKey]?.themeColor || 'rgba(255,255,255,0.1)'
                                                         }}
                                                         title={`${config.name}: ${count} groupes`}
                                                     >
@@ -306,12 +285,12 @@ const StatsPanel = ({ onClose, customEvents = [] }) => {
                                             })}
                                     </div>
 
-                                    <div className="daily-rank-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginTop: '10px', marginBottom: '10px' }}>
+                                    <div className="daily-rank-container">
                                         <div className="daily-rank-icon">
                                             <i className="fa-solid fa-medal"></i>
                                         </div>
                                         <div className="daily-rank-title">
-                                            {data.persona?.title || "Simple Festivalier"}
+                                            {data.persona.title}
                                         </div>
                                     </div>
                                 </div>

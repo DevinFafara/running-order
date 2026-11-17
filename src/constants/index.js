@@ -1,10 +1,19 @@
+import { EDITION, EDITION_STAGES } from '../editions';
+
+// Les scènes, pôles et jours viennent du fichier d'édition (src/editions/).
+// Les clés des anciennes scènes annexes restent déclarées pour ne pas casser
+// le code qui les référence encore (carte, crews) ; elles ne sont plus affichées.
 export const STAGES = {
   MAINSTAGE_1: 'MAINSTAGE 1',
   MAINSTAGE_2: 'MAINSTAGE 2',
   WARZONE: 'WARZONE',
+  RIOT: 'RIOT',
   VALLEY: 'VALLEY',
+  ABYSS: 'ABYSS',
   ALTAR: 'ALTAR',
+  FORGE: 'FORGE',
   TEMPLE: 'TEMPLE',
+  CRYPT: 'CRYPT',
   HELLSTAGE: 'HELLSTAGE',
   METAL_CORNER: 'METAL_CORNER',
   PURPLE_HOUSE: 'PURPLE_HOUSE',
@@ -13,129 +22,39 @@ export const STAGES = {
   LE_OFF2: 'LE_OFF2',
 };
 
-// Groupements pour l'agencement
-export const STAGE_PAIRS = [
-  { id: 'MS', stages: [STAGES.MAINSTAGE_1, STAGES.MAINSTAGE_2] },
-  { id: 'WV', stages: [STAGES.WARZONE, STAGES.VALLEY] },
-  { id: 'AT', stages: [STAGES.ALTAR, STAGES.TEMPLE] },
-];
+// Pôles de l'édition (2 scènes qui alternent par colonne)
+export const POLES = EDITION.poles;
+export const STAGE_PAIRS = POLES.map(p => ({ id: p.id, stages: p.stages }));
 
-export const STAGE_CONFIG = {
-  [STAGES.MAINSTAGE_1]: {
-    name: 'Mainstage 1',
-    icon: `${import.meta.env.BASE_URL}icons/icon_mainstage_1.png`,
-    slug: 'mainstage1',
-    themeColor: '#0055a5',
-    bandColor: '#9eaad3',
-    mapPosition: { left: '41.1%', top: '12.6%' }
-  },
-  [STAGES.MAINSTAGE_2]: {
-    name: 'Mainstage 2',
-    icon: `${import.meta.env.BASE_URL}icons/icon_mainstage_2.png`,
-    slug: 'mainstage2',
-    themeColor: '#a6a19b',
-    bandColor: '#d4d2cf',
-    mapPosition: { left: '35.1%', top: '12.2%' }
-  },
-  [STAGES.WARZONE]: {
-    name: 'Warzone',
-    icon: `${import.meta.env.BASE_URL}icons/icon_warzone.png`,
-    slug: 'warzone',
-    themeColor: '#949b1a',
-    bandColor: '#cecb93',
-    mapPosition: { left: '8.1%', top: '41.6%' }
-  },
-  [STAGES.VALLEY]: {
-    name: 'Valley',
-    icon: `${import.meta.env.BASE_URL}icons/icon_valley.png`,
-    slug: 'valley',
-    themeColor: '#ce7c19',
-    bandColor: '#eabe97',
-    mapPosition: { left: '28.9%', top: '60.2%' }
-  },
-  [STAGES.ALTAR]: {
-    name: 'Altar',
-    icon: `${import.meta.env.BASE_URL}icons/icon_altar.png`,
-    slug: 'altar',
-    themeColor: '#dc2829',
-    bandColor: '#f19e9e',
-    mapPosition: { left: '59.1%', top: '24.7%' }
-  },
-  [STAGES.TEMPLE]: {
-    name: 'Temple',
-    icon: `${import.meta.env.BASE_URL}icons/icon_temple.png`,
-    slug: 'temple',
-    themeColor: '#93a7b0',
-    bandColor: '#cbd4d8',
-    mapPosition: { left: '63.2%', top: '29.4%' }
-  },
-  [STAGES.HELLSTAGE]: {
-    name: 'Hellstage',
-    icon: `${import.meta.env.BASE_URL}icons/hellStage.png`,
-    slug: 'hellstage',
-    themeColor: '#239c60',
-    bandColor: '#a0d8b7',
-    mapPosition: { left: '68.9%', top: '53.4%' }
-  },
-  [STAGES.METAL_CORNER]: {
-    name: 'Metal Corner',
-    icon: `${import.meta.env.BASE_URL}icons/metalCorner.png`,
-    slug: 'metal_corner',
-    themeColor: '#9f9c78',
-    bandColor: '#d0cfae',
-    mapPosition: { left: '84.7%', top: '79.1%' }
-  },
-  [STAGES.PURPLE_HOUSE]: {
-    name: 'Purple House',
-    icon: `${import.meta.env.BASE_URL}icons/purple.png`,
-    slug: 'purple_house',
-    themeColor: '#9500c6',
-    bandColor: '#d6b2e0',
-    mapPosition: { left: '78.0%', top: '68.8%' }
-  },
-  [STAGES.HELLCITY_STAGE]: {
-    name: 'Hellcity Brewpub',
-    icon: `${import.meta.env.BASE_URL}icons/hellcity-brewpub.png`,
-    slug: 'hellcity_stage',
-    themeColor: '#c45c00',
-    bandColor: '#e8b07a',
-    mapPosition: { left: '80.6%', top: '53.1%' }
-  },
-  [STAGES.LE_OFF1]: {
-    name: 'Le Off 1',
-    icon: `${import.meta.env.BASE_URL}icons/le_off1.png`,
-    slug: 'le_off1',
-    themeColor: '#7a1a1a',
-    bandColor: '#c47070',
-    mapPosition: { left: '101.6%', top: '84.3%' }
-  },
-  [STAGES.LE_OFF2]: {
-    name: 'Le Off 2',
-    icon: `${import.meta.env.BASE_URL}icons/le_off2.png`,
-    slug: 'le_off2',
-    themeColor: '#3a3a3a',
-    bandColor: '#8a8a8a',
-    mapPosition: { left: '101.7%', top: '98.0%' }
-  },
+// Positions de carte de test (carte 2027 non publiée) — utilisées seulement en développement
+const TEST_MAP_POSITIONS = {
+  'MAINSTAGE 1': { left: '41.1%', top: '12.6%' },
+  'MAINSTAGE 2': { left: '35.1%', top: '12.2%' },
+  WARZONE: { left: '8.1%', top: '41.6%' },
+  RIOT: { left: '12.0%', top: '30.0%' },
+  VALLEY: { left: '28.9%', top: '60.2%' },
+  ABYSS: { left: '40.0%', top: '66.0%' },
+  ALTAR: { left: '59.1%', top: '24.7%' },
+  FORGE: { left: '55.0%', top: '16.0%' },
+  TEMPLE: { left: '63.2%', top: '29.4%' },
+  CRYPT: { left: '68.0%', top: '36.0%' },
 };
 
-export const MAIN_STAGES = [
-  STAGES.MAINSTAGE_1,
-  STAGES.MAINSTAGE_2,
-  STAGES.WARZONE,
-  STAGES.VALLEY,
-  STAGES.ALTAR,
-  STAGES.TEMPLE,
-];
+export const STAGE_CONFIG = Object.fromEntries(
+  Object.entries(EDITION_STAGES).map(([key, s]) => [key, {
+    name: s.name,
+    short: s.short,
+    icon: s.icon,
+    slug: s.slug,
+    themeColor: s.themeColor,
+    bandColor: s.bandColor,
+    pole: s.pole,
+    mapPosition: TEST_MAP_POSITIONS[key] || { left: '50%', top: '50%' },
+  }])
+);
 
-export const SIDE_STAGES = [
-  STAGES.HELLSTAGE,
-  STAGES.PURPLE_HOUSE,
-  STAGES.METAL_CORNER,
-  STAGES.HELLCITY_STAGE,
-  STAGES.LE_OFF1,
-  STAGES.LE_OFF2,
-];
+export const MAIN_STAGES = EDITION.stages.map(s => s.key);
+export const SIDE_STAGES = EDITION.sideStages;
 
 export const MAP_POIS = [
   { id: 'poi-tree', name: 'Foret du Muscadet', icon: 'fa-solid fa-tree', mapPosition: { left: '30.4%', top: '41.4%' }, color: '#4CAF50' },
@@ -168,7 +87,9 @@ export const MAP_POIS = [
   { id: 'poi-restos-mc', name: 'Restos Metal Corner', icon: 'fa-solid fa-utensils', mapPosition: { left: '89.3%', top: '79.4%' }, color: '#FF9800' },
 ];
 
-export const DAYS = ['Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+export const DAYS = EDITION.days.map(d => d.key);
+export const DAY_SHORT = Object.fromEntries(EDITION.days.map(d => [d.key, d.short]));
+export const DEFAULT_DAY = EDITION.defaultDay;
 
 export const DEFAULT_COLORS = {
   color1: "#FFEC61",
@@ -191,14 +112,14 @@ export const INTEREST_LEVELS = {
   },
   interested: {
     id: 'interested',
-    label: 'Intéressé',
+    label: 'Intéressé(e)',
     stars: 2,
     defaultColor: '#4A90D9', // Bleu
     sentiment: 'positive',
   },
   curious: {
     id: 'curious',
-    label: 'Curieux',
+    label: 'Curieux(se)',
     stars: 1,
     defaultColor: '#50C878', // Vert
     sentiment: 'neutral_positive',
@@ -211,7 +132,7 @@ export const INTEREST_ORDER = ['must_see', 'interested', 'curious'];
 export const CONTEXT_TAGS = {
   with_friend: {
     id: 'with_friend',
-    label: 'Pour un ami',
+    label: 'Pour un(e) ami(e)',
     icon: '👥',
     description: 'J\'accompagne quelqu\'un',
   },
@@ -231,4 +152,5 @@ export const CONTEXT_TAGS = {
 
 export const CONTEXT_ORDER = ['with_friend', 'strategic', 'skip'];
 
-export const GOOGLE_SHEETS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTmGfmaVsqb8_2Ivh5DHxqjhcMnQJb7Tu98XAGaet45tdmA8k9CRpZVNeHGV4PUzyOg97u3PYUQO5Zc/pub?gid=1801148757&single=true&output=csv';
+// URL du Google Sheet publié de l'édition (null tant que la programmation 2027 n'existe pas)
+export const GOOGLE_SHEETS_URL = EDITION.lineup.sheetUrl;

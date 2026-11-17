@@ -1,12 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useCheckedState } from '../../context/CheckedStateContext';
-import { INTEREST_LEVELS, INTEREST_ORDER } from '../../constants';
 import { api } from '../../services/api';
 
 const SettingsPanel = ({ isOpen, onClose, onClearCustomEvents, onViewChange, notif, onOpenGroups }) => {
-    const { state, setState, getInterestColor, setInterestColor, resetInterestColors, clearAllFavorites, consentChoice, setConsentChoice, reloadFromServer, user } = useCheckedState();
+    const { state, setState, clearAllFavorites, consentChoice, setConsentChoice, reloadFromServer, user } = useCheckedState();
     const isAuthenticated = !!user;
-    const [windowWidth, setWindowWidth] = useState(window.innerWidth);
     const [confirmDelete, setConfirmDelete] = useState(false);
     const [confirmServerDelete, setConfirmServerDelete] = useState(false);
     const [showPrivacy, setShowPrivacy] = useState(false);
@@ -32,22 +30,6 @@ const SettingsPanel = ({ isOpen, onClose, onClearCustomEvents, onViewChange, not
         } finally {
             setIsSyncing(false);
         }
-    };
-
-    useEffect(() => {
-        const handleResize = () => setWindowWidth(window.innerWidth);
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
-
-    const canUseExtendedView = windowWidth >= 1200;
-
-    const toggleCompact = () => {
-        setState(prev => ({ ...prev, compact: !prev.compact }));
-    };
-
-    const toggleReverse = () => {
-        setState(prev => ({ ...prev, reverse: !prev.reverse }));
     };
 
     const handleLanguageChange = (lang) => {
@@ -80,73 +62,6 @@ const SettingsPanel = ({ isOpen, onClose, onClearCustomEvents, onViewChange, not
                     >
                         <i className="fa-solid fa-xmark"></i>
                     </button>
-                </div>
-
-                {/* Section Couleurs des favoris */}
-                <div className="settings-section">
-                    <div className="settings-section-header">
-                        <h3>Couleurs des favoris</h3>
-                        <button className="settings-reset-btn" onClick={resetInterestColors}>
-                            Réinitialiser
-                        </button>
-                    </div>
-                    <p className="settings-section-desc">
-                        Personnalisez les couleurs pour chaque niveau d'intérêt
-                    </p>
-
-                    <div className="color-options">
-                        {INTEREST_ORDER.map(levelId => {
-                            const level = INTEREST_LEVELS[levelId];
-                            const currentColor = getInterestColor(levelId);
-
-                            return (
-                                <div key={levelId} className="color-option">
-                                    <div className="color-option-info">
-                                        <span
-                                            className="color-preview-star"
-                                            style={{ color: currentColor }}
-                                        >
-                                            ★
-                                        </span>
-                                        <span className="color-option-label">{level.label}</span>
-                                    </div>
-                                    <input
-                                        type="color"
-                                        value={currentColor}
-                                        onChange={(e) => setInterestColor(levelId, e.target.value)}
-                                        className="color-picker"
-                                    />
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
-
-                {/* Section Affichage */}
-                <div className="settings-section">
-                    <h3>Affichage</h3>
-
-                    <label className="settings-option">
-                        <div className="settings-option-info">
-                            <i className="fa-solid fa-arrow-down-up-across-line"></i>
-                            <div>
-                                <span className="settings-option-title">Inverser l'ordre</span>
-                                <span className="settings-option-desc">Matin en haut, soir en bas</span>
-                            </div>
-                        </div>
-                        <div className="toggle-switch">
-                            <input
-                                type="checkbox"
-                                checked={state.reverse || false}
-                                onChange={toggleReverse}
-                            />
-                            <span className="toggle-slider"></span>
-                        </div>
-                    </label>
-
-                    {/* (Option Vue étendue déplacée dans DayView) */}
-
-
                 </div>
 
                 {/* Section Notifications */}

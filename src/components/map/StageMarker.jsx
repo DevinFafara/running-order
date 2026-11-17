@@ -1,6 +1,7 @@
 import React from 'react';
 import { useCheckedState } from '../../context/CheckedStateContext';
-import { INTEREST_LEVELS, CONTEXT_TAGS } from '../../constants';
+import { INTEREST_LEVELS, CONTEXT_TAGS, STAGES } from '../../constants';
+import StageIcon from '../common/StageIcon';
 
 /**
  * StageMarker — Positioned marker on the festival map for a single stage.
@@ -61,12 +62,12 @@ const StageMarker = ({ stageKey, stageData, onSelect, counterTransform }) => {
                     {/* Icon dot */}
                     <div
                         className="stage-marker__dot"
-                        style={{ backgroundColor: color }}
+                        style={{ backgroundColor: '#fff', borderColor: color }}
                     >
                         {status === 'playing' && (
                             <div className="stage-marker__pulse" style={{ borderColor: color }} />
                         )}
-                        <img src={config.icon} alt={config.name} className="stage-marker__icon" />
+                        <StageIcon stageKey={STAGES[stageKey]} src={config.icon} alt={config.name} className="stage-marker__icon" />
 
                         {/* Status Badges on the dot edge */}
                         {tags && (

@@ -26,4 +26,9 @@ export default defineConfig([
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
     },
   },
+  // Scripts Node (synchronisation, protocole affiche → running order)
+  {
+    files: ['scripts/**/*.js', 'backend/**/*.js'],
+    languageOptions: { globals: globals.node },
+  },
 ])

@@ -42,3 +42,6 @@ backend/public/
 # Forum deployment package
 ro-planner-forum.zip
 ro-planner-image.tar.gz
+
+# Sorties du protocole affiche (régénérées à chaque build)
+scripts/poster/out/

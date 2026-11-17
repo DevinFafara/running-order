@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useSwipeable } from 'react-swipeable';
 import { HashRouter as Router, Route, Routes } from 'react-router-dom';
-import { DAYS } from './constants';
+import { EDITION, isCurrentEditionId } from './editions';
 import { CheckedStateProvider, useCheckedState } from './context/CheckedStateContext';
+import { FestivalClockProvider } from './context/FestivalClockContext';
 import { useLineup } from './hooks/useLineup';
 import { useAuth } from './hooks/useAuth';
 import HeaderBar from './components/layout/HeaderBar';
@@ -12,8 +12,10 @@ import DayView from './components/views/DayView';
 import WeeklyView from './components/views/WeeklyView';
 import MapView from './components/views/MapView';
 import GroupCard from './components/common/GroupCard';
+import DisplayPanel from './components/panels/DisplayPanel';
 import SaveIndicator from './components/common/SaveIndicator';
 import ConsentModal from './components/modals/ConsentModal';
+import WelcomeModal from './components/modals/WelcomeModal';
 import ConflictResolver from './components/modals/ConflictResolver';
 import './styles/App.css';
 
@@ -30,7 +32,7 @@ import GroupsPanel from './components/panels/GroupsPanel';
 function AppContent() {
   const { data: lineupGroups, loading, error } = useLineup();
   const {
-    state, setDay, setState, isGuestMode, guestRo, setGuestRo,
+    state, setState, isGuestMode, guestRo, setGuestRo,
     saveStatus, conflictData, resolveConflict,
     consentChoice, setConsentChoice, setCustomEventsForSync,
     setContactsForSync, serverContacts,
@@ -44,21 +46,34 @@ function AppContent() {
   const [popoverPosition, setPopoverPosition] = useState(null);
   const [viewMode, setViewMode] = useState(() => {
     const saved = localStorage.getItem('viewMode');
-    return saved === 'week' || saved === 'map' ? saved : 'day';
+    if (saved === 'map' && !(EDITION.map.enabled || import.meta.env.DEV)) return 'day';
+    return saved === 'week' || saved === 'weekly' || saved === 'map' ? saved : 'day';
   });
 
   React.useEffect(() => {
     localStorage.setItem('viewMode', viewMode);
   }, [viewMode]);
   const [groupsOpen, setGroupsOpen] = useState(false);
-  const [filterOpen, setFilterOpen] = useState(false);
+  // Panneau Affichage (rouage de la DayView) : position d'ancrage, null = fermé
+  const [displayPanelPos, setDisplayPanelPos] = useState(null);
   const [groupRo, setGroupRo] = useState(null);
   const [mapFlyTarget, setMapFlyTarget] = useState(null);
 
 
+  // Créneaux perso rattachés à l'édition : ceux d'une édition passée sont archivés au premier lancement
   const [customEvents, setCustomEvents] = useState(() => {
-    const saved = localStorage.getItem('customEvents');
-    return saved ? JSON.parse(saved) : [];
+    try {
+      const saved = JSON.parse(localStorage.getItem('customEvents') || '[]');
+      const current = saved.filter(e => e.edition === EDITION.year);
+      const old = saved.filter(e => e.edition !== EDITION.year);
+      if (old.length > 0) {
+        const archive = JSON.parse(localStorage.getItem('customEvents-archive') || '[]');
+        localStorage.setItem('customEvents-archive', JSON.stringify([...archive, ...old]));
+      }
+      return current;
+    } catch {
+      return [];
+    }
   });
   const [isCustomModalOpen, setIsCustomModalOpen] = useState(false);
 
@@ -125,12 +140,16 @@ function AppContent() {
 
 
   const handleImportReplace = (data) => {
+    // Seuls les favoris de l'édition courante sont remplacés ; l'historique des autres éditions est conservé
     setState(prev => ({
       ...prev,
-      taggedBands: data.bands
+      taggedBands: {
+        ...Object.fromEntries(Object.entries(prev.taggedBands).filter(([id]) => !isCurrentEditionId(id))),
+        ...Object.fromEntries(Object.entries(data.bands || {}).filter(([id]) => isCurrentEditionId(id)))
+      }
     }));
 
-    setCustomEvents(data.customEvents);
+    setCustomEvents((data.customEvents || []).map(e => ({ ...e, edition: EDITION.year })));
     setIsImportModalOpen(false);
   };
 
@@ -181,7 +200,8 @@ function AppContent() {
     }
   };
 
-  const handleAddCustomEvent = (event) => {
+  const handleAddCustomEvent = (rawEvent) => {
+    const event = { ...rawEvent, edition: EDITION.year };
     setCustomEvents(prev => {
       const index = prev.findIndex(e => e.id === event.id);
       if (index !== -1) {
@@ -256,31 +276,8 @@ function AppContent() {
 
   const showConsentModal = isAuthenticated && !consentChoice;
 
-  const swipeHandlers = useSwipeable({
-    onSwipedLeft: (eventData) => {
-      if (eventData.event.target.closest('.group-card')) return;
-
-      if (viewMode === 'day') {
-        const currentIndex = DAYS.indexOf(state.day);
-        if (currentIndex !== -1 && currentIndex < DAYS.length - 1) {
-          setDay(DAYS[currentIndex + 1]);
-        }
-      }
-    },
-    onSwipedRight: (eventData) => {
-      if (eventData.event.target.closest('.group-card')) return;
-
-      if (viewMode === 'day') {
-        const currentIndex = DAYS.indexOf(state.day);
-        if (currentIndex > 0) {
-          setDay(DAYS[currentIndex - 1]);
-        }
-      }
-    },
-    preventScrollOnSwipe: false,
-    trackMouse: false,
-    touchEventOptions: { passive: true }
-  });
+  // Le swipe horizontal ne change plus de jour (2027) : il fait glisser les pôles dans la DayView.
+  // Le changement de jour passe par les onglets de la Navigation.
 
   const handleCardPositionChange = (newPos) => {
     setPopoverPosition(newPos);
@@ -288,6 +285,7 @@ function AppContent() {
 
   const handleGroupSelect = (group, event) => {
     if (group) {
+      setDisplayPanelPos(null);
       setSelectedGroup(group);
 
       if (!selectedGroup && event) {
@@ -334,7 +332,7 @@ function AppContent() {
   const currentDayGroups = lineupGroups.filter(group => group.DAY === state.day);
 
   return (
-    <div className={`App ${selectedGroup ? 'group-selected' : ''} view-${viewMode}`}>
+    <div className={`App ${selectedGroup || (displayPanelPos && viewMode === 'day') ? 'group-selected' : ''} view-${viewMode}`}>
       <HeaderBar
         viewMode={viewMode}
         onViewChange={setViewMode}
@@ -358,8 +356,6 @@ function AppContent() {
         username={user?.username}
         notif={notif}
         onOpenGroups={() => setGroupsOpen(true)}
-        filterOpen={filterOpen}
-        onCloseFilter={() => setFilterOpen(false)}
       />
 
       {isGuestMode && (
@@ -404,11 +400,16 @@ function AppContent() {
           onSelectGroup={handleGroupSelect}
           isAuthenticated={isAuthenticated}
           username={user?.username}
-          onOpenFilter={() => setFilterOpen(true)}
+          onOpenDisplay={(e) => {
+            // Sous le rouage, aligné à droite (sur mobile la carte devient un bottom sheet)
+            const rect = e.currentTarget.getBoundingClientRect();
+            setSelectedGroup(null);
+            setDisplayPanelPos(displayPanelPos ? null : { x: rect.right - 380, y: rect.bottom + 8 });
+          }}
         />
       )}
 
-      <main className="content" {...swipeHandlers}>
+      <main className="content">
         <Routes>
           <Route path="/" element={
             viewMode === 'day' ? (
@@ -451,7 +452,7 @@ function AppContent() {
                 onExitGuestMode={() => {
                   const origin = guestRo?.origin;
                   setGuestRo(null);
-                  if (origin === 'map') setViewMode('map');
+                  if (origin === 'map' && (EDITION.map.enabled || import.meta.env.DEV)) setViewMode('map');
                 }}
               />
             )
@@ -508,6 +509,12 @@ function AppContent() {
         </>
       )}
 
+      {displayPanelPos && viewMode === 'day' && (
+        <div className="group-card-container">
+          <DisplayPanel position={displayPanelPos} onClose={() => setDisplayPanelPos(null)} />
+        </div>
+      )}
+
       <ConfirmationModal
         isOpen={!!contactToOverwrite}
         onClose={() => setContactToOverwrite(null)}
@@ -518,6 +525,9 @@ function AppContent() {
       />
 
       {/* Server sync UI */}
+      {/* Avertissement au lancement : programmation de démo (« ??? ») ou horaires projetés */}
+      <WelcomeModal isDemo={lineupGroups.length > 0 && lineupGroups.every(g => g.GROUPE === '???')} />
+
       <ConsentModal
         isOpen={showConsentModal}
         onChoice={handleConsentChoice}
@@ -561,9 +571,11 @@ function App() {
 
   return (
     <CheckedStateProvider user={user}>
-      <Router>
-        <AppContent />
-      </Router>
+      <FestivalClockProvider>
+        <Router>
+          <AppContent />
+        </Router>
+      </FestivalClockProvider>
     </CheckedStateProvider>
   );
 }

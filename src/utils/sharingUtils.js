@@ -1,3 +1,4 @@
+import { isCurrentEditionId } from '../editions';
 import LZString from 'lz-string';
 
 /**
@@ -10,7 +11,8 @@ import LZString from 'lz-string';
 export const generateShareLink = (taggedBands, customEvents, username = '') => {
     // 1. Minify Data — include both interest AND context
     const minimalBands = {};
-    Object.entries(taggedBands).forEach(([id, data]) => {
+    // Seuls les favoris de l'édition courante sont partagés (URL plus courte, pas de groupes d'une autre année)
+    Object.entries(taggedBands).filter(([id]) => isCurrentEditionId(id)).forEach(([id, data]) => {
         if (data.interest && data.context) {
             // Both interest and context → object format
             minimalBands[id] = { i: data.interest, c: data.context };
@@ -63,10 +65,14 @@ export const parseShareData = (token) => {
         if (!data || (!data.b && !data.c)) return null;
 
         // Reconstruct format — handle both old and new encoding
+        // Seuls les favoris de l'édition courante sont repris ; ceux d'une autre édition sont seulement comptés
         const bands = {};
+        let otherEditionCount = 0;
         if (data.b) {
             Object.entries(data.b).forEach(([id, val]) => {
-                if (typeof val === 'string') {
+                if (!isCurrentEditionId(id)) {
+                    otherEditionCount++;
+                } else if (typeof val === 'string') {
                     // Old format: value is just the interest string (e.g. "must_see")
                     bands[id] = { interest: val };
                 } else if (typeof val === 'object' && val !== null) {
@@ -98,7 +104,8 @@ export const parseShareData = (token) => {
             bands,
             customEvents: events,
             bandCount: Object.keys(bands).length,
-            eventCount: events.length
+            eventCount: events.length,
+            otherEditionCount
         };
 
     } catch (e) {
@@ -121,7 +128,8 @@ export const parseShareData = (token) => {
  */
 export const encodeROForServer = (taggedBands, customEvents = []) => {
     const minimalBands = {};
-    Object.entries(taggedBands).forEach(([id, data]) => {
+    // Seuls les favoris de l'édition courante sont partagés (URL plus courte, pas de groupes d'une autre année)
+    Object.entries(taggedBands).filter(([id]) => isCurrentEditionId(id)).forEach(([id, data]) => {
         if (data.interest && data.context) {
             minimalBands[id] = { i: data.interest, c: data.context };
         } else if (data.interest) {

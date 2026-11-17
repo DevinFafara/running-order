@@ -1,28 +1,19 @@
-import { STAGE_CONFIG } from '../constants';
+import { POLES, SIDE_STAGES } from '../constants';
+
+const pairUp = (list) => list.reduce((acc, s, i) => (i % 2 ? acc[acc.length - 1].push(s) : acc.push([s]), acc), []);
 import { timeToMinutes } from './statsUtils';
 
 const START_HOUR = 10;
 const TOTAL_MINUTES = 18 * 60; // 10h to 04h
 
-const SCENE_GROUPS = [
-    ['MAINSTAGE 1', 'MAINSTAGE 2'],
-    ['WARZONE', 'VALLEY'],
-    ['ALTAR', 'TEMPLE'],
-    ['HELLSTAGE', 'HELLCITY_STAGE'],
-    ['PURPLE_HOUSE', 'METAL_CORNER'],
-    ['LE_OFF1', 'LE_OFF2']
-];
+// Colonnes = pôles de l'édition (+ couples annexes s'il y en a)
+const SCENE_GROUPS = [...POLES.map(p => p.stages), ...pairUp(SIDE_STAGES)];
 
-const SCENE_COUPLES = {
-    'MAINSTAGE 1': 'MS', 'MAINSTAGE 2': 'MS',
-    'WARZONE': 'WV', 'VALLEY': 'WV',
-    'ALTAR': 'AT', 'TEMPLE': 'AT',
-    'HELLSTAGE': 'HC', 'HELLCITY_STAGE': 'HC',
-    'PURPLE_HOUSE': 'PM', 'METAL_CORNER': 'PM',
-    'LE_OFF1': 'LO', 'LE_OFF2': 'LO'
-};
+const SCENE_COUPLES = Object.fromEntries(
+    SCENE_GROUPS.flatMap((group, i) => group.map(scene => [scene, POLES[i]?.id || `SIDE${i}`]))
+);
 
-const SCENE_ORDER = ['MS', 'WV', 'AT', 'HC', 'PM', 'LO'];
+const SCENE_ORDER = SCENE_GROUPS.map((group, i) => POLES[i]?.id || `SIDE${i}`);
 
 const doTimesOverlap = (s1, e1, s2, e2) => s1 < e2 && e1 > s2;
 

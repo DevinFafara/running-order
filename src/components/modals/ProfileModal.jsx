@@ -1,4 +1,5 @@
 import React from 'react';
+import { EDITION } from '../../editions';
 
 const ProfileModal = ({ isOpen, onClose, onOpenPanel, onShare, isInstallable, isInstalled, onInstall, hasPrompt, platform, onShowPwaGuide, isAuthenticated, username, onOpenGroups }) => {
     if (!isOpen) return null;
@@ -9,13 +10,13 @@ const ProfileModal = ({ isOpen, onClose, onOpenPanel, onShare, isInstallable, is
 
     const MENU_ITEMS = [
         { id: 'stats', label: 'Mes Stats', icon: 'fa-solid fa-chart-pie', color: '#FFD700' },
-        { id: 'groups', label: 'Crew', icon: 'fa-solid fa-user-group', color: '#dd7d24' },
+        { id: 'groups', label: 'Crew', icon: 'fa-solid fa-user-group', color: '#dd7d24', disabled: true }, // désactivé pour 2027
         { id: 'contacts', label: 'Mes Contacts', icon: 'fa-solid fa-address-book', color: '#79624f' },
         { id: 'share', label: 'Partager', icon: 'fa-solid fa-share-nodes', color: '#9C27B0' },
         ...(isAuthenticated ? [{ id: 'community', label: 'Communauté', icon: 'fa-solid fa-users', color: 'white' }] : []),
         { id: 'install', label: isInstalled ? 'Installée' : 'Installer', icon: 'fa-solid fa-download', color: isInstalled ? '#555' : '#00b894', disabled: isInstalled },
         { id: 'settings', label: 'Paramètres', icon: 'fa-solid fa-gear', color: '#aaa' },
-        { id: 'playlists', label: 'Playlists', icon: 'fa-solid fa-music', color: '#2196F3' },
+        { id: 'playlists', label: 'Playlists', icon: 'fa-solid fa-music', color: '#2196F3', disabled: true }, // liens 2027 à venir
         { id: 'credits', label: 'Crédits', icon: 'fa-solid fa-heart', color: '#ff6b6b' },
     ];
 
@@ -154,7 +155,7 @@ const ProfileModal = ({ isOpen, onClose, onOpenPanel, onShare, isInstallable, is
                         >
                             <div style={{
                                 fontSize: '1.5rem',
-                                color: item.color
+                                color: item.disabled ? '#555' : item.color
                             }}>
                                 <i className={item.icon}></i>
                             </div>
@@ -172,8 +173,11 @@ const ProfileModal = ({ isOpen, onClose, onOpenPanel, onShare, isInstallable, is
                     {(() => {
                         const now = new Date();
                         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-                        const festivalStart = new Date(2026, 5, 18); // 18 Juin 2026
-                        const festivalEnd = new Date(2026, 5, 21);   // 21 Juin 2026
+                        // Dates lues dans le fichier d'édition (premier et dernier jour)
+                        const [sy, sm, sd] = EDITION.days[0].date.split('-').map(Number);
+                        const [ey, em, ed] = EDITION.days[EDITION.days.length - 1].date.split('-').map(Number);
+                        const festivalStart = new Date(sy, sm - 1, sd);
+                        const festivalEnd = new Date(ey, em - 1, ed);
 
                         if (today < festivalStart) {
                             const diffTime = festivalStart - today;

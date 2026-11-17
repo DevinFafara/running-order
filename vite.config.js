@@ -50,7 +50,7 @@ export default defineConfig({
         theme_color: '#000000',
         background_color: '#000000',
         display: 'standalone',
-        orientation: 'portrait',
+        // Pas de verrou d'orientation : en paysage, la DayView affiche les 5 pôles
         icons: [
           {
             src: 'icons/icon-72x72.png',

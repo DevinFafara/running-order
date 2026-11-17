@@ -1,0 +1,1629 @@
+{
+  "edition": 2027,
+  "_comment": "Affiche FICTIVE générée par generate-fake-lineup-2027.js",
+  "days": {
+    "Jeudi": {
+      "MAINSTAGE 1": [
+        {
+          "name": "Ashen Lantern",
+          "style": "Metal Alternatif",
+          "country": "Pologne"
+        },
+        {
+          "name": "Howling Orchard",
+          "style": "Nu Metal",
+          "country": "Japon"
+        },
+        {
+          "name": "Burning Vortex",
+          "style": "Nu Metal",
+          "country": "Australie"
+        },
+        {
+          "name": "Venomous Orchard",
+          "style": "Power Metal",
+          "country": "Japon"
+        },
+        {
+          "name": "Clair Obscur",
+          "style": "Heavy Metal",
+          "country": "Suède"
+        }
+      ],
+      "MAINSTAGE 2": [
+        {
+          "name": "Cursed Harvest",
+          "style": "Hard Rock",
+          "country": "Espagne"
+        },
+        {
+          "name": "Pale Marrow",
+          "style": "Heavy Metal",
+          "country": "Pologne"
+        },
+        {
+          "name": "Wretched Throne",
+          "style": "Metalcore",
+          "country": "Canada"
+        },
+        {
+          "name": "Nuit Blanche",
+          "style": "Metal Alternatif",
+          "country": "Pologne"
+        },
+        {
+          "name": "Vile Pyre",
+          "style": "Hard Rock",
+          "country": "Belgique"
+        }
+      ],
+      "WARZONE": [
+        {
+          "name": "Bleeding Orchard",
+          "style": "Hardcore",
+          "country": "Pologne"
+        },
+        {
+          "name": "Lunar Harvest",
+          "style": "Oi!",
+          "country": "Pologne"
+        },
+        {
+          "name": "Black Vortex",
+          "style": "Hardcore",
+          "country": "Brésil"
+        },
+        {
+          "name": "Black Throne",
+          "style": "Street Punk",
+          "country": "Royaume-Uni"
+        },
+        {
+          "name": "Les Sans-Nom",
+          "style": "Street Punk",
+          "country": "Italie"
+        }
+      ],
+      "RIOT": [
+        {
+          "name": "Lunar Requiem",
+          "style": "Street Punk",
+          "country": "Belgique"
+        },
+        {
+          "name": "Molten Serpent",
+          "style": "Punk Rock",
+          "country": "Allemagne"
+        },
+        {
+          "name": "Scarlet Vortex",
+          "style": "Punk Rock",
+          "country": "Belgique"
+        },
+        {
+          "name": "Vile Hymn",
+          "style": "Hardcore",
+          "country": "Belgique"
+        },
+        {
+          "name": "Frozen Choir",
+          "style": "Street Punk",
+          "country": "Finlande"
+        }
+      ],
+      "VALLEY": [
+        {
+          "name": "Venomous Harvest",
+          "style": "Sludge",
+          "country": "Suède"
+        },
+        {
+          "name": "The Wretched Mire",
+          "style": "Psyché",
+          "country": "Belgique"
+        },
+        {
+          "name": "Marée Basse",
+          "style": "Post Metal",
+          "country": "Finlande"
+        },
+        {
+          "name": "Pale Cathedral",
+          "style": "Post Metal",
+          "country": "Pologne"
+        },
+        {
+          "name": "Rotten Wolves",
+          "style": "Post Metal",
+          "country": "Italie"
+        }
+      ],
+      "ABYSS": [
+        {
+          "name": "Obsidian Furnace",
+          "style": "Sludge",
+          "country": "Pologne"
+        },
+        {
+          "name": "Wretched Furnace",
+          "style": "Post Metal",
+          "country": "Finlande"
+        },
+        {
+          "name": "Howling Requiem",
+          "style": "Drone",
+          "country": "Canada"
+        },
+        {
+          "name": "Hollow Vortex",
+          "style": "Drone",
+          "country": "Japon"
+        },
+        {
+          "name": "Rusted Marrow",
+          "style": "Sludge",
+          "country": "Allemagne"
+        }
+      ],
+      "ALTAR": [
+        {
+          "name": "Venomous Lantern",
+          "style": "Deathcore",
+          "country": "Suède"
+        },
+        {
+          "name": "Ashen Throne",
+          "style": "Death Metal",
+          "country": "Espagne"
+        },
+        {
+          "name": "Rusted Monolith",
+          "style": "Speed Metal",
+          "country": "Italie"
+        },
+        {
+          "name": "Savage Comet",
+          "style": "Deathcore",
+          "country": "Norvège"
+        },
+        {
+          "name": "Howling Kingdom",
+          "style": "Death Metal",
+          "country": "Japon"
+        }
+      ],
+      "FORGE": [
+        {
+          "name": "Black Pyre",
+          "style": "Brutal Death Metal",
+          "country": "Finlande"
+        },
+        {
+          "name": "Thorned Mire",
+          "style": "Grindcore",
+          "country": "USA"
+        },
+        {
+          "name": "Howling Lantern",
+          "style": "Deathcore",
+          "country": "Royaume-Uni"
+        },
+        {
+          "name": "Ossuaire",
+          "style": "Speed Metal",
+          "country": "France"
+        },
+        {
+          "name": "Silent Pyre",
+          "style": "Deathcore",
+          "country": "France"
+        }
+      ],
+      "TEMPLE": [
+        {
+          "name": "Scarlet Gallows",
+          "style": "Metal Atmosphérique",
+          "country": "Japon"
+        },
+        {
+          "name": "Fer Rouillé",
+          "style": "Pagan Metal",
+          "country": "Finlande"
+        },
+        {
+          "name": "Thorned Comet",
+          "style": "Metal Atmosphérique",
+          "country": "France"
+        },
+        {
+          "name": "Pale Requiem",
+          "style": "Pagan Metal",
+          "country": "Finlande"
+        },
+        {
+          "name": "Feral Marrow",
+          "style": "Pagan Metal",
+          "country": "USA"
+        }
+      ],
+      "CRYPT": [
+        {
+          "name": "Ashen Monolith",
+          "style": "Viking Metal",
+          "country": "Allemagne"
+        },
+        {
+          "name": "Saint-Sulfure",
+          "style": "Black Metal",
+          "country": "Japon"
+        },
+        {
+          "name": "Wretched Harvest",
+          "style": "Dungeon Synth",
+          "country": "Finlande"
+        },
+        {
+          "name": "Bleeding Cathedral",
+          "style": "Pagan Metal",
+          "country": "Espagne"
+        },
+        {
+          "name": "Burning Tide",
+          "style": "Black Metal",
+          "country": "Canada"
+        }
+      ]
+    },
+    "Vendredi": {
+      "MAINSTAGE 1": [
+        {
+          "name": "Frozen Engine",
+          "style": "Metal Alternatif",
+          "country": "France"
+        },
+        {
+          "name": "Silent Furnace",
+          "style": "Nu Metal",
+          "country": "Norvège"
+        },
+        {
+          "name": "Silent Vortex",
+          "style": "Power Metal",
+          "country": "Brésil"
+        },
+        {
+          "name": "Bleeding Kingdom",
+          "style": "Metal Alternatif",
+          "country": "France"
+        },
+        {
+          "name": "Sunken Mire",
+          "style": "Metalcore",
+          "country": "Australie"
+        },
+        {
+          "name": "Lunar Engine",
+          "style": "Metal Alternatif",
+          "country": "Finlande"
+        },
+        {
+          "name": "Grim Monolith",
+          "style": "Hard Rock",
+          "country": "Japon"
+        },
+        {
+          "name": "Grim Covenant",
+          "style": "Metalcore",
+          "country": "France"
+        }
+      ],
+      "MAINSTAGE 2": [
+        {
+          "name": "Rotten Throne",
+          "style": "Nu Metal",
+          "country": "Allemagne"
+        },
+        {
+          "name": "The Howling Prophet",
+          "style": "Metalcore",
+          "country": "Australie"
+        },
+        {
+          "name": "Rotten Prophet",
+          "style": "Heavy Metal",
+          "country": "Pologne"
+        },
+        {
+          "name": "Obsidian Comet",
+          "style": "Power Metal",
+          "country": "Allemagne"
+        },
+        {
+          "name": "Wretched Requiem",
+          "style": "Hard Rock",
+          "country": "Brésil"
+        },
+        {
+          "name": "Bleeding Gallows",
+          "style": "Hard Rock",
+          "country": "Belgique"
+        },
+        {
+          "name": "Bleeding Requiem",
+          "style": "Metalcore",
+          "country": "Australie"
+        },
+        {
+          "name": "Scarlet Monolith",
+          "style": "Metal Alternatif",
+          "country": "Suède"
+        }
+      ],
+      "WARZONE": [
+        {
+          "name": "The Black Covenant",
+          "style": "Street Punk",
+          "country": "Finlande"
+        },
+        {
+          "name": "Lunar Prophet",
+          "style": "Crossover",
+          "country": "Italie"
+        },
+        {
+          "name": "The Scarlet Furnace",
+          "style": "Punk Rock",
+          "country": "USA"
+        },
+        {
+          "name": "Wretched Comet",
+          "style": "Crossover",
+          "country": "Allemagne"
+        },
+        {
+          "name": "Pale Lantern",
+          "style": "Crossover",
+          "country": "Espagne"
+        },
+        {
+          "name": "Pale Orchard",
+          "style": "Street Punk",
+          "country": "Belgique"
+        },
+        {
+          "name": "Bleeding Covenant",
+          "style": "Crossover",
+          "country": "Australie"
+        },
+        {
+          "name": "Obsidian Cathedral",
+          "style": "Hardcore",
+          "country": "Brésil"
+        },
+        {
+          "name": "Wretched Legion",
+          "style": "Skate Punk",
+          "country": "USA"
+        }
+      ],
+      "RIOT": [
+        {
+          "name": "Frozen Prophet",
+          "style": "Crossover",
+          "country": "Australie"
+        },
+        {
+          "name": "Sunken Gallows",
+          "style": "Crossover",
+          "country": "Finlande"
+        },
+        {
+          "name": "Lunar Comet",
+          "style": "Street Punk",
+          "country": "Espagne"
+        },
+        {
+          "name": "Wretched Gallows",
+          "style": "Street Punk",
+          "country": "USA"
+        },
+        {
+          "name": "Cursed Hymn",
+          "style": "Street Punk",
+          "country": "Italie"
+        },
+        {
+          "name": "Feral Orchard",
+          "style": "Punk Rock",
+          "country": "Allemagne"
+        },
+        {
+          "name": "Silent Comet",
+          "style": "Hardcore",
+          "country": "France"
+        },
+        {
+          "name": "Burning Engine",
+          "style": "Oi!",
+          "country": "Australie"
+        },
+        {
+          "name": "Obsidian Mire",
+          "style": "Skate Punk",
+          "country": "Australie"
+        }
+      ],
+      "VALLEY": [
+        {
+          "name": "Feral Serpent",
+          "style": "Post Metal",
+          "country": "Norvège"
+        },
+        {
+          "name": "Silent Throne",
+          "style": "Stoner",
+          "country": "Espagne"
+        },
+        {
+          "name": "Feral Cathedral",
+          "style": "Sludge",
+          "country": "Espagne"
+        },
+        {
+          "name": "Vermine",
+          "style": "Post Metal",
+          "country": "Norvège"
+        },
+        {
+          "name": "Rusted Wolves",
+          "style": "Psyché",
+          "country": "Australie"
+        },
+        {
+          "name": "Black Marrow",
+          "style": "Doom",
+          "country": "Norvège"
+        },
+        {
+          "name": "The Savage Tide",
+          "style": "Stoner",
+          "country": "Australie"
+        },
+        {
+          "name": "Lunar Hymn",
+          "style": "Sludge",
+          "country": "Brésil"
+        },
+        {
+          "name": "Bûcher",
+          "style": "Doom",
+          "country": "Pologne"
+        }
+      ],
+      "ABYSS": [
+        {
+          "name": "Burning Legion",
+          "style": "Sludge",
+          "country": "Royaume-Uni"
+        },
+        {
+          "name": "Brume Noire",
+          "style": "Drone",
+          "country": "Pologne"
+        },
+        {
+          "name": "Vile Vortex",
+          "style": "Sludge",
+          "country": "Japon"
+        },
+        {
+          "name": "Scarlet Throne",
+          "style": "Stoner",
+          "country": "Belgique"
+        },
+        {
+          "name": "Vile Mire",
+          "style": "Stoner",
+          "country": "Australie"
+        },
+        {
+          "name": "Howling Serpent",
+          "style": "Stoner",
+          "country": "Espagne"
+        },
+        {
+          "name": "Thorned Harvest",
+          "style": "Post Metal",
+          "country": "Canada"
+        },
+        {
+          "name": "Grim Choir",
+          "style": "Post Metal",
+          "country": "Pologne"
+        },
+        {
+          "name": "Grim Wolves",
+          "style": "Post Metal",
+          "country": "Italie"
+        }
+      ],
+      "ALTAR": [
+        {
+          "name": "Molten Mire",
+          "style": "Death Metal",
+          "country": "Espagne"
+        },
+        {
+          "name": "Lunar Gallows",
+          "style": "Speed Metal",
+          "country": "France"
+        },
+        {
+          "name": "Vile Furnace",
+          "style": "Grindcore",
+          "country": "Australie"
+        },
+        {
+          "name": "Pale Tide",
+          "style": "Deathcore",
+          "country": "Allemagne"
+        },
+        {
+          "name": "Bleeding Marrow",
+          "style": "Grindcore",
+          "country": "Allemagne"
+        },
+        {
+          "name": "Ashen Harvest",
+          "style": "Brutal Death Metal",
+          "country": "France"
+        },
+        {
+          "name": "Grim Mire",
+          "style": "Deathcore",
+          "country": "Norvège"
+        },
+        {
+          "name": "The Rotten Covenant",
+          "style": "Deathcore",
+          "country": "Canada"
+        },
+        {
+          "name": "Cursed Throne",
+          "style": "Grindcore",
+          "country": "Pologne"
+        }
+      ],
+      "FORGE": [
+        {
+          "name": "Charogne",
+          "style": "Deathcore",
+          "country": "Belgique"
+        },
+        {
+          "name": "Molten Lantern",
+          "style": "Grindcore",
+          "country": "Espagne"
+        },
+        {
+          "name": "Rusted Legion",
+          "style": "Deathcore",
+          "country": "Japon"
+        },
+        {
+          "name": "The Scarlet Vortex",
+          "style": "Speed Metal",
+          "country": "Belgique"
+        },
+        {
+          "name": "Pale Prophet",
+          "style": "Death Metal",
+          "country": "Espagne"
+        },
+        {
+          "name": "Sunken Lantern",
+          "style": "Deathcore",
+          "country": "Japon"
+        },
+        {
+          "name": "The Burning Orchard",
+          "style": "Deathcore",
+          "country": "USA"
+        },
+        {
+          "name": "Wretched Mire",
+          "style": "Grindcore",
+          "country": "Allemagne"
+        },
+        {
+          "name": "Black Legion",
+          "style": "Death Metal",
+          "country": "Finlande"
+        }
+      ],
+      "TEMPLE": [
+        {
+          "name": "Pale Legion",
+          "style": "Pagan Metal",
+          "country": "USA"
+        },
+        {
+          "name": "Thorned Gallows",
+          "style": "Metal Atmosphérique",
+          "country": "Suède"
+        },
+        {
+          "name": "Venomous Covenant",
+          "style": "Viking Metal",
+          "country": "Canada"
+        },
+        {
+          "name": "Molten Throne",
+          "style": "Folk Metal",
+          "country": "France"
+        },
+        {
+          "name": "The Silent Throne",
+          "style": "Black Metal",
+          "country": "Brésil"
+        },
+        {
+          "name": "Bleeding Vortex",
+          "style": "Folk Metal",
+          "country": "Allemagne"
+        },
+        {
+          "name": "Savage Pyre",
+          "style": "Viking Metal",
+          "country": "Pologne"
+        },
+        {
+          "name": "Lunar Furnace",
+          "style": "Dungeon Synth",
+          "country": "Finlande"
+        },
+        {
+          "name": "Hollow Requiem",
+          "style": "Viking Metal",
+          "country": "Belgique"
+        }
+      ],
+      "CRYPT": [
+        {
+          "name": "Molten Marrow",
+          "style": "Pagan Metal",
+          "country": "Allemagne"
+        },
+        {
+          "name": "Scarlet Furnace",
+          "style": "Viking Metal",
+          "country": "Pologne"
+        },
+        {
+          "name": "Savage Choir",
+          "style": "Folk Metal",
+          "country": "Belgique"
+        },
+        {
+          "name": "Rotten Mire",
+          "style": "Viking Metal",
+          "country": "Belgique"
+        },
+        {
+          "name": "Howling Covenant",
+          "style": "Dungeon Synth",
+          "country": "Japon"
+        },
+        {
+          "name": "Granit",
+          "style": "Pagan Metal",
+          "country": "France"
+        },
+        {
+          "name": "Hollow Covenant",
+          "style": "Dungeon Synth",
+          "country": "Brésil"
+        },
+        {
+          "name": "The Venomous Comet",
+          "style": "Dungeon Synth",
+          "country": "USA"
+        },
+        {
+          "name": "Silent Monolith",
+          "style": "Viking Metal",
+          "country": "Belgique"
+        }
+      ]
+    },
+    "Samedi": {
+      "MAINSTAGE 1": [
+        {
+          "name": "Thorned Monolith",
+          "style": "Power Metal",
+          "country": "Belgique"
+        },
+        {
+          "name": "Lunar Monolith",
+          "style": "Heavy Metal",
+          "country": "Australie"
+        },
+        {
+          "name": "Ashen Hymn",
+          "style": "Metal Alternatif",
+          "country": "Finlande"
+        },
+        {
+          "name": "Silent Choir",
+          "style": "Nu Metal",
+          "country": "Espagne"
+        },
+        {
+          "name": "Molten Gallows",
+          "style": "Power Metal",
+          "country": "Royaume-Uni"
+        },
+        {
+          "name": "Frozen Requiem",
+          "style": "Metalcore",
+          "country": "Finlande"
+        },
+        {
+          "name": "Black Orchard",
+          "style": "Power Metal",
+          "country": "Italie"
+        },
+        {
+          "name": "Tempête",
+          "style": "Metalcore",
+          "country": "Finlande"
+        }
+      ],
+      "MAINSTAGE 2": [
+        {
+          "name": "Rotten Gallows",
+          "style": "Metalcore",
+          "country": "Norvège"
+        },
+        {
+          "name": "Vile Lantern",
+          "style": "Metalcore",
+          "country": "Brésil"
+        },
+        {
+          "name": "The Cursed Pyre",
+          "style": "Power Metal",
+          "country": "Canada"
+        },
+        {
+          "name": "Wretched Prophet",
+          "style": "Heavy Metal",
+          "country": "Brésil"
+        },
+        {
+          "name": "Rotten Pyre",
+          "style": "Power Metal",
+          "country": "Pologne"
+        },
+        {
+          "name": "Vile Prophet",
+          "style": "Power Metal",
+          "country": "Pologne"
+        },
+        {
+          "name": "The Frozen Covenant",
+          "style": "Power Metal",
+          "country": "USA"
+        },
+        {
+          "name": "Thorned Hymn",
+          "style": "Nu Metal",
+          "country": "Finlande"
+        },
+        {
+          "name": "Scarlet Lantern",
+          "style": "Metal Alternatif",
+          "country": "Finlande"
+        }
+      ],
+      "WARZONE": [
+        {
+          "name": "Rusted Covenant",
+          "style": "Crossover",
+          "country": "Pologne"
+        },
+        {
+          "name": "Rotten Serpent",
+          "style": "Hardcore",
+          "country": "Australie"
+        },
+        {
+          "name": "Hollow Serpent",
+          "style": "Crossover",
+          "country": "Suède"
+        },
+        {
+          "name": "Thorned Engine",
+          "style": "Hardcore",
+          "country": "Japon"
+        },
+        {
+          "name": "Frozen Gallows",
+          "style": "Hardcore",
+          "country": "Belgique"
+        },
+        {
+          "name": "Rotten Harvest",
+          "style": "Oi!",
+          "country": "Espagne"
+        },
+        {
+          "name": "Frozen Furnace",
+          "style": "Street Punk",
+          "country": "Suède"
+        },
+        {
+          "name": "Savage Hymn",
+          "style": "Street Punk",
+          "country": "Pologne"
+        },
+        {
+          "name": "Pale Gallows",
+          "style": "Street Punk",
+          "country": "USA"
+        }
+      ],
+      "RIOT": [
+        {
+          "name": "The Frozen Wolves",
+          "style": "Skate Punk",
+          "country": "Canada"
+        },
+        {
+          "name": "Obsidian Vortex",
+          "style": "Crossover",
+          "country": "Italie"
+        },
+        {
+          "name": "Cursed Serpent",
+          "style": "Skate Punk",
+          "country": "Australie"
+        },
+        {
+          "name": "Feral Choir",
+          "style": "Skate Punk",
+          "country": "Australie"
+        },
+        {
+          "name": "The Sunken Prophet",
+          "style": "Street Punk",
+          "country": "Canada"
+        },
+        {
+          "name": "Rotten Furnace",
+          "style": "Skate Punk",
+          "country": "USA"
+        },
+        {
+          "name": "Hollow Hymn",
+          "style": "Hardcore",
+          "country": "Espagne"
+        },
+        {
+          "name": "Cursed Monolith",
+          "style": "Crossover",
+          "country": "Finlande"
+        },
+        {
+          "name": "Hollow Cathedral",
+          "style": "Oi!",
+          "country": "Australie"
+        }
+      ],
+      "VALLEY": [
+        {
+          "name": "Wretched Monolith",
+          "style": "Drone",
+          "country": "Finlande"
+        },
+        {
+          "name": "Black Furnace",
+          "style": "Drone",
+          "country": "Canada"
+        },
+        {
+          "name": "Lunar Throne",
+          "style": "Sludge",
+          "country": "Espagne"
+        },
+        {
+          "name": "Hollow Prophet",
+          "style": "Drone",
+          "country": "Royaume-Uni"
+        },
+        {
+          "name": "Hollow Throne",
+          "style": "Sludge",
+          "country": "Espagne"
+        },
+        {
+          "name": "Burning Hymn",
+          "style": "Drone",
+          "country": "Allemagne"
+        },
+        {
+          "name": "Wretched Cathedral",
+          "style": "Stoner",
+          "country": "Allemagne"
+        },
+        {
+          "name": "The Silent Marrow",
+          "style": "Drone",
+          "country": "Norvège"
+        },
+        {
+          "name": "Savage Harvest",
+          "style": "Stoner",
+          "country": "Allemagne"
+        }
+      ],
+      "ABYSS": [
+        {
+          "name": "Grim Requiem",
+          "style": "Sludge",
+          "country": "Italie"
+        },
+        {
+          "name": "Sunken Wolves",
+          "style": "Sludge",
+          "country": "Finlande"
+        },
+        {
+          "name": "Pale Pyre",
+          "style": "Sludge",
+          "country": "Belgique"
+        },
+        {
+          "name": "Molten Pyre",
+          "style": "Doom",
+          "country": "Suède"
+        },
+        {
+          "name": "Black Engine",
+          "style": "Psyché",
+          "country": "France"
+        },
+        {
+          "name": "Scarlet Cathedral",
+          "style": "Doom",
+          "country": "Royaume-Uni"
+        },
+        {
+          "name": "Venomous Hymn",
+          "style": "Stoner",
+          "country": "Finlande"
+        },
+        {
+          "name": "Venomous Choir",
+          "style": "Doom",
+          "country": "Pologne"
+        },
+        {
+          "name": "Vile Tide",
+          "style": "Psyché",
+          "country": "Belgique"
+        }
+      ],
+      "ALTAR": [
+        {
+          "name": "Feral Pyre",
+          "style": "Death Metal",
+          "country": "Pologne"
+        },
+        {
+          "name": "Feral Mire",
+          "style": "Deathcore",
+          "country": "Brésil"
+        },
+        {
+          "name": "Hollow Marrow",
+          "style": "Grindcore",
+          "country": "Canada"
+        },
+        {
+          "name": "Silent Covenant",
+          "style": "Thrash Metal",
+          "country": "Allemagne"
+        },
+        {
+          "name": "Thorned Serpent",
+          "style": "Grindcore",
+          "country": "Canada"
+        },
+        {
+          "name": "Cursed Requiem",
+          "style": "Deathcore",
+          "country": "Allemagne"
+        },
+        {
+          "name": "Cursed Marrow",
+          "style": "Grindcore",
+          "country": "Belgique"
+        },
+        {
+          "name": "Silent Wolves",
+          "style": "Speed Metal",
+          "country": "Japon"
+        },
+        {
+          "name": "Bleeding Serpent",
+          "style": "Thrash Metal",
+          "country": "Suède"
+        }
+      ],
+      "FORGE": [
+        {
+          "name": "Vile Legion",
+          "style": "Death Metal",
+          "country": "Suède"
+        },
+        {
+          "name": "Thorned Vortex",
+          "style": "Death Metal",
+          "country": "Suède"
+        },
+        {
+          "name": "The Rotten Pyre",
+          "style": "Deathcore",
+          "country": "Australie"
+        },
+        {
+          "name": "The Vile Requiem",
+          "style": "Deathcore",
+          "country": "France"
+        },
+        {
+          "name": "Hollow Orchard",
+          "style": "Speed Metal",
+          "country": "Belgique"
+        },
+        {
+          "name": "Savage Gallows",
+          "style": "Deathcore",
+          "country": "Belgique"
+        },
+        {
+          "name": "Howling Throne",
+          "style": "Deathcore",
+          "country": "Allemagne"
+        },
+        {
+          "name": "Ashen Requiem",
+          "style": "Death Metal",
+          "country": "Finlande"
+        },
+        {
+          "name": "Vile Serpent",
+          "style": "Speed Metal",
+          "country": "USA"
+        }
+      ],
+      "TEMPLE": [
+        {
+          "name": "Cursed Furnace",
+          "style": "Pagan Metal",
+          "country": "Suède"
+        },
+        {
+          "name": "Rotten Orchard",
+          "style": "Black Metal",
+          "country": "Royaume-Uni"
+        },
+        {
+          "name": "Silent Cathedral",
+          "style": "Viking Metal",
+          "country": "Pologne"
+        },
+        {
+          "name": "Sunken Serpent",
+          "style": "Viking Metal",
+          "country": "Japon"
+        },
+        {
+          "name": "Burning Orchard",
+          "style": "Metal Atmosphérique",
+          "country": "Pologne"
+        },
+        {
+          "name": "The Lunar Covenant",
+          "style": "Viking Metal",
+          "country": "Allemagne"
+        },
+        {
+          "name": "Thorned Wolves",
+          "style": "Pagan Metal",
+          "country": "Finlande"
+        },
+        {
+          "name": "Silent Orchard",
+          "style": "Folk Metal",
+          "country": "Royaume-Uni"
+        },
+        {
+          "name": "Rusted Kingdom",
+          "style": "Metal Atmosphérique",
+          "country": "Belgique"
+        }
+      ],
+      "CRYPT": [
+        {
+          "name": "Sunken Choir",
+          "style": "Viking Metal",
+          "country": "Pologne"
+        },
+        {
+          "name": "Les Chiens de Paille",
+          "style": "Folk Metal",
+          "country": "USA"
+        },
+        {
+          "name": "Lunar Mire",
+          "style": "Viking Metal",
+          "country": "Pologne"
+        },
+        {
+          "name": "Lunar Wolves",
+          "style": "Dungeon Synth",
+          "country": "Espagne"
+        },
+        {
+          "name": "Ashen Engine",
+          "style": "Viking Metal",
+          "country": "Allemagne"
+        },
+        {
+          "name": "Feral Lantern",
+          "style": "Viking Metal",
+          "country": "Espagne"
+        },
+        {
+          "name": "Silent Tide",
+          "style": "Metal Atmosphérique",
+          "country": "Suède"
+        },
+        {
+          "name": "Silent Mire",
+          "style": "Viking Metal",
+          "country": "Canada"
+        },
+        {
+          "name": "Wretched Engine",
+          "style": "Black Metal",
+          "country": "Espagne"
+        }
+      ]
+    },
+    "Dimanche": {
+      "MAINSTAGE 1": [
+        {
+          "name": "Frozen Tide",
+          "style": "Metal Alternatif",
+          "country": "Italie"
+        },
+        {
+          "name": "Scarlet Requiem",
+          "style": "Metalcore",
+          "country": "Espagne"
+        },
+        {
+          "name": "Lunar Pyre",
+          "style": "Metal Alternatif",
+          "country": "France"
+        },
+        {
+          "name": "Scarlet Wolves",
+          "style": "Metalcore",
+          "country": "Finlande"
+        },
+        {
+          "name": "Rotten Covenant",
+          "style": "Hard Rock",
+          "country": "Finlande"
+        },
+        {
+          "name": "Hollow Pyre",
+          "style": "Hard Rock",
+          "country": "Canada"
+        },
+        {
+          "name": "Ashen Kingdom",
+          "style": "Power Metal",
+          "country": "Japon"
+        },
+        {
+          "name": "Thorned Furnace",
+          "style": "Power Metal",
+          "country": "Pologne"
+        }
+      ],
+      "MAINSTAGE 2": [
+        {
+          "name": "Ashen Pyre",
+          "style": "Nu Metal",
+          "country": "Norvège"
+        },
+        {
+          "name": "Sunken Hymn",
+          "style": "Metalcore",
+          "country": "Norvège"
+        },
+        {
+          "name": "Black Monolith",
+          "style": "Metalcore",
+          "country": "Norvège"
+        },
+        {
+          "name": "Bleeding Mire",
+          "style": "Metalcore",
+          "country": "Pologne"
+        },
+        {
+          "name": "Howling Gallows",
+          "style": "Nu Metal",
+          "country": "Japon"
+        },
+        {
+          "name": "Thorned Cathedral",
+          "style": "Nu Metal",
+          "country": "Finlande"
+        },
+        {
+          "name": "The Cursed Comet",
+          "style": "Metalcore",
+          "country": "Italie"
+        },
+        {
+          "name": "Ashen Orchard",
+          "style": "Power Metal",
+          "country": "Australie"
+        }
+      ],
+      "WARZONE": [
+        {
+          "name": "La Meute",
+          "style": "Punk Rock",
+          "country": "Belgique"
+        },
+        {
+          "name": "The Feral Engine",
+          "style": "Oi!",
+          "country": "Canada"
+        },
+        {
+          "name": "Wretched Vortex",
+          "style": "Punk Rock",
+          "country": "Allemagne"
+        },
+        {
+          "name": "Pale Mire",
+          "style": "Oi!",
+          "country": "Brésil"
+        },
+        {
+          "name": "Obsidian Orchard",
+          "style": "Street Punk",
+          "country": "Belgique"
+        },
+        {
+          "name": "Savage Wolves",
+          "style": "Hardcore",
+          "country": "Japon"
+        },
+        {
+          "name": "Hollow Tide",
+          "style": "Crossover",
+          "country": "France"
+        },
+        {
+          "name": "The Black Lantern",
+          "style": "Hardcore",
+          "country": "Belgique"
+        }
+      ],
+      "RIOT": [
+        {
+          "name": "Wretched Orchard",
+          "style": "Hardcore",
+          "country": "Brésil"
+        },
+        {
+          "name": "Obsidian Legion",
+          "style": "Punk Rock",
+          "country": "France"
+        },
+        {
+          "name": "Sang d'Encre",
+          "style": "Oi!",
+          "country": "Suède"
+        },
+        {
+          "name": "Silent Serpent",
+          "style": "Street Punk",
+          "country": "Australie"
+        },
+        {
+          "name": "Sunken Throne",
+          "style": "Oi!",
+          "country": "Belgique"
+        },
+        {
+          "name": "Venomous Prophet",
+          "style": "Skate Punk",
+          "country": "Japon"
+        },
+        {
+          "name": "Burning Serpent",
+          "style": "Punk Rock",
+          "country": "Royaume-Uni"
+        },
+        {
+          "name": "The Frozen Choir",
+          "style": "Oi!",
+          "country": "France"
+        }
+      ],
+      "VALLEY": [
+        {
+          "name": "Scarlet Harvest",
+          "style": "Sludge",
+          "country": "Finlande"
+        },
+        {
+          "name": "Grim Cathedral",
+          "style": "Sludge",
+          "country": "Pologne"
+        },
+        {
+          "name": "Black Tide",
+          "style": "Stoner",
+          "country": "Canada"
+        },
+        {
+          "name": "Black Prophet",
+          "style": "Sludge",
+          "country": "France"
+        },
+        {
+          "name": "Ashen Furnace",
+          "style": "Psyché",
+          "country": "Canada"
+        },
+        {
+          "name": "Frozen Lantern",
+          "style": "Drone",
+          "country": "Belgique"
+        },
+        {
+          "name": "Hollow Kingdom",
+          "style": "Psyché",
+          "country": "Suède"
+        },
+        {
+          "name": "Sunken Legion",
+          "style": "Doom",
+          "country": "Allemagne"
+        }
+      ],
+      "ABYSS": [
+        {
+          "name": "Scarlet Marrow",
+          "style": "Sludge",
+          "country": "Belgique"
+        },
+        {
+          "name": "Obsidian Harvest",
+          "style": "Post Metal",
+          "country": "Australie"
+        },
+        {
+          "name": "Obsidian Wolves",
+          "style": "Doom",
+          "country": "Australie"
+        },
+        {
+          "name": "Rusted Furnace",
+          "style": "Post Metal",
+          "country": "Brésil"
+        },
+        {
+          "name": "Silent Prophet",
+          "style": "Stoner",
+          "country": "USA"
+        },
+        {
+          "name": "The Hollow Lantern",
+          "style": "Drone",
+          "country": "Canada"
+        },
+        {
+          "name": "Frozen Hymn",
+          "style": "Drone",
+          "country": "Italie"
+        },
+        {
+          "name": "Pale Comet",
+          "style": "Post Metal",
+          "country": "USA"
+        }
+      ],
+      "ALTAR": [
+        {
+          "name": "The Hollow Covenant",
+          "style": "Death Metal",
+          "country": "Brésil"
+        },
+        {
+          "name": "Lunar Cathedral",
+          "style": "Brutal Death Metal",
+          "country": "Suède"
+        },
+        {
+          "name": "Grim Throne",
+          "style": "Thrash Metal",
+          "country": "Australie"
+        },
+        {
+          "name": "Savage Lantern",
+          "style": "Death Metal",
+          "country": "Norvège"
+        },
+        {
+          "name": "Grim Kingdom",
+          "style": "Speed Metal",
+          "country": "Pologne"
+        },
+        {
+          "name": "Wretched Serpent",
+          "style": "Thrash Metal",
+          "country": "Brésil"
+        },
+        {
+          "name": "Sunken Cathedral",
+          "style": "Death Metal",
+          "country": "Australie"
+        },
+        {
+          "name": "Pale Choir",
+          "style": "Deathcore",
+          "country": "Suède"
+        }
+      ],
+      "FORGE": [
+        {
+          "name": "The Ashen Tide",
+          "style": "Speed Metal",
+          "country": "Espagne"
+        },
+        {
+          "name": "The Rotten Vortex",
+          "style": "Deathcore",
+          "country": "Finlande"
+        },
+        {
+          "name": "Black Choir",
+          "style": "Brutal Death Metal",
+          "country": "Australie"
+        },
+        {
+          "name": "Savage Tide",
+          "style": "Thrash Metal",
+          "country": "Italie"
+        },
+        {
+          "name": "Burning Wolves",
+          "style": "Deathcore",
+          "country": "Italie"
+        },
+        {
+          "name": "Feral Vortex",
+          "style": "Death Metal",
+          "country": "France"
+        },
+        {
+          "name": "Obsidian Engine",
+          "style": "Grindcore",
+          "country": "France"
+        },
+        {
+          "name": "The Howling Wolves",
+          "style": "Death Metal",
+          "country": "Allemagne"
+        }
+      ],
+      "TEMPLE": [
+        {
+          "name": "Rotten Requiem",
+          "style": "Pagan Metal",
+          "country": "Espagne"
+        },
+        {
+          "name": "Silent Legion",
+          "style": "Viking Metal",
+          "country": "Pologne"
+        },
+        {
+          "name": "Scarlet Kingdom",
+          "style": "Black Metal",
+          "country": "Finlande"
+        },
+        {
+          "name": "The Hollow Marrow",
+          "style": "Folk Metal",
+          "country": "Japon"
+        },
+        {
+          "name": "The Vile Wolves",
+          "style": "Pagan Metal",
+          "country": "Italie"
+        },
+        {
+          "name": "Feral Furnace",
+          "style": "Folk Metal",
+          "country": "Suède"
+        },
+        {
+          "name": "Bleeding Harvest",
+          "style": "Dungeon Synth",
+          "country": "Norvège"
+        },
+        {
+          "name": "The Hollow Orchard",
+          "style": "Metal Atmosphérique",
+          "country": "Pologne"
+        }
+      ],
+      "CRYPT": [
+        {
+          "name": "Venomous Serpent",
+          "style": "Pagan Metal",
+          "country": "Italie"
+        },
+        {
+          "name": "The Howling Furnace",
+          "style": "Black Metal",
+          "country": "Royaume-Uni"
+        },
+        {
+          "name": "The Wretched Hymn",
+          "style": "Pagan Metal",
+          "country": "USA"
+        },
+        {
+          "name": "Savage Serpent",
+          "style": "Metal Atmosphérique",
+          "country": "Australie"
+        },
+        {
+          "name": "Howling Hymn",
+          "style": "Dungeon Synth",
+          "country": "Finlande"
+        },
+        {
+          "name": "Savage Covenant",
+          "style": "Dungeon Synth",
+          "country": "Belgique"
+        },
+        {
+          "name": "Rusted Prophet",
+          "style": "Folk Metal",
+          "country": "Canada"
+        },
+        {
+          "name": "Silent Requiem",
+          "style": "Metal Atmosphérique",
+          "country": "Suède"
+        }
+      ]
+    }
+  }
+}

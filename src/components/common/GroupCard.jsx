@@ -1,43 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useSwipeable } from 'react-swipeable';
 import { useCheckedState } from '../../context/CheckedStateContext';
 import { STAGE_CONFIG, INTEREST_LEVELS, INTEREST_ORDER, CONTEXT_TAGS, CONTEXT_ORDER } from '../../constants';
+import FloatingCard from './FloatingCard';
 // Import Logos
 import bandLogos from '../../data/bandLogos.json';
 
 const GroupCard = ({ group, position, onClose, onPositionChange, groupMembersForBand = null }) => {
-    // ... existing content ...
-    const cardRef = useRef(null);
-    const positionRef = useRef(position);
-    const { state, setInterest, setContext, getUserBandTag, getInterestColor, updateNote } = useCheckedState();
-    // ...
+    const { state, setInterest, setContext, getUserBandTag, getInterestColor, updateNote, stageTheme } = useCheckedState();
 
-    // Helper to get logo safely (case insensitive?)
-    // The scraper uses exact match from H2, which theoretically matches lineup data.
-    const logoUrl = bandLogos[group.GROUPE];
     const [activeTab, setActiveTab] = useState(groupMembersForBand !== null ? 'going' : 'infos');
     const [note, setNote] = useState('');
-    const [cardPosition, setCardPosition] = useState(position);
-    const [isDragging, setIsDragging] = useState(false);
-    const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-    const [measuredHeight, setMeasuredHeight] = useState(null);
-    const [expanded, setExpanded] = useState(false);
-    const [manualHeight, setManualHeight] = useState(null);
-
-    // Swipe logic for resizing
-    const swipeHandlers = useSwipeable({
-        onSwipedUp: () => setExpanded(true),
-        onSwipedDown: () => setExpanded(false),
-        preventDefaultTouchmoveEvent: true,
-        trackMouse: true
-    });
 
     // Get current tag info
     const bandTag = getUserBandTag(group.id);
     const currentInterest = bandTag?.interest;
     const currentContext = bandTag?.context;
 
-    const sceneColor = STAGE_CONFIG[group.SCENE]?.themeColor || '#333';
+    const sceneColor = stageTheme[group.SCENE]?.themeColor || '#333';
 
     // Init note safely
     useEffect(() => {
@@ -47,29 +26,6 @@ const GroupCard = ({ group, position, onClose, onPositionChange, groupMembersFor
             setNote('');
         }
     }, [group.id, state?.notes]);
-
-    // Measure height when on Infos tab
-    useEffect(() => {
-        if (activeTab === 'infos' && cardRef.current) {
-            requestAnimationFrame(() => {
-                if (cardRef.current) {
-                    const rect = cardRef.current.getBoundingClientRect();
-                    setMeasuredHeight(rect.height);
-                    // Sync global padding if not manually overridden or just generally
-                    if (!manualHeight) {
-                        document.documentElement.style.setProperty('--group-card-height', `${rect.height}px`);
-                    }
-                }
-            });
-        }
-    }, [activeTab, group.id, manualHeight]);
-
-    // Also sync on manual height change
-    useEffect(() => {
-        if (manualHeight) {
-            document.documentElement.style.setProperty('--group-card-height', `${manualHeight}px`);
-        }
-    }, [manualHeight]);
 
     const [showTagDropdown, setShowTagDropdown] = useState(false);
     const [openUpwards, setOpenUpwards] = useState(false);
@@ -105,168 +61,6 @@ const GroupCard = ({ group, position, onClose, onPositionChange, groupMembersFor
             updateNote(group.id, newNote);
         }
     };
-
-    // Position adjustment logic (boundaries)
-    useEffect(() => {
-        if (cardRef.current && !isDragging && position) {
-            const rect = cardRef.current.getBoundingClientRect();
-            const viewportWidth = window.innerWidth;
-            const viewportHeight = window.innerHeight;
-
-            let newX = position.x;
-            let newY = position.y;
-
-            if (newX + rect.width > viewportWidth) newX = viewportWidth - rect.width - 20;
-            if (newX < 10) newX = 10;
-            if (newY + rect.height > viewportHeight) newY = viewportHeight - rect.height - 20;
-            if (newY < 60) newY = 60;
-
-            const finalPos = { x: newX, y: newY };
-            setCardPosition(finalPos);
-            positionRef.current = finalPos;
-        }
-    }, [position]);
-
-    // Drag handlers
-    const handleMouseDown = (e) => {
-        if (e.target.closest('button') || e.target.closest('.tag-dropdown')) return;
-        setIsDragging(true);
-        const rect = cardRef.current.getBoundingClientRect();
-        setDragOffset({
-            x: e.clientX - rect.left,
-            y: e.clientY - rect.top
-        });
-    };
-
-    useEffect(() => {
-        const handleMouseMove = (e) => {
-            if (!isDragging || !cardRef.current) return;
-            e.preventDefault();
-
-            const rect = cardRef.current.getBoundingClientRect();
-            const viewportWidth = window.innerWidth;
-            const viewportHeight = window.innerHeight;
-
-            let newX = e.clientX - dragOffset.x;
-            let newY = e.clientY - dragOffset.y;
-
-            if (newX < 0) newX = 0;
-            if (newX + rect.width > viewportWidth) newX = viewportWidth - rect.width;
-            if (newY < 0) newY = 0;
-            if (newY + rect.height > viewportHeight) newY = viewportHeight - rect.height;
-
-            const newPos = { x: newX, y: newY };
-            setCardPosition(newPos);
-            positionRef.current = newPos;
-        };
-
-        const handleMouseUp = () => {
-            setIsDragging(false);
-            if (onPositionChange) {
-                onPositionChange(positionRef.current);
-            }
-        };
-
-        if (isDragging) {
-            document.addEventListener('mousemove', handleMouseMove);
-            document.addEventListener('mouseup', handleMouseUp);
-        }
-
-        return () => {
-            document.removeEventListener('mousemove', handleMouseMove);
-            document.removeEventListener('mouseup', handleMouseUp);
-        };
-
-    }, [isDragging, dragOffset, onPositionChange]);
-    // Touch Drag Handlers (Mobile Resize)
-    const touchStartRef = useRef({ y: 0, height: 0 });
-    const isTouchDraggingRef = useRef(false);
-
-    const handleTouchStart = (e) => {
-        // Only trigger on header or drag handle
-        if (e.target.closest('button') || e.target.closest('.tag-dropdown')) return;
-
-        const touch = e.touches[0];
-        const currentHeight = cardRef.current.offsetHeight;
-
-        touchStartRef.current = {
-            y: touch.clientY,
-            height: currentHeight
-        };
-        isTouchDraggingRef.current = true;
-
-        // Disable transition for 1:1 following
-        if (cardRef.current) {
-            cardRef.current.style.transition = 'none';
-        }
-    };
-
-    const handleTouchMove = (e) => {
-        if (!isTouchDraggingRef.current || !cardRef.current) return;
-
-        // Prevent default only if vertical scroll is intended (e.g. body scroll)
-        // But here we want to resize.
-        if (e.cancelable) e.preventDefault();
-
-        const touch = e.touches[0];
-        const deltaY = touchStartRef.current.y - touch.clientY; // Moving UP increases height
-        let newHeight = touchStartRef.current.height + deltaY;
-
-        // Constraints
-        // MAX: Header touches Toolbar. Toolbar ~50px.
-        // Constraints
-        // MAX: Fixed limit requested by user.
-        const maxHeight = 475;
-
-        // MIN: Provide enough space for header only (header ~50px)
-        const minHeight = 55;
-
-        if (newHeight > maxHeight) newHeight = maxHeight;
-        if (newHeight < minHeight) newHeight = minHeight;
-
-        // Apply height directly
-        cardRef.current.style.setProperty('--mobile-height', `${newHeight}px`);
-
-        // Broadcast to app level (for padding adjustment)
-        document.documentElement.style.setProperty('--group-card-height', `${newHeight}px`);
-    };
-
-    const handleTouchEnd = () => {
-        isTouchDraggingRef.current = false;
-        // Re-enable transition for smooth snaps (if needed)
-        // But keep it "sticky" to where user left it.
-        if (cardRef.current) {
-            // Check if card is very small (closed?) -> user says "completely disappear" at bottom?
-            // "en bas : que le contenu de groupCard disparraisse complètement (mais pas le header)"
-            // This is matched by minHeight=60 (approx header height).
-
-            // Re-apply transition slightly for UX feel or keep raw?
-            cardRef.current.style.transition = '';
-
-            // Save manual height to state
-            const currentVar = cardRef.current.style.getPropertyValue('--mobile-height');
-            if (currentVar && currentVar.endsWith('px')) {
-                setManualHeight(parseFloat(currentVar));
-            }
-        }
-    };
-
-    useEffect(() => {
-        const cardHeader = cardRef.current?.querySelector('.card-header');
-        if (cardHeader) {
-            cardHeader.addEventListener('touchstart', handleTouchStart, { passive: false });
-            cardHeader.addEventListener('touchmove', handleTouchMove, { passive: false });
-            cardHeader.addEventListener('touchend', handleTouchEnd);
-        }
-
-        return () => {
-            if (cardHeader) {
-                cardHeader.removeEventListener('touchstart', handleTouchStart);
-                cardHeader.removeEventListener('touchmove', handleTouchMove);
-                cardHeader.removeEventListener('touchend', handleTouchEnd);
-            }
-        };
-    }, []);
 
     // Render single star for dropdown display
     const renderSingleStar = (level, isActive) => {
@@ -437,198 +231,136 @@ const GroupCard = ({ group, position, onClose, onPositionChange, groupMembersFor
         }
     };
 
+    const tabs = [
+        { id: 'infos', icon: 'fa-solid fa-circle-info', label: 'Infos' },
+        { id: 'bio', icon: 'fa-solid fa-align-left', label: 'Bio' },
+        { id: 'links', icon: 'fa-solid fa-link', label: 'Liens' },
+        { id: 'notes', icon: 'fa-solid fa-pen', label: 'Notes' },
+        ...(groupMembersForBand !== null
+            ? [{ id: 'going', icon: 'fa-solid fa-users', label: <>Présents {groupMembersForBand.length > 0 && `(${groupMembersForBand.length})`}</> }]
+            : []),
+    ];
+
     return (
-        <div
-            ref={cardRef}
-            className={`group-card ${expanded ? 'expanded' : ''}`}
-            style={{
-                left: cardPosition?.x,
-                top: cardPosition?.y,
-                '--scene-color': sceneColor,
-                '--mobile-height': manualHeight ? `${manualHeight}px` : (activeTab === 'infos' ? 'auto' : (measuredHeight ? `${measuredHeight}px` : 'auto')),
-                zIndex: isDragging ? 1100 : 1000
-            }}
-        >
-            <div
-                className="card-header"
-                style={{
-                    backgroundColor: sceneColor,
-                    cursor: isDragging ? 'grabbing' : 'grab'
-                }}
-                onMouseDown={handleMouseDown}
-            >
-                {/* Drag Handle Indicator */}
-                <div
-                    className="drag-handle"
-                    style={{
-                        position: 'absolute',
-                        top: '6px',
-                        left: '50%',
-                        transform: 'translateX(-50%)',
-                        width: '40px',
-                        height: '0',
-                        borderTop: '4px solid rgba(255,255,255,0.3)',
-                        backgroundColor: 'transparent',
-                        borderRadius: '2px',
-                        cursor: 'grab',
-                        zIndex: 10
-                    }}
-                />
-
-                <div className="header-top">
-                    <h3>{group.GROUPE}</h3>
-                    <div className="header-actions">
-                        {/* Tag dropdown button */}
-                        <div className="tag-dropdown-container" style={{ position: 'relative' }}>
-                            <button
-                                ref={tagBtnRef}
-                                className={`favorite-btn ${(currentInterest || currentContext) ? 'active' : ''}`}
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setShowTagDropdown(!showTagDropdown);
-                                }}
-                                title="Marquer ce groupe"
-                            >
-                                {getHeaderButtonContent()}
-                            </button>
-
-                            {/* Dropdown menu */}
-                            {showTagDropdown && (
-                                <div
-                                    className={`tag-dropdown ${openUpwards ? 'upwards' : ''}`}
-                                    onClick={(e) => e.stopPropagation()}
-                                    style={{
-                                        position: 'absolute',
-                                        top: openUpwards ? 'auto' : '100%',
-                                        bottom: openUpwards ? '100%' : 'auto',
-                                        right: 0,
-                                        width: '200px',
-                                        backgroundColor: '#222',
-                                        border: '1px solid #444',
-                                        borderRadius: '8px',
-                                        padding: '10px',
-                                        boxShadow: openUpwards ? '0 -4px 12px rgba(0,0,0,0.5)' : '0 4px 12px rgba(0,0,0,0.5)',
-                                        zIndex: 2000,
-                                        marginTop: openUpwards ? '0' : '5px',
-                                        marginBottom: openUpwards ? '5px' : '0',
-                                        textAlign: 'left'
-                                    }}
-                                >
-                                    {/* Section Intérêt */}
-                                    <div className="dropdown-section-title">Intérêt</div>
-                                    {INTEREST_ORDER.map(levelId => {
-                                        const level = INTEREST_LEVELS[levelId];
-                                        const isActive = currentInterest === levelId;
-                                        return (
-                                            <button
-                                                key={levelId}
-                                                className={`tag-dropdown-item ${isActive ? 'active' : ''}`}
-                                                onClick={() => {
-                                                    setInterest(group.id, isActive ? null : levelId);
-                                                }}
-                                                style={{
-                                                    '--tag-color': getInterestColor(levelId),
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    width: '100%',
-                                                    padding: '6px',
-                                                    marginBottom: '4px',
-                                                    background: isActive ? '#333' : 'transparent',
-                                                    border: 'none',
-                                                    borderRadius: '4px',
-                                                    color: 'white',
-                                                    cursor: 'pointer'
-                                                }}
-                                            >
-                                                {renderSingleStar(levelId, isActive)}
-                                                <span>{level.label}</span>
-                                                {isActive && <span className="tag-check">✓</span>}
-                                            </button>
-                                        );
-                                    })}
-
-                                    {/* Section Contexte */}
-                                    <div className="dropdown-section-title" style={{ marginTop: '10px', marginBottom: '5px', fontSize: '0.85em', color: '#888' }}>Contexte</div>
-                                    {CONTEXT_ORDER.map(contextId => {
-                                        const ctx = CONTEXT_TAGS[contextId];
-                                        const isActive = currentContext === contextId;
-                                        return (
-                                            <button
-                                                key={contextId}
-                                                className={`tag-dropdown-item ${isActive ? 'active' : ''}`}
-                                                onClick={() => {
-                                                    setContext(group.id, isActive ? null : contextId);
-                                                }}
-                                                style={{
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    width: '100%',
-                                                    padding: '6px',
-                                                    marginBottom: '4px',
-                                                    background: isActive ? '#333' : 'transparent',
-                                                    border: 'none',
-                                                    borderRadius: '4px',
-                                                    color: 'white',
-                                                    cursor: 'pointer',
-                                                    textAlign: 'left'
-                                                }}
-                                            >
-                                                <span className="tag-item-icon">{ctx.icon}</span>
-                                                <span>{ctx.label}</span>
-                                                {isActive && <span className="tag-check">✓</span>}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            )}
-                        </div>
-
-                        <button className="close-btn" onClick={onClose}>
-                            <i className="fa-solid fa-xmark"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div className="card-tabs">
-                <button
-                    className={`tab-btn ${activeTab === 'infos' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('infos')}
-                >
-                    <i className="fa-solid fa-circle-info"></i> Infos
-                </button>
-                <button
-                    className={`tab-btn ${activeTab === 'bio' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('bio')}
-                >
-                    <i className="fa-solid fa-align-left"></i> Bio
-                </button>
-                <button
-                    className={`tab-btn ${activeTab === 'links' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('links')}
-                >
-                    <i className="fa-solid fa-link"></i> Liens
-                </button>
-                <button
-                    className={`tab-btn ${activeTab === 'notes' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('notes')}
-                >
-                    <i className="fa-solid fa-pen"></i> Notes
-                </button>
-                {groupMembersForBand !== null && (
+        <FloatingCard
+            color={sceneColor}
+            title={group.GROUPE}
+            onClose={onClose}
+            position={position}
+            onPositionChange={onPositionChange}
+            tabs={tabs}
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            autoHeight={activeTab === 'infos'}
+            contentKey={group.id}
+            actions={
+                <div className="tag-dropdown-container" style={{ position: 'relative' }}>
                     <button
-                        className={`tab-btn ${activeTab === 'going' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('going')}
+                        ref={tagBtnRef}
+                        className={`favorite-btn ${(currentInterest || currentContext) ? 'active' : ''}`}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setShowTagDropdown(!showTagDropdown);
+                        }}
+                        title="Marquer ce groupe"
                     >
-                        <i className="fa-solid fa-users"></i> Présents {groupMembersForBand.length > 0 && `(${groupMembersForBand.length})`}
+                        {getHeaderButtonContent()}
                     </button>
-                )}
-            </div>
 
-            <div className="card-body">
-                {renderContent()}
-            </div>
-        </div>
+                    {/* Dropdown menu */}
+                    {showTagDropdown && (
+                        <div
+                            className={`tag-dropdown ${openUpwards ? 'upwards' : ''}`}
+                            onClick={(e) => e.stopPropagation()}
+                            style={{
+                                position: 'absolute',
+                                top: openUpwards ? 'auto' : '100%',
+                                bottom: openUpwards ? '100%' : 'auto',
+                                right: 0,
+                                width: '200px',
+                                backgroundColor: '#222',
+                                border: '1px solid #444',
+                                borderRadius: '8px',
+                                padding: '10px',
+                                boxShadow: openUpwards ? '0 -4px 12px rgba(0,0,0,0.5)' : '0 4px 12px rgba(0,0,0,0.5)',
+                                zIndex: 2000,
+                                marginTop: openUpwards ? '0' : '5px',
+                                marginBottom: openUpwards ? '5px' : '0',
+                                textAlign: 'left'
+                            }}
+                        >
+                            {/* Section Intérêt */}
+                            <div className="dropdown-section-title">Intérêt</div>
+                            {INTEREST_ORDER.map(levelId => {
+                                const level = INTEREST_LEVELS[levelId];
+                                const isActive = currentInterest === levelId;
+                                return (
+                                    <button
+                                        key={levelId}
+                                        className={`tag-dropdown-item ${isActive ? 'active' : ''}`}
+                                        onClick={() => {
+                                            setInterest(group.id, isActive ? null : levelId);
+                                        }}
+                                        style={{
+                                            '--tag-color': getInterestColor(levelId),
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            width: '100%',
+                                            padding: '6px',
+                                            marginBottom: '4px',
+                                            background: isActive ? '#333' : 'transparent',
+                                            border: 'none',
+                                            borderRadius: '4px',
+                                            color: 'white',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        {renderSingleStar(levelId, isActive)}
+                                        <span>{level.label}</span>
+                                        {isActive && <span className="tag-check">✓</span>}
+                                    </button>
+                                );
+                            })}
+
+                            {/* Section Contexte */}
+                            <div className="dropdown-section-title" style={{ marginTop: '10px', marginBottom: '5px', fontSize: '0.85em', color: '#888' }}>Contexte</div>
+                            {CONTEXT_ORDER.map(contextId => {
+                                const ctx = CONTEXT_TAGS[contextId];
+                                const isActive = currentContext === contextId;
+                                return (
+                                    <button
+                                        key={contextId}
+                                        className={`tag-dropdown-item ${isActive ? 'active' : ''}`}
+                                        onClick={() => {
+                                            setContext(group.id, isActive ? null : contextId);
+                                        }}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            width: '100%',
+                                            padding: '6px',
+                                            marginBottom: '4px',
+                                            background: isActive ? '#333' : 'transparent',
+                                            border: 'none',
+                                            borderRadius: '4px',
+                                            color: 'white',
+                                            cursor: 'pointer',
+                                            textAlign: 'left'
+                                        }}
+                                    >
+                                        <span className="tag-item-icon">{ctx.icon}</span>
+                                        <span>{ctx.label}</span>
+                                        {isActive && <span className="tag-check">✓</span>}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            }
+        >
+            {renderContent()}
+        </FloatingCard>
     );
 };
 

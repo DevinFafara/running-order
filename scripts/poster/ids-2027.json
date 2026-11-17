@@ -1,0 +1,4 @@
+{
+  "_doc": "Registre des identifiants de groupes 2027 (nom normalisé → id). Ne jamais réattribuer un id : les favoris des utilisateurs en dépendent.",
+  "ids": {}
+}

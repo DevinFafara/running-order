@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { DAYS, DEFAULT_DAY } from '../../constants';
 import '../panels/StatsPanel.css'; // Re-use panel styles or create new ones? Let's use simple inline or basic styles for now to be quick.
 
 const CustomEventModal = ({ isOpen, onClose, onSave, onDelete, defaultDay, eventToEdit }) => {
     const [title, setTitle] = useState('');
-    const [day, setDay] = useState(defaultDay || 'Jeudi');
+    const [day, setDay] = useState(defaultDay || DEFAULT_DAY);
     const [type, setType] = useState('apero'); // apero, repas, dodo, autre
 
     // State for split time fields
@@ -22,7 +23,7 @@ const CustomEventModal = ({ isOpen, onClose, onSave, onDelete, defaultDay, event
             setShowDeleteConfirm(false);
             if (eventToEdit) {
                 setTitle(eventToEdit.title || '');
-                setDay(eventToEdit.day || defaultDay || 'Jeudi');
+                setDay(eventToEdit.day || defaultDay || DEFAULT_DAY);
                 setType(eventToEdit.type || 'apero');
                 const [sH, sM] = (eventToEdit.startTime || '12:00').split(':');
                 setStartH(sH);
@@ -31,7 +32,7 @@ const CustomEventModal = ({ isOpen, onClose, onSave, onDelete, defaultDay, event
                 setEndH(eH);
                 setEndM(eM);
             } else {
-                setDay(defaultDay || 'Jeudi');
+                setDay(defaultDay || DEFAULT_DAY);
                 setTitle('');
                 setType('apero');
                 setStartH('12');
@@ -189,7 +190,7 @@ const CustomEventModal = ({ isOpen, onClose, onSave, onDelete, defaultDay, event
                                 fontSize: '1rem'
                             }}
                         >
-                            {['Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'].map(d => (
+                            {DAYS.map(d => (
                                 <option key={d} value={d}>{d}</option>
                             ))}
                         </select>

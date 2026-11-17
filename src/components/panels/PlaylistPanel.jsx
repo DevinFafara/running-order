@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { EDITION } from '../../editions';
 
 const PlaylistPanel = ({ isOpen, onClose }) => {
     const [hoveredItem, setHoveredItem] = useState(null);
@@ -49,7 +50,7 @@ const PlaylistPanel = ({ isOpen, onClose }) => {
                 <div className="panel-header">
                     <h2 style={{ fontFamily: 'Metal Mania', letterSpacing: '2px' }}>
                         <i className="fa-solid fa-music"></i>
-                        Playlists Hellfest 2026
+                        Playlists {EDITION.label}
                     </h2>
                     <button
                         onClick={onClose}
